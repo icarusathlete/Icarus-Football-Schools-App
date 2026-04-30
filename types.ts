@@ -110,12 +110,16 @@ export interface MatchStats {
   isStarter?: boolean; // New field to track Starting XI
 }
 
+export type MatchEventType = 'goal' | 'yellow_card' | 'red_card' | 'substitution';
+
 export interface MatchEvent {
   id: string;
-  type: 'goal' | 'yellow_card' | 'red_card' | 'substitution';
+  type: MatchEventType;
   minute: number;
   playerId: string;
   assistantId?: string; // For goals
+  subInId?: string; // For substitutions
+  subOutId?: string; // For substitutions
 }
 
 export interface Match {

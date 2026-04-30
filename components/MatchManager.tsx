@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { StorageService } from '../services/storageService';
-import { Player, Match, ScheduleEvent } from '../types';
+import { Player, Match, ScheduleEvent, MatchEvent } from '../types';
 import { 
     PlusCircle, Calendar, Trophy, ChevronDown, Save, X, Youtube, 
     PlayCircle, Filter, MonitorPlay, FileJson, UploadCloud, 
     AlertCircle, Check, Users, Shirt, Activity, Clock, 
     MessageSquare, Award, PieChart, TrendingUp, History,
-    Flame, Zap, Target, MapPin, Shield, Trash2
+    Flame, Zap, Target, MapPin, Shield, Trash2, RefreshCw, ArrowRight
 } from 'lucide-react';
 
 export const MatchManager: React.FC = () => {
@@ -25,8 +25,13 @@ export const MatchManager: React.FC = () => {
     
     // Goal Entry Modal State
     const [showGoalModal, setShowGoalModal] = useState(false);
-    const [goalScorerId, setGoalScorerId] = useState<string>('');
-    const [goalAssistantId, setGoalAssistantId] = useState<string>('');
+    const [showCardModal, setShowCardModal] = useState<{type: 'yellow_card' | 'red_card'} | null>(null);
+    const [showSubModal, setShowSubModal] = useState(false);
+    const [selectedGoalScorer, setSelectedGoalScorer] = useState('');
+    const [selectedAssistant, setSelectedAssistant] = useState('');
+    const [selectedCardPlayer, setSelectedCardPlayer] = useState('');
+    const [selectedSubOut, setSelectedSubOut] = useState('');
+    const [selectedSubIn, setSelectedSubIn] = useState('');
     
     // Console Tabs
     const [consoleTab, setConsoleTab] = useState<'tactical' | 'performance'>('tactical');
@@ -136,36 +141,52 @@ export const MatchManager: React.FC = () => {
         await StorageService.updateMatch(updatedMatch);
     };
 
-    const handleRecordGoal = async () => {
+    const handleAddGoal = () => {
         const match = matches.find(m => m.id === activeMatchId);
-        if (!match || !goalScorerId) return;
-
-        const currentMinute = Math.floor(matchTime / 60) + 1;
-        const newEvent = {
+        if (!match || !selectedGoalScorer) return;
+        const newEvent: MatchEvent = {
             id: Math.random().toString(36).substr(2, 9),
-            type: 'goal' as const,
-            minute: currentMinute,
-            playerId: goalScorerId,
-            assistantId: goalAssistantId || undefined
+            type: 'goal',
+            minute: Math.floor(matchTime / 60) + 1,
+            playerId: selectedGoalScorer,
+            assistantId: selectedAssistant || undefined
         };
+        const updatedEvents = [...(match.events || []), newEvent];
+        const updatedStats = match.playerStats.map(ps => {
+            if (ps.playerId === selectedGoalScorer) return { ...ps, goals: (ps.goals || 0) + 1 };
+            if (ps.playerId === selectedAssistant) return { ...ps, assists: (ps.assists || 0) + 1 };
+            return ps;
+        });
+        updateLiveMatch({ ...match, scoreFor: (match.scoreFor || 0) + 1, events: updatedEvents, playerStats: updatedStats });
+        setShowGoalModal(false); setSelectedGoalScorer(''); setSelectedAssistant('');
+    };
 
-        const updatedMatch = {
-            ...match,
-            scoreFor: (match.scoreFor || 0) + 1,
-            events: [...(match.events || []), newEvent],
-            // Also update player stats directly for consistency
-            playerStats: match.playerStats.map(ps => {
-                if (ps.playerId === goalScorerId) return { ...ps, goals: (ps.goals || 0) + 1 };
-                if (goalAssistantId && ps.playerId === goalAssistantId) return { ...ps, assists: (ps.assists || 0) + 1 };
-                return ps;
-            })
+    const handleAddCard = (type: 'yellow_card' | 'red_card') => {
+        const match = matches.find(m => m.id === activeMatchId);
+        if (!match || !selectedCardPlayer) return;
+        const newEvent: MatchEvent = {
+            id: Math.random().toString(36).substr(2, 9),
+            type,
+            minute: Math.floor(matchTime / 60) + 1,
+            playerId: selectedCardPlayer
         };
+        updateLiveMatch({ ...match, events: [...(match.events || []), newEvent] });
+        setShowCardModal(null); setSelectedCardPlayer('');
+    };
 
-        await StorageService.updateMatch(updatedMatch);
-        setShowGoalModal(false);
-        setGoalScorerId('');
-        setGoalAssistantId('');
-        loadData();
+    const handleAddSub = () => {
+        const match = matches.find(m => m.id === activeMatchId);
+        if (!match || !selectedSubOut || !selectedSubIn) return;
+        const newEvent: MatchEvent = {
+            id: Math.random().toString(36).substr(2, 9),
+            type: 'substitution',
+            minute: Math.floor(matchTime / 60) + 1,
+            playerId: selectedSubOut,
+            subOutId: selectedSubOut,
+            subInId: selectedSubIn
+        };
+        updateLiveMatch({ ...match, events: [...(match.events || []), newEvent] });
+        setShowSubModal(false); setSelectedSubOut(''); setSelectedSubIn('');
     };
 
     const updatePlayerPerformance = async (playerId: string, updates: { rating?: number, isMOTM?: boolean }) => {
@@ -401,30 +422,49 @@ export const MatchManager: React.FC = () => {
                                     </div>
                                 </div>
 
+                                {/* Quick Actions Bar */}
+                                <div className="flex flex-wrap items-center justify-center gap-4 lg:gap-8 px-4">
+                                    <button onClick={() => setShowGoalModal(true)} className="flex items-center gap-3 bg-brand-accent/10 hover:bg-brand-accent hover:text-brand-950 text-brand-accent px-6 py-3 rounded-2xl border border-brand-accent/20 transition-all shadow-glow group">
+                                        <PlusCircle size={18} className="group-hover:scale-110 transition-transform" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest italic">Log Goal</span>
+                                    </button>
+                                    <button onClick={() => setShowCardModal({type: 'yellow_card'})} className="flex items-center gap-3 bg-amber-500/10 hover:bg-amber-500 hover:text-white text-amber-500 px-6 py-3 rounded-2xl border border-amber-500/20 transition-all group">
+                                        <div className="w-3 h-4 bg-amber-500 rounded-sm group-hover:bg-white transition-colors" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest italic">Yellow</span>
+                                    </button>
+                                    <button onClick={() => setShowCardModal({type: 'red_card'})} className="flex items-center gap-3 bg-red-500/10 hover:bg-red-500 hover:text-white text-red-500 px-6 py-3 rounded-2xl border border-red-500/20 transition-all group">
+                                        <div className="w-3 h-4 bg-red-500 rounded-sm group-hover:bg-white transition-colors" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest italic">Red</span>
+                                    </button>
+                                    <button onClick={() => setShowSubModal(true)} className="flex items-center gap-3 bg-brand-primary/10 hover:bg-brand-primary hover:text-brand-950 text-brand-primary px-6 py-3 rounded-2xl border border-brand-primary/20 transition-all group">
+                                        <RefreshCw size={18} className="group-hover:rotate-180 transition-transform duration-500" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest italic">Sub</span>
+                                    </button>
+                                </div>
+
                                 {/* Metrics & Feed Grid */}
                                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
                                     <div className="lg:col-span-1 space-y-4 lg:space-y-6">
-                                        <div className="glass-card p-6 lg:p-8 rounded-[2rem] lg:rounded-[2.5rem] border border-white/10 bg-black/20">
-                                            <div className="flex justify-between items-center mb-4 lg:mb-6">
-                                                <p className="text-[8px] lg:text-[10px] font-black text-white/40 uppercase tracking-[0.2rem] italic">Possession</p>
-                                                <span className="text-xl lg:text-2xl font-black text-white italic tabular-nums">{activeMatch.possession || 50}%</span>
-                                            </div>
-                                            <div className="relative h-4 bg-white/5 rounded-full overflow-hidden border border-white/5">
-                                                <input 
-                                                    type="range" 
-                                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
-                                                    min="0" max="100" 
-                                                    value={activeMatch.possession || 50} 
-                                                    onChange={(e) => updateLiveMatch({ ...activeMatch, possession: parseInt(e.target.value) })} 
-                                                />
-                                                <div 
-                                                    className="absolute top-0 left-0 h-full bg-brand-accent transition-all duration-300"
-                                                    style={{ width: `${activeMatch.possession || 50}%` }}
-                                                />
-                                            </div>
-                                            <div className="flex justify-between mt-3 text-[7px] lg:text-[8px] font-black text-white/20 uppercase italic tracking-widest">
-                                                <span>{settings.name}</span>
-                                                <span>{activeMatch.opponent}</span>
+                                        <div className="glass-card p-6 lg:p-8 rounded-[2rem] lg:rounded-[2.5rem] border border-white/10 bg-black/20 relative overflow-hidden group/pos">
+                                            <div className="absolute inset-0 bg-brand-accent/5 opacity-0 group-hover/pos:opacity-100 transition-opacity" />
+                                            <div className="relative z-10">
+                                                <div className="flex justify-between items-center mb-4 lg:mb-6">
+                                                    <p className="text-[8px] lg:text-[10px] font-black text-white/40 uppercase tracking-[0.2rem] italic">Possession</p>
+                                                    <span className="text-xl lg:text-2xl font-black text-white italic tabular-nums">{activeMatch.possession || 50}%</span>
+                                                </div>
+                                                <div className="relative h-4 bg-white/5 rounded-full overflow-hidden border border-white/5">
+                                                    <input 
+                                                        type="range" 
+                                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
+                                                        min="0" max="100" 
+                                                        value={activeMatch.possession || 50} 
+                                                        onChange={(e) => updateLiveMatch({ ...activeMatch, possession: parseInt(e.target.value) })} 
+                                                    />
+                                                    <div 
+                                                        className="absolute top-0 left-0 h-full bg-brand-accent transition-all duration-300 shadow-[0_0_20px_rgba(200,255,0,0.5)]"
+                                                        style={{ width: `${activeMatch.possession || 50}%` }}
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
 
@@ -450,20 +490,44 @@ export const MatchManager: React.FC = () => {
                                                 activeMatch.events.sort((a,b) => b.minute - a.minute).map(event => (
                                                     <div key={event.id} className="flex items-center justify-between bg-white/5 p-4 lg:p-5 rounded-2xl lg:rounded-[2rem] border border-white/5 hover:border-white/10 transition-all animate-in slide-in-from-right-8 duration-700">
                                                         <div className="flex items-center gap-4 lg:gap-6">
-                                                            <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl lg:rounded-2xl bg-brand-accent text-brand-950 flex items-center justify-center text-base lg:text-lg font-black italic shadow-glow">{event.minute}'</div>
+                                                            <div className={`w-10 h-10 lg:w-12 lg:h-12 rounded-xl lg:rounded-2xl flex items-center justify-center text-base lg:text-lg font-black italic shadow-glow ${
+                                                                event.type === 'goal' ? 'bg-brand-accent text-brand-950' : 
+                                                                event.type === 'yellow_card' ? 'bg-amber-500 text-white' : 
+                                                                event.type === 'red_card' ? 'bg-red-500 text-white' : 
+                                                                'bg-brand-primary text-brand-950'
+                                                            }`}>{event.minute}'</div>
                                                             <div>
                                                                 <div className="text-xs lg:text-sm font-black text-white uppercase italic tracking-tight">
                                                                     {players.find(p => p.id === event.playerId)?.fullName}
-                                                                    <span className="text-brand-accent ml-2 lg:ml-3">GOAL</span>
+                                                                    <span className={`ml-2 lg:ml-3 ${
+                                                                        event.type === 'goal' ? 'text-brand-accent' : 
+                                                                        event.type === 'yellow_card' ? 'text-amber-500' : 
+                                                                        event.type === 'red_card' ? 'text-red-500' : 
+                                                                        'text-brand-primary'
+                                                                    }`}>
+                                                                        {event.type === 'goal' ? 'GOAL' : 
+                                                                         event.type === 'yellow_card' ? 'YELLOW CARD' : 
+                                                                         event.type === 'red_card' ? 'RED CARD' : 
+                                                                         'SUBSTITUTED'}
+                                                                    </span>
                                                                 </div>
-                                                                {event.assistantId && (
+                                                                {event.type === 'goal' && event.assistantId && (
                                                                     <div className="text-[8px] lg:text-[10px] font-bold text-white/30 uppercase italic tracking-widest mt-1">
                                                                         ASST: {players.find(p => p.id === event.assistantId)?.fullName}
                                                                     </div>
                                                                 )}
+                                                                {event.type === 'substitution' && (
+                                                                    <div className="text-[8px] lg:text-[10px] font-bold text-white/30 uppercase italic tracking-widest mt-1 flex items-center gap-2">
+                                                                        <span className="text-red-400">OUT: {players.find(p => p.id === event.subOutId)?.fullName}</span>
+                                                                        <ArrowRight size={10} />
+                                                                        <span className="text-emerald-400">IN: {players.find(p => p.id === event.subInId)?.fullName}</span>
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         </div>
-                                                        <Award size={18} className="text-brand-accent animate-pulse" />
+                                                        {event.type === 'goal' && <Award size={18} className="text-brand-accent animate-pulse" />}
+                                                        {event.type === 'substitution' && <RefreshCw size={18} className="text-brand-primary" />}
+                                                        {(event.type === 'yellow_card' || event.type === 'red_card') && <AlertCircle size={18} className={event.type === 'yellow_card' ? 'text-amber-500' : 'text-red-500'} />}
                                                     </div>
                                                 ))
                                             ) : (
@@ -777,8 +841,8 @@ export const MatchManager: React.FC = () => {
                                 <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] italic ml-1">SELECT_SCORER</label>
                                 <select 
                                     className="w-full bg-black/40 border border-white/10 p-5 rounded-2xl text-white font-black italic text-sm outline-none focus:border-brand-accent transition-all appearance-none"
-                                    value={goalScorerId}
-                                    onChange={e => setGoalScorerId(e.target.value)}
+                                    value={selectedGoalScorer}
+                                    onChange={e => setSelectedGoalScorer(e.target.value)}
                                 >
                                     <option value="">-- SELECT PLAYER --</option>
                                     {players.map(p => <option key={p.id} value={p.id}>{p.fullName}</option>)}
@@ -789,17 +853,17 @@ export const MatchManager: React.FC = () => {
                                 <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] italic ml-1">SELECT_ASSISTANT (OPTIONAL)</label>
                                 <select 
                                     className="w-full bg-black/40 border border-white/10 p-5 rounded-2xl text-white font-black italic text-sm outline-none focus:border-brand-accent transition-all appearance-none"
-                                    value={goalAssistantId}
-                                    onChange={e => setGoalAssistantId(e.target.value)}
+                                    value={selectedAssistant}
+                                    onChange={e => setSelectedAssistant(e.target.value)}
                                 >
                                     <option value="">-- NO ASSIST --</option>
-                                    {players.filter(p => p.id !== goalScorerId).map(p => <option key={p.id} value={p.id}>{p.fullName}</option>)}
+                                    {players.filter(p => p.id !== selectedGoalScorer).map(p => <option key={p.id} value={p.id}>{p.fullName}</option>)}
                                 </select>
                             </div>
 
                             <button 
-                                onClick={handleRecordGoal}
-                                disabled={!goalScorerId}
+                                onClick={handleAddGoal}
+                                disabled={!selectedGoalScorer}
                                 className="w-full py-6 bg-brand-accent text-brand-950 rounded-2xl font-black uppercase tracking-[0.3em] text-xs shadow-glow hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-4 italic disabled:opacity-30 disabled:hover:scale-100"
                             >
                                 <Award size={20} /> CONFIRM GOAL DATA
@@ -817,6 +881,81 @@ export const MatchManager: React.FC = () => {
                             <X size={32}/>
                         </button>
                         <iframe src={selectedVideo} className="w-full h-full" title="Match Highlights" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+                    </div>
+                </div>
+            )}
+            {/* Card Modal */}
+            {showCardModal && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-brand-950/90 backdrop-blur-md">
+                    <div className="glass-card w-full max-w-md p-8 rounded-[2.5rem] border border-white/10 animate-in zoom-in-95 duration-300">
+                        <div className="flex justify-between items-center mb-8">
+                            <h3 className="text-2xl font-black text-white italic uppercase tracking-tighter">LOG {showCardModal.type === 'yellow_card' ? 'YELLOW' : 'RED'} CARD</h3>
+                            <button onClick={() => setShowCardModal(null)} className="p-2 hover:bg-white/10 rounded-xl transition-colors text-white/40"><X size={24}/></button>
+                        </div>
+                        <div className="space-y-6">
+                            <div>
+                                <label className="text-[9px] font-black text-white/40 uppercase tracking-[0.3em] mb-3 block italic">PLAYER CITED</label>
+                                <select 
+                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white text-sm font-bold appearance-none cursor-pointer focus:border-brand-accent/50 outline-none"
+                                    value={selectedCardPlayer}
+                                    onChange={(e) => setSelectedCardPlayer(e.target.value)}
+                                >
+                                    <option value="">SELECT PLAYER</option>
+                                    {players.map(p => <option key={p.id} value={p.id}>{p.fullName}</option>)}
+                                </select>
+                            </div>
+                            <button 
+                                onClick={() => handleAddCard(showCardModal.type)}
+                                disabled={!selectedCardPlayer}
+                                className={`w-full py-5 rounded-2xl font-black uppercase tracking-[0.3em] text-xs transition-all italic ${selectedCardPlayer ? (showCardModal.type === 'yellow_card' ? 'bg-amber-500 text-white shadow-[0_0_30px_rgba(245,158,11,0.3)]' : 'bg-red-500 text-white shadow-[0_0_30px_rgba(239,68,68,0.3)]') : 'bg-white/5 text-white/20 border border-white/5'}`}
+                            >
+                                CONFIRM DISCIPLINARY EVENT
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Substitution Modal */}
+            {showSubModal && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-brand-950/90 backdrop-blur-md">
+                    <div className="glass-card w-full max-w-md p-8 rounded-[2.5rem] border border-white/10 animate-in zoom-in-95 duration-300">
+                        <div className="flex justify-between items-center mb-8">
+                            <h3 className="text-2xl font-black text-white italic uppercase tracking-tighter">TACTICAL SUBSTITUTION</h3>
+                            <button onClick={() => setShowSubModal(false)} className="p-2 hover:bg-white/10 rounded-xl transition-colors text-white/40"><X size={24}/></button>
+                        </div>
+                        <div className="space-y-6">
+                            <div>
+                                <label className="text-[9px] font-black text-red-400 uppercase tracking-[0.3em] mb-3 block italic">PLAYER OUT</label>
+                                <select 
+                                    className="w-full bg-white/5 border border-red-500/20 rounded-2xl px-6 py-4 text-white text-sm font-bold appearance-none focus:border-red-500/50 outline-none"
+                                    value={selectedSubOut}
+                                    onChange={(e) => setSelectedSubOut(e.target.value)}
+                                >
+                                    <option value="">SELECT PLAYER</option>
+                                    {players.map(p => <option key={p.id} value={p.id}>{p.fullName}</option>)}
+                                </select>
+                            </div>
+                            <div className="flex justify-center"><RefreshCw className="text-white/10" size={24} /></div>
+                            <div>
+                                <label className="text-[9px] font-black text-emerald-400 uppercase tracking-[0.3em] mb-3 block italic">PLAYER IN</label>
+                                <select 
+                                    className="w-full bg-white/5 border border-emerald-500/20 rounded-2xl px-6 py-4 text-white text-sm font-bold appearance-none focus:border-emerald-500/50 outline-none"
+                                    value={selectedSubIn}
+                                    onChange={(e) => setSelectedSubIn(e.target.value)}
+                                >
+                                    <option value="">SELECT PLAYER</option>
+                                    {players.map(p => <option key={p.id} value={p.id}>{p.fullName}</option>)}
+                                </select>
+                            </div>
+                            <button 
+                                onClick={handleAddSub}
+                                disabled={!selectedSubOut || !selectedSubIn}
+                                className={`w-full py-5 rounded-2xl font-black uppercase tracking-[0.3em] text-xs transition-all italic ${selectedSubOut && selectedSubIn ? 'bg-brand-primary text-brand-950 shadow-glow' : 'bg-white/5 text-white/20 border border-white/5'}`}
+                            >
+                                EXECUTE SUBSTITUTION
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
