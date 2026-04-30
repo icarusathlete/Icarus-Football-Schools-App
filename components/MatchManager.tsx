@@ -332,72 +332,82 @@ export const MatchManager: React.FC = () => {
 
             {/* Live Match Console */}
             {activeMatch && (
-                <div className="glass-card rounded-[3.5rem] border border-brand-accent/30 shadow-2xl overflow-hidden animate-in slide-in-from-bottom-12 duration-1000 relative">
-                    <div className="green-light-bar" />
-                    <div className="bg-white/5 px-8 py-4 flex flex-col sm:flex-row justify-between items-center border-b border-white/10 gap-4">
-                        <div className="flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.3em] text-red-500 italic">
+                <div className="fixed inset-0 z-[100] lg:relative lg:inset-auto glass-card lg:rounded-[3.5rem] border-0 lg:border border-brand-accent/30 shadow-2xl overflow-hidden animate-in slide-in-from-bottom-12 duration-1000 bg-brand-950 lg:bg-transparent">
+                    <div className="green-light-bar lg:block hidden" />
+                    <div className="bg-white/5 px-6 lg:px-8 py-4 flex justify-between items-center border-b border-white/10 sticky top-0 z-20 backdrop-blur-md">
+                        <div className="flex items-center gap-2 lg:gap-3 text-[10px] font-black uppercase tracking-[0.2em] lg:tracking-[0.3em] text-red-500 italic">
                             <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                            LIVE MATCH CONSOLE
+                            LIVE CONSOLE
                         </div>
-                        <div className="flex bg-black/40 p-1 rounded-xl border border-white/5">
-                            <button onClick={() => setConsoleTab('tactical')} className={`px-6 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all italic ${consoleTab === 'tactical' ? 'bg-brand-accent text-brand-950 shadow-glow' : 'text-white/40 hover:text-white/60'}`}>TACTICAL</button>
-                            <button onClick={() => setConsoleTab('performance')} className={`px-6 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all italic ${consoleTab === 'performance' ? 'bg-brand-accent text-brand-950 shadow-glow' : 'text-white/40 hover:text-white/60'}`}>PERFORMANCE</button>
+                        <div className="flex bg-black/40 p-1 rounded-xl border border-white/5 mx-2">
+                            <button onClick={() => setConsoleTab('tactical')} className={`px-4 lg:px-6 py-2 rounded-lg text-[8px] lg:text-[9px] font-black uppercase tracking-widest transition-all italic ${consoleTab === 'tactical' ? 'bg-brand-accent text-brand-950 shadow-glow' : 'text-white/40'}`}>TACTICAL</button>
+                            <button onClick={() => setConsoleTab('performance')} className={`px-4 lg:px-6 py-2 rounded-lg text-[8px] lg:text-[9px] font-black uppercase tracking-widest transition-all italic ${consoleTab === 'performance' ? 'bg-brand-accent text-brand-950 shadow-glow' : 'text-white/40'}`}>PERF</button>
                         </div>
                         <button onClick={() => setActiveMatchId(null)} className="p-2 hover:bg-white/10 rounded-xl transition-colors text-white/40"><X size={20}/></button>
                     </div>
 
-                    <div className="p-8 lg:p-14">
+                    <div className="p-6 lg:p-14 h-[calc(100vh-64px)] lg:h-auto overflow-y-auto custom-scrollbar">
                         {consoleTab === 'tactical' ? (
-                            <div className="flex flex-col gap-12 lg:gap-20">
+                            <div className="flex flex-col gap-8 lg:gap-20">
                                 {/* Score & Timer Row */}
-                                <div className="flex flex-col md:flex-row items-center justify-center gap-12 lg:gap-24 border-b border-white/5 pb-12">
-                                    <div className="flex flex-col items-center gap-5 group">
-                                        <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center border border-white/10 group-hover:border-brand-accent/50 transition-all shadow-2xl">
-                                            <Shirt size={48} className="text-brand-accent" />
+                                <div className="flex flex-col md:flex-row items-center justify-center gap-8 lg:gap-24 border-b border-white/5 pb-8 lg:pb-12">
+                                    {/* Home Team (Mobile Compact) */}
+                                    <div className="flex md:flex-col items-center gap-4 lg:gap-5 group w-full md:w-auto px-4 md:px-0">
+                                        <div className="w-12 h-12 lg:w-24 lg:h-24 bg-white/5 rounded-full flex items-center justify-center border border-white/10 group-hover:border-brand-accent/50 transition-all shadow-2xl order-1 md:order-1">
+                                            <Shirt size={24} className="text-brand-accent lg:hidden" />
+                                            <Shirt size={48} className="text-brand-accent hidden lg:block" />
                                         </div>
-                                        <h4 className="text-sm font-black text-white uppercase italic tracking-widest">{settings.name}</h4>
+                                        <h4 className="text-[10px] lg:text-sm font-black text-white uppercase italic tracking-widest order-2 md:order-2">{settings.name}</h4>
                                     </div>
 
-                                    <div className="flex items-center gap-10">
-                                        <div className="flex flex-col items-center gap-4">
-                                            <button onClick={() => setShowGoalModal(true)} className="w-14 h-14 rounded-2xl bg-brand-accent/10 text-brand-accent flex items-center justify-center hover:bg-brand-accent hover:text-brand-950 transition-all border border-brand-accent/20 shadow-glow"><PlusCircle size={24} /></button>
-                                            <div className="text-7xl sm:text-9xl font-black text-white italic leading-none tracking-tighter">{activeMatch.scoreFor || 0}</div>
-                                            <button onClick={() => updateLiveMatch({ ...activeMatch, scoreFor: Math.max(0, (activeMatch.scoreFor || 0) - 1) })} className="text-white/20 hover:text-white transition-colors"><ChevronDown size={28} /></button>
+                                    {/* Central Score/Time Unit */}
+                                    <div className="flex items-center gap-6 lg:gap-10 w-full justify-center">
+                                        {/* Score Home */}
+                                        <div className="flex flex-col items-center gap-2 lg:gap-4">
+                                            <button onClick={() => setShowGoalModal(true)} className="w-10 h-10 lg:w-14 lg:h-14 rounded-xl lg:rounded-2xl bg-brand-accent/10 text-brand-accent flex items-center justify-center hover:bg-brand-accent hover:text-brand-950 transition-all border border-brand-accent/20 shadow-glow"><PlusCircle size={20} /></button>
+                                            <div className="text-5xl lg:text-9xl font-black text-white italic leading-none tracking-tighter">{activeMatch.scoreFor || 0}</div>
+                                            <button onClick={() => updateLiveMatch({ ...activeMatch, scoreFor: Math.max(0, (activeMatch.scoreFor || 0) - 1) })} className="text-white/20 hover:text-white transition-colors"><ChevronDown size={24} /></button>
                                         </div>
-                                        <div className="flex flex-col items-center gap-6">
-                                            <div className="text-6xl font-black text-white/10 italic leading-none">:</div>
-                                            <div className="bg-black/60 px-8 py-5 rounded-[2.5rem] border border-white/10 shadow-2xl flex flex-col items-center gap-3 min-w-[160px]">
-                                                <div className="text-4xl font-mono font-black text-brand-accent tabular-nums tracking-tighter">{formatMatchTime(matchTime)}</div>
+
+                                        {/* Timer Unit */}
+                                        <div className="flex flex-col items-center gap-4 lg:gap-6">
+                                            <div className="text-4xl lg:text-6xl font-black text-white/10 italic leading-none hidden md:block">:</div>
+                                            <div className="bg-black/60 px-4 lg:px-8 py-3 lg:py-5 rounded-2xl lg:rounded-[2.5rem] border border-white/10 shadow-2xl flex flex-col items-center gap-2 lg:gap-3 min-w-[120px] lg:min-w-[160px]">
+                                                <div className="text-2xl lg:text-4xl font-mono font-black text-brand-accent tabular-nums tracking-tighter">{formatMatchTime(matchTime)}</div>
                                                 <button 
                                                     onClick={toggleTimer}
-                                                    className={`w-full py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest italic transition-all ${isTimerRunning ? 'bg-red-500/20 text-red-500 border border-red-500/30' : 'bg-brand-accent text-brand-950 shadow-glow'}`}
+                                                    className={`w-full py-2 lg:py-2.5 rounded-lg lg:rounded-xl text-[8px] lg:text-[10px] font-black uppercase tracking-widest italic transition-all ${isTimerRunning ? 'bg-red-500/20 text-red-500 border border-red-500/30' : 'bg-brand-accent text-brand-950 shadow-glow'}`}
                                                 >
-                                                    {isTimerRunning ? 'PAUSE CLOCK' : matchTime === 0 ? 'START MATCH' : 'RESUME CLOCK'}
+                                                    {isTimerRunning ? 'PAUSE' : matchTime === 0 ? 'START' : 'RESUME'}
                                                 </button>
                                             </div>
                                         </div>
-                                        <div className="flex flex-col items-center gap-4">
-                                            <button onClick={() => updateLiveMatch({ ...activeMatch, scoreAgainst: (activeMatch.scoreAgainst || 0) + 1 })} className="w-14 h-14 rounded-2xl bg-white/5 text-white/40 flex items-center justify-center hover:bg-white hover:text-brand-950 transition-all border border-white/10 shadow-xl"><PlusCircle size={24} /></button>
-                                            <div className="text-7xl sm:text-9xl font-black text-white/40 italic leading-none tracking-tighter">{activeMatch.scoreAgainst || 0}</div>
-                                            <button onClick={() => updateLiveMatch({ ...activeMatch, scoreAgainst: Math.max(0, (activeMatch.scoreAgainst || 0) - 1) })} className="text-white/10 hover:text-white transition-colors"><ChevronDown size={28} /></button>
+
+                                        {/* Score Away */}
+                                        <div className="flex flex-col items-center gap-2 lg:gap-4">
+                                            <button onClick={() => updateLiveMatch({ ...activeMatch, scoreAgainst: (activeMatch.scoreAgainst || 0) + 1 })} className="w-10 h-10 lg:w-14 lg:h-14 rounded-xl lg:rounded-2xl bg-white/5 text-white/40 flex items-center justify-center hover:bg-white hover:text-brand-950 transition-all border border-white/10 shadow-xl"><PlusCircle size={20} /></button>
+                                            <div className="text-5xl lg:text-9xl font-black text-white/40 italic leading-none tracking-tighter">{activeMatch.scoreAgainst || 0}</div>
+                                            <button onClick={() => updateLiveMatch({ ...activeMatch, scoreAgainst: Math.max(0, (activeMatch.scoreAgainst || 0) - 1) })} className="text-white/10 hover:text-white transition-colors"><ChevronDown size={24} /></button>
                                         </div>
                                     </div>
 
-                                    <div className="flex flex-col items-center gap-5 group">
-                                        <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center border border-white/10 group-hover:border-white/30 transition-all shadow-2xl">
-                                            <Shield size={48} className="text-white/10" />
+                                    {/* Away Team (Mobile Compact) */}
+                                    <div className="flex md:flex-col items-center gap-4 lg:gap-5 group w-full md:w-auto px-4 md:px-0 justify-end md:justify-center">
+                                        <h4 className="text-[10px] lg:text-sm font-black text-white/40 uppercase italic tracking-widest order-1 md:order-2">{activeMatch.opponent}</h4>
+                                        <div className="w-12 h-12 lg:w-24 lg:h-24 bg-white/5 rounded-full flex items-center justify-center border border-white/10 group-hover:border-white/30 transition-all shadow-2xl order-2 md:order-1">
+                                            <Shield size={24} className="text-white/10 lg:hidden" />
+                                            <Shield size={48} className="text-white/10 hidden lg:block" />
                                         </div>
-                                        <h4 className="text-sm font-black text-white/40 uppercase italic tracking-widest">{activeMatch.opponent}</h4>
                                     </div>
                                 </div>
 
                                 {/* Metrics & Feed Grid */}
-                                <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-                                    <div className="xl:col-span-1 space-y-6">
-                                        <div className="glass-card p-8 rounded-[2.5rem] border border-white/10 bg-black/20">
-                                            <div className="flex justify-between items-center mb-6">
-                                                <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.2rem] italic">Possession</p>
-                                                <span className="text-2xl font-black text-white italic tabular-nums">{activeMatch.possession || 50}%</span>
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+                                    <div className="lg:col-span-1 space-y-4 lg:space-y-6">
+                                        <div className="glass-card p-6 lg:p-8 rounded-[2rem] lg:rounded-[2.5rem] border border-white/10 bg-black/20">
+                                            <div className="flex justify-between items-center mb-4 lg:mb-6">
+                                                <p className="text-[8px] lg:text-[10px] font-black text-white/40 uppercase tracking-[0.2rem] italic">Possession</p>
+                                                <span className="text-xl lg:text-2xl font-black text-white italic tabular-nums">{activeMatch.possession || 50}%</span>
                                             </div>
                                             <div className="relative h-4 bg-white/5 rounded-full overflow-hidden border border-white/5">
                                                 <input 
@@ -412,61 +422,61 @@ export const MatchManager: React.FC = () => {
                                                     style={{ width: `${activeMatch.possession || 50}%` }}
                                                 />
                                             </div>
-                                            <div className="flex justify-between mt-3 text-[8px] font-black text-white/20 uppercase italic tracking-widest">
+                                            <div className="flex justify-between mt-3 text-[7px] lg:text-[8px] font-black text-white/20 uppercase italic tracking-widest">
                                                 <span>{settings.name}</span>
                                                 <span>{activeMatch.opponent}</span>
                                             </div>
                                         </div>
 
-                                        <div className="glass-card p-8 rounded-[2.5rem] border border-white/10 bg-black/20">
-                                            <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.2rem] mb-6 italic">Shots on Target</p>
+                                        <div className="glass-card p-6 lg:p-8 rounded-[2rem] lg:rounded-[2.5rem] border border-white/10 bg-black/20">
+                                            <p className="text-[8px] lg:text-[10px] font-black text-white/40 uppercase tracking-[0.2rem] mb-4 lg:mb-6 italic">Shots on Target</p>
                                             <div className="flex items-center justify-between">
-                                                <span className="text-5xl font-black text-white italic tabular-nums">{activeMatch.shotsOnTarget || 0}</span>
-                                                <div className="flex gap-3">
-                                                    <button onClick={() => updateLiveMatch({...activeMatch, shotsOnTarget: Math.max(0, (activeMatch.shotsOnTarget || 0) - 1)})} className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 text-white/20 hover:text-red-500 transition-all flex items-center justify-center"><X size={18}/></button>
-                                                    <button onClick={() => updateLiveMatch({...activeMatch, shotsOnTarget: (activeMatch.shotsOnTarget || 0) + 1})} className="w-12 h-12 rounded-xl bg-brand-accent/20 text-brand-accent hover:bg-brand-accent hover:text-brand-950 transition-all shadow-glow flex items-center justify-center"><TrendingUp size={18}/></button>
+                                                <span className="text-4xl lg:text-5xl font-black text-white italic tabular-nums">{activeMatch.shotsOnTarget || 0}</span>
+                                                <div className="flex gap-2 lg:gap-3">
+                                                    <button onClick={() => updateLiveMatch({...activeMatch, shotsOnTarget: Math.max(0, (activeMatch.shotsOnTarget || 0) - 1)})} className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-white/5 border border-white/10 text-white/20 hover:text-red-500 transition-all flex items-center justify-center"><X size={16}/></button>
+                                                    <button onClick={() => updateLiveMatch({...activeMatch, shotsOnTarget: (activeMatch.shotsOnTarget || 0) + 1})} className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-brand-accent/20 text-brand-accent hover:bg-brand-accent hover:text-brand-950 transition-all shadow-glow flex items-center justify-center"><TrendingUp size={16}/></button>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
 
                                     {/* Match Feed */}
-                                    <div className="xl:col-span-2 bg-black/40 rounded-[3rem] border border-white/10 overflow-hidden flex flex-col shadow-2xl">
-                                        <div className="px-8 py-5 bg-white/5 border-b border-white/10 text-[10px] font-black text-white/40 uppercase tracking-[0.3em] italic flex items-center gap-3">
-                                            <Activity size={16} className="text-brand-accent" /> MATCH TIMELINE
+                                    <div className="lg:col-span-2 bg-black/40 rounded-[2rem] lg:rounded-[3rem] border border-white/10 overflow-hidden flex flex-col shadow-2xl">
+                                        <div className="px-6 lg:px-8 py-4 lg:py-5 bg-white/5 border-b border-white/10 text-[9px] lg:text-[10px] font-black text-white/40 uppercase tracking-[0.2em] lg:tracking-[0.3em] italic flex items-center gap-3">
+                                            <Activity size={14} className="text-brand-accent" /> MATCH TIMELINE
                                         </div>
-                                        <div className="p-6 max-h-[300px] overflow-y-auto custom-scrollbar space-y-4">
+                                        <div className="p-4 lg:p-6 max-h-[250px] lg:max-h-[300px] overflow-y-auto custom-scrollbar space-y-3 lg:space-y-4">
                                             {activeMatch.events && activeMatch.events.length > 0 ? (
                                                 activeMatch.events.sort((a,b) => b.minute - a.minute).map(event => (
-                                                    <div key={event.id} className="flex items-center justify-between bg-white/5 p-5 rounded-[2rem] border border-white/5 hover:border-white/10 transition-all animate-in slide-in-from-right-8 duration-700">
-                                                        <div className="flex items-center gap-6">
-                                                            <div className="w-12 h-12 rounded-2xl bg-brand-accent text-brand-950 flex items-center justify-center text-lg font-black italic shadow-glow">{event.minute}'</div>
+                                                    <div key={event.id} className="flex items-center justify-between bg-white/5 p-4 lg:p-5 rounded-2xl lg:rounded-[2rem] border border-white/5 hover:border-white/10 transition-all animate-in slide-in-from-right-8 duration-700">
+                                                        <div className="flex items-center gap-4 lg:gap-6">
+                                                            <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl lg:rounded-2xl bg-brand-accent text-brand-950 flex items-center justify-center text-base lg:text-lg font-black italic shadow-glow">{event.minute}'</div>
                                                             <div>
-                                                                <div className="text-sm font-black text-white uppercase italic tracking-tight">
+                                                                <div className="text-xs lg:text-sm font-black text-white uppercase italic tracking-tight">
                                                                     {players.find(p => p.id === event.playerId)?.fullName}
-                                                                    <span className="text-brand-accent ml-3">GOAL SCORDED</span>
+                                                                    <span className="text-brand-accent ml-2 lg:ml-3">GOAL</span>
                                                                 </div>
                                                                 {event.assistantId && (
-                                                                    <div className="text-[10px] font-bold text-white/30 uppercase italic tracking-widest mt-1">
-                                                                        STRATEGIC ASSIST: {players.find(p => p.id === event.assistantId)?.fullName}
+                                                                    <div className="text-[8px] lg:text-[10px] font-bold text-white/30 uppercase italic tracking-widest mt-1">
+                                                                        ASST: {players.find(p => p.id === event.assistantId)?.fullName}
                                                                     </div>
                                                                 )}
                                                             </div>
                                                         </div>
-                                                        <Award size={20} className="text-brand-accent animate-pulse" />
+                                                        <Award size={18} className="text-brand-accent animate-pulse" />
                                                     </div>
                                                 ))
                                             ) : (
-                                                <div className="text-center py-16 flex flex-col items-center gap-4">
-                                                    <Activity size={48} className="text-white/5" />
-                                                    <p className="text-[11px] font-bold text-white/10 uppercase tracking-[0.4em] italic">No tactical events recorded in this session</p>
+                                                <div className="text-center py-10 lg:py-16 flex flex-col items-center gap-4">
+                                                    <Activity size={40} className="text-white/5" />
+                                                    <p className="text-[9px] lg:text-[11px] font-bold text-white/10 uppercase tracking-[0.3em] lg:tracking-[0.4em] italic text-center">No tactical events recorded</p>
                                                 </div>
                                             )}
                                         </div>
                                     </div>
                                 </div>
                                 
-                                <button onClick={() => finalizeMatch(activeMatch)} className="w-full py-8 bg-brand-accent text-brand-950 rounded-[2rem] font-black uppercase tracking-[0.4em] text-sm shadow-[0_20px_50px_rgba(200,255,0,0.3)] hover:scale-[1.01] active:scale-95 transition-all flex items-center justify-center gap-5 italic border border-brand-accent/20"><Check size={24} /> ARCHIVE & FINALIZE MATCH DATA</button>
+                                <button onClick={() => finalizeMatch(activeMatch)} className="w-full py-6 lg:py-8 bg-brand-accent text-brand-950 rounded-2xl lg:rounded-[2rem] font-black uppercase tracking-[0.3em] lg:tracking-[0.4em] text-[10px] lg:text-sm shadow-glow hover:scale-[1.01] active:scale-95 transition-all flex items-center justify-center gap-3 lg:gap-5 italic border border-brand-accent/20"><Check size={20} /> FINALIZE MATCH DATA</button>
                             </div>
                         ) : (
                             <div className="space-y-10 animate-in fade-in duration-500">
@@ -482,55 +492,54 @@ export const MatchManager: React.FC = () => {
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[500px] overflow-y-auto pr-4 custom-scrollbar">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6 max-h-[450px] lg:max-h-[500px] overflow-y-auto pr-2 lg:pr-4 custom-scrollbar">
                                     {activeMatch.playerStats.map(ps => {
                                         const player = players.find(p => p.id === ps.playerId);
                                         if (!player) return null;
                                         const isMOTM = activeMatch.playerOfTheMatchId === ps.playerId;
 
                                         return (
-                                            <div key={ps.playerId} className={`glass-card p-6 rounded-[2.5rem] border transition-all duration-500 flex items-center justify-between group ${isMOTM ? 'bg-brand-accent/10 border-brand-accent shadow-glow' : 'border-white/10 bg-black/20 hover:border-white/30'}`}>
-                                                <div className="flex items-center gap-6">
-                                                    <div className={`w-14 h-14 rounded-full flex items-center justify-center border transition-all ${isMOTM ? 'bg-brand-accent border-brand-accent' : 'bg-white/5 border-white/10 group-hover:border-white/30'}`}>
-                                                        <Shirt size={28} className={isMOTM ? 'text-brand-950' : 'text-white/20'} />
+                                            <div key={ps.playerId} className={`glass-card p-4 lg:p-6 rounded-2xl lg:rounded-[2.5rem] border transition-all duration-500 flex flex-col lg:flex-row lg:items-center justify-between group gap-4 ${isMOTM ? 'bg-brand-accent/10 border-brand-accent shadow-glow' : 'border-white/10 bg-black/20'}`}>
+                                                <div className="flex items-center gap-4 lg:gap-6">
+                                                    <div className={`w-10 h-10 lg:w-14 lg:h-14 rounded-full flex items-center justify-center border transition-all ${isMOTM ? 'bg-brand-accent border-brand-accent' : 'bg-white/5 border-white/10'}`}>
+                                                        <Shirt size={20} className={isMOTM ? 'text-brand-950' : 'text-white/20'} />
                                                     </div>
-                                                    <div>
-                                                        <h4 className={`text-sm font-black uppercase italic tracking-tight ${isMOTM ? 'text-brand-accent' : 'text-white'}`}>{player.fullName}</h4>
+                                                    <div className="flex-1">
+                                                        <h4 className={`text-xs lg:text-sm font-black uppercase italic tracking-tight ${isMOTM ? 'text-brand-accent' : 'text-white'}`}>{player.fullName}</h4>
                                                         <div className="flex items-center gap-3 mt-1">
-                                                            <span className="text-[9px] font-bold text-white/20 uppercase italic">{ps.goals} Goals</span>
+                                                            <span className="text-[8px] lg:text-[9px] font-bold text-white/20 uppercase italic">{ps.goals}G</span>
                                                             <span className="w-1 h-1 bg-white/10 rounded-full" />
-                                                            <span className="text-[9px] font-bold text-white/20 uppercase italic">{ps.assists} Assists</span>
+                                                            <span className="text-[8px] lg:text-[9px] font-bold text-white/20 uppercase italic">{ps.assists}A</span>
                                                         </div>
                                                     </div>
                                                 </div>
 
-                                                <div className="flex items-center gap-8">
-                                                    <div className="flex flex-col items-center gap-2">
-                                                        <p className="text-[8px] font-black text-white/30 uppercase italic tracking-widest">Rating</p>
-                                                        <div className="flex items-center gap-3">
+                                                <div className="flex items-center justify-between lg:justify-end gap-4 lg:gap-8 border-t lg:border-t-0 border-white/5 pt-3 lg:pt-0">
+                                                    <div className="flex flex-col items-center lg:items-center gap-1 lg:gap-2 flex-1 lg:flex-none">
+                                                        <p className="text-[7px] lg:text-[8px] font-black text-white/30 uppercase italic tracking-widest">Rating</p>
+                                                        <div className="flex items-center gap-2 lg:gap-3 w-full lg:w-auto">
                                                             <input 
                                                                 type="range" min="1" max="10" step="0.5" 
                                                                 value={ps.rating || 6} 
                                                                 onChange={(e) => updatePlayerPerformance(ps.playerId, { rating: parseFloat(e.target.value) })}
-                                                                className="w-20 accent-brand-accent"
+                                                                className="flex-1 lg:w-20 accent-brand-accent"
                                                             />
-                                                            <span className="text-sm font-black text-white italic w-8 text-center">{ps.rating || 6}</span>
+                                                            <span className="text-xs lg:text-sm font-black text-white italic w-6 lg:w-8 text-center">{ps.rating || 6}</span>
                                                         </div>
                                                     </div>
 
                                                     <button 
                                                         onClick={() => updatePlayerPerformance(ps.playerId, { isMOTM: !isMOTM })}
-                                                        className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${isMOTM ? 'bg-brand-accent text-brand-950 shadow-glow' : 'bg-white/5 text-white/20 hover:text-brand-accent hover:bg-brand-accent/10 border border-white/10'}`}
-                                                        title="Nominate Player of the Match"
+                                                        className={`w-10 h-10 lg:w-12 lg:h-12 rounded-xl lg:rounded-2xl flex items-center justify-center transition-all ${isMOTM ? 'bg-brand-accent text-brand-950 shadow-glow' : 'bg-white/5 text-white/20 border border-white/10'}`}
                                                     >
-                                                        <Trophy size={20} />
+                                                        <Trophy size={16} />
                                                     </button>
                                                 </div>
                                             </div>
                                         );
                                     })}
                                 </div>
-                                <button onClick={() => setConsoleTab('tactical')} className="w-full py-6 bg-white/5 text-white/60 rounded-[2rem] font-black uppercase tracking-[0.4em] text-xs hover:bg-white/10 transition-all border border-white/10 italic">RETURN TO TACTICAL CONSOLE</button>
+                                <button onClick={() => setConsoleTab('tactical')} className="w-full py-4 lg:py-6 bg-white/5 text-white/60 rounded-xl lg:rounded-[2rem] font-black uppercase tracking-[0.2em] lg:tracking-[0.4em] text-[10px] hover:bg-white/10 transition-all border border-white/10 italic">RETURN TO CONSOLE</button>
                             </div>
                         )}
                     </div>
