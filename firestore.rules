@@ -122,6 +122,12 @@ service cloud.firestore {
              data.status in ['PAID', 'PENDING', 'OVERDUE'];
     }
 
+    function isValidInventory(data) {
+      return hasRequiredFields(['name', 'quantity', 'condition', 'lastCheckedDate']) &&
+             data.name is string && data.name.size() > 0 &&
+             data.condition in ['Excellent', 'Good', 'Fair', 'Poor'];
+    }
+
     // ===============================================================
     // Rules
     // ===============================================================
@@ -233,6 +239,12 @@ service cloud.firestore {
                     (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
                      (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.linkedPlayerId == resource.data.playerId ||
                       request.auth.uid == resource.data.playerId)));
+      allow delete: if isAdmin();
+    }
+
+    match /inventory/{itemId} {
+      allow read: if isAuthenticated();
+      allow write: if (isAdmin() || isCoach()) && isValidInventory(request.resource.data);
       allow delete: if isAdmin();
     }
   }

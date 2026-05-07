@@ -2,14 +2,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { StorageService } from '../services/storageService';
 import { Player, User } from '../types';
-import { ChevronLeft, ChevronRight, Shield, User as UserIcon, Star, MapPin, Layers, Lock, Mail, CheckCircle2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Shield, User as UserIcon, Star, MapPin, Layers, Lock, Mail, Zap } from 'lucide-react';
 import { PageHeader } from './ui/PageHeader';
+import { PlayerPerformanceModal } from './PlayerPerformanceModal';
 
 interface TeamProps {
     currentUser: User;
 }
 
-const PlayerCard: React.FC<{ player: Player }> = ({ player }) => (
+const PlayerCard: React.FC<{ player: Player; onViewProfile: (p: Player) => void }> = ({ player, onViewProfile }) => (
     <div className="flex-shrink-0 w-72 h-96 relative rounded-[2.5rem] overflow-hidden group snap-center shadow-2xl transition-all duration-500 hover:scale-[1.02] border border-white/5 hover:border-brand-primary/50 bg-brand-950">
         {/* Background Image */}
         <img 
@@ -29,8 +30,8 @@ const PlayerCard: React.FC<{ player: Player }> = ({ player }) => (
                     <span className="px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 text-[10px] font-black uppercase tracking-widest backdrop-blur-md">
                         {player.position}
                     </span>
-                    <span className="text-4xl font-black text-white/10 font-mono tracking-tighter group-hover:text-white/30 transition-colors">
-                        {player.memberId.split('-')[1] || '00'}
+                    <span className="text-4xl font-black text-white/5 font-mono tracking-tighter group-hover:text-white/10 transition-colors">
+                        SQUAD
                     </span>
                 </div>
                 
@@ -59,6 +60,13 @@ const PlayerCard: React.FC<{ player: Player }> = ({ player }) => (
                         <div className="text-xl font-black text-lime italic">8.5</div>
                     </div>
                 </div>
+                
+                <button 
+                    onClick={() => onViewProfile(player)}
+                    className="w-full mt-6 py-3 bg-brand-primary text-brand-950 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] italic opacity-0 group-hover:opacity-100 transition-all duration-500 delay-200 hover:scale-[1.02] active:scale-95 shadow-lg"
+                >
+                    VIEW PROFILE
+                </button>
             </div>
         </div>
     </div>
@@ -73,7 +81,7 @@ const CoachCard: React.FC<{ user: User }> = ({ user }) => (
             
             {/* Staff Badge */}
             <div className="absolute top-6 right-6 bg-brand-950/40 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-xl text-[9px] font-black text-white uppercase tracking-[0.2em] flex items-center gap-2 shadow-xl italic">
-                <Shield size={12} className="text-brand-primary" /> OFFICIAL_STAFF
+                <Shield size={12} className="text-brand-primary" /> STAFF
             </div>
         </div>
 
@@ -101,7 +109,7 @@ const CoachCard: React.FC<{ user: User }> = ({ user }) => (
         {/* Info Section */}
         <div className="p-8 pt-6 flex-1 bg-brand-950">
             <h3 className="text-2xl font-black text-white italic uppercase tracking-tighter leading-tight mb-1">{user.username}</h3>
-            <p className="text-[10px] font-black text-brand-primary uppercase tracking-[0.3em] mb-8 italic">HEAD_TACTICIAN</p>
+            <p className="text-[10px] font-black text-brand-primary uppercase tracking-[0.3em] mb-8 italic">OFFICIAL COACH</p>
 
             {/* Assignments / Specialization */}
             <div className="space-y-6">
@@ -110,7 +118,7 @@ const CoachCard: React.FC<{ user: User }> = ({ user }) => (
                         <MapPin size={14} />
                     </div>
                     <div>
-                        <p className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-1 italic">Sector Authorization</p>
+                        <p className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-1 italic">Assigned Venue</p>
                         <p className="text-xs font-black text-white leading-snug italic uppercase">
                             {user.assignedVenues && user.assignedVenues.length > 0 
                                 ? user.assignedVenues.join(' // ') 
@@ -124,7 +132,7 @@ const CoachCard: React.FC<{ user: User }> = ({ user }) => (
                         <Layers size={14} />
                     </div>
                     <div>
-                        <p className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-1 italic">Squad Protocols</p>
+                        <p className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-1 italic">Academy Information</p>
                         <p className="text-xs font-black text-white leading-snug italic uppercase">
                             {user.assignedBatches && user.assignedBatches.length > 0 
                                 ? user.assignedBatches.join(' // ') 
@@ -135,12 +143,9 @@ const CoachCard: React.FC<{ user: User }> = ({ user }) => (
             </div>
         </div>
 
-        {/* Footer */}
-        <div className="bg-brand-900/50 px-8 py-5 border-t border-white/5 flex justify-between items-center mt-auto backdrop-blur-md">
-            <span className="text-[9px] font-black text-white/20 uppercase tracking-[0.2em] italic font-mono">NODE_{user.id.substring(0,8).toUpperCase()}</span>
-            <span className="text-[9px] font-black text-lime flex items-center gap-2 uppercase tracking-[0.3em] italic bg-lime/10 px-3 py-1.5 rounded-xl border border-lime/20 shadow-xl shadow-lime/5">
-                <CheckCircle2 size={10} /> VERIFIED
-            </span>
+        <div className="bg-brand-900/50 px-8 py-4 border-t border-white/5 flex justify-between items-center mt-auto backdrop-blur-md">
+            <span className="text-[8px] font-black text-white/10 uppercase tracking-[0.2em] italic font-mono">STAFF_ID_{user.id.substring(0,4).toUpperCase()}</span>
+            <Zap size={10} className="text-brand-primary opacity-20" />
         </div>
     </div>
 );
@@ -150,6 +155,7 @@ export const Team: React.FC<TeamProps> = ({ currentUser }) => {
     const [coaches, setCoaches] = useState<User[]>([]);
     const [myPlayerProfile, setMyPlayerProfile] = useState<Player | null>(null);
     const [filter, setFilter] = useState<'MY_BATCH' | 'ALL'>('MY_BATCH');
+    const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
 
     const squadScrollRef = useRef<HTMLDivElement>(null);
     const coachScrollRef = useRef<HTMLDivElement>(null);
@@ -223,16 +229,16 @@ export const Team: React.FC<TeamProps> = ({ currentUser }) => {
             <PageHeader
                 title="TEAM HUB"
                 subtitle={currentUser.role === 'coach' 
-                    ? 'OPERATIONAL_SQUAD_MANAGEMENT' 
-                    : myPlayerProfile ? `SQUAD_ROSTER_STREAM // ${myPlayerProfile.batch}` : 'TACTICAL_NETWORK_PERSONNEL'}
+                    ? 'Academy Squad Management' 
+                    : myPlayerProfile ? `SQUAD ROSTER // ${myPlayerProfile.batch}` : 'Academy Personnel'}
                 extra={
                     currentUser.role === 'admin' && (
                         <div className="flex">
                             <button className="px-8 py-3 bg-[#CCFF00] text-brand-950 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-[0_0_20px_rgba(204,255,0,0.4)] italic transition-all">
-                                TOTAL_FORCE
+                                TOTAL SQUAD
                             </button>
                             <button className="px-8 py-3 text-white/40 hover:text-[#CCFF00] rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all italic">
-                                BATCH_SYNC
+                                REFRESH
                             </button>
                         </div>
                     )
@@ -244,7 +250,7 @@ export const Team: React.FC<TeamProps> = ({ currentUser }) => {
                 <div className="flex items-center justify-between px-2">
                     <div className="space-y-1">
                         <h2 className="text-xl font-black text-white uppercase italic tracking-[0.3em] flex items-center gap-3">
-                            <Shield className="text-brand-primary" size={20} /> COMMAND <span className="text-brand-primary">PERSONNEL</span>
+                            <Shield className="text-brand-primary" size={20} /> COACHING <span className="text-brand-primary">STAFF</span>
                         </h2>
                         <div className="h-1 w-24 bg-brand-primary/20 rounded-full" />
                     </div>
@@ -265,7 +271,7 @@ export const Team: React.FC<TeamProps> = ({ currentUser }) => {
                     {coaches.length === 0 && (
                         <div className="w-full py-16 text-center text-white/10 glass-card rounded-[3rem] border-dashed border-white/5 flex flex-col items-center justify-center gap-4 italic uppercase tracking-widest font-black text-xs">
                             <Shield size={48} className="opacity-5" />
-                            No command units listed.
+                            No coaches assigned.
                         </div>
                     )}
                 </div>
@@ -277,8 +283,8 @@ export const Team: React.FC<TeamProps> = ({ currentUser }) => {
                     <div className="space-y-1">
                         <h2 className="text-xl font-black text-white uppercase italic tracking-[0.3em] flex items-center gap-3">
                             <UserIcon className="text-brand-primary" size={20} /> 
-                            {myPlayerProfile ? 'UNIT_COLLABORATORS' : 'ROSTER_ASSETS'}
-                            <span className="bg-brand-950 text-brand-primary px-4 py-1 rounded-xl text-xs font-black ml-4 border border-brand-primary/20 shadow-xl">{displayedPlayers.length}</span>
+                            {myPlayerProfile ? 'MY SQUAD' : 'ACADEMY SQUAD'}
+                            <span className="bg-brand-950 text-brand-primary px-4 py-1 rounded-xl text-xs font-black ml-4 border border-brand-primary/20 shadow-xl">{displayedPlayers.length} TEAMMATES</span>
                         </h2>
                         <div className="h-1 w-32 bg-brand-primary/20 rounded-full" />
                     </div>
@@ -294,21 +300,21 @@ export const Team: React.FC<TeamProps> = ({ currentUser }) => {
                     style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                 >
                     {displayedPlayers.map(player => (
-                        <PlayerCard key={player.id} player={player} />
+                        <PlayerCard key={player.id} player={player} onViewProfile={setSelectedPlayer} />
                     ))}
                     {displayedPlayers.length === 0 && (
                         <div className="w-full py-24 text-center flex flex-col items-center justify-center glass-card rounded-[3rem] border-2 border-dashed border-white/5 italic">
                             {currentUser.role === 'coach' ? (
                                 <>
                                     <Lock size={64} className="text-white/5 mb-6 animate-pulse" />
-                                    <p className="text-white/60 font-black uppercase tracking-[0.3em] text-sm">No Tactical Coverage Assigned.</p>
-                                    <p className="text-[10px] text-brand-primary/40 mt-3 font-black uppercase tracking-widest">Awaiting sector authorization from Central Command.</p>
+                                    <p className="text-white/60 font-black uppercase tracking-[0.3em] text-sm">No players assigned yet.</p>
+                                    <p className="text-[10px] text-brand-primary/40 mt-3 font-black uppercase tracking-widest">Awaiting venue assignment from the Academy.</p>
                                 </>
                             ) : (
                                 <>
                                     <UserIcon size={64} className="text-white/5 mb-6" />
-                                    <p className="text-white/60 font-black uppercase tracking-[0.3em] text-sm">Personnel Roster Depleted.</p>
-                                    <p className="text-[10px] text-brand-primary/40 mt-3 font-black uppercase tracking-widest">No active operatives detected in this sector.</p>
+                                    <p className="text-white/60 font-black uppercase tracking-[0.3em] text-sm">Your squad is empty.</p>
+                                    <p className="text-[10px] text-brand-primary/40 mt-3 font-black uppercase tracking-widest">No active teammates found in this section.</p>
                                 </>
                             )}
                         </div>
@@ -316,6 +322,14 @@ export const Team: React.FC<TeamProps> = ({ currentUser }) => {
                 </div>
             </section>
 
+            {/* Player Profile Modal */}
+            {selectedPlayer && (
+                <PlayerPerformanceModal 
+                    player={selectedPlayer} 
+                    onClose={() => setSelectedPlayer(null)} 
+                    role={currentUser.role}
+                />
+            )}
         </div>
     );
 };

@@ -55,11 +55,13 @@ export const KitInventory: React.FC = () => {
         loadData();
     };
 
-    const handleInventorySubmit = async (item: InventoryItem | Omit<InventoryItem, 'id'>) => {
-        if ('id' in item) {
-            await StorageService.updateInventoryItem(item as InventoryItem);
+    const handleInventorySubmit = async (item: InventoryItem) => {
+        if (isAddingItem) {
+            // For new items, remove the placeholder id and use addInventoryItem
+            const { id, ...rest } = item;
+            await StorageService.addInventoryItem(rest);
         } else {
-            await StorageService.addInventoryItem(item);
+            await StorageService.updateInventoryItem(item);
         }
         setEditingItem(null);
         setIsAddingItem(false);
@@ -85,6 +87,7 @@ export const KitInventory: React.FC = () => {
     // Stats
     const totalKitsIssued = players.filter(p => p.kitIssued).length;
     const totalEquipment = inventory.reduce((acc, item) => acc + item.quantity, 0);
+    const lowStockCount = inventory.filter(item => item.minStock && item.quantity <= item.minStock).length;
 
     return (
         <div className="space-y-10 pb-32 animate-in fade-in duration-700">
@@ -95,9 +98,11 @@ export const KitInventory: React.FC = () => {
                 extra={
                     <div className="flex items-center gap-4 px-4 py-2">
                         <div className="flex flex-col items-end">
-                            <p className="text-[10px] font-black text-white/40 uppercase tracking-widest italic mb-1">ASSETS_VALUE</p>
+                            <p className="text-[10px] font-black text-white/40 uppercase tracking-widest italic mb-1">ACADEMY_ASSET_VALUE</p>
                             <div className="flex items-baseline gap-2">
-                                <span className="text-2xl font-black text-brand-accent italic tracking-tighter">EST. HIGH</span>
+                                <span className="text-2xl font-black text-brand-accent italic tracking-tighter">
+                                    ${inventory.reduce((acc, item) => acc + (item.quantity * (item.unitCost || 0)), 0).toLocaleString()}
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -109,11 +114,11 @@ export const KitInventory: React.FC = () => {
                 {[
                     { label: 'Total Players', value: players.length, icon: <Users size={18} />, color: '#60a5fa' },
                     { label: 'Kits Issued', value: totalKitsIssued, icon: <CheckCircle2 size={18} />, color: '#C3F629' },
-                    { label: 'Kits Pending', value: players.length - totalKitsIssued, icon: <AlertCircle size={18} />, color: '#ef4444' },
-                    { label: 'Total Assets', value: totalEquipment, icon: <Package size={18} />, color: '#00C8FF', pulse: true }
+                    { label: 'Low Stock Alerts', value: lowStockCount, icon: <AlertCircle size={18} />, color: '#ef4444', pulse: lowStockCount > 0 },
+                    { label: 'Total Assets', value: totalEquipment, icon: <Package size={18} />, color: '#00C8FF' }
                 ].map((k, i) => (
-                    <div key={i} className="glass-card p-8 rounded-[2.5rem] group hover:bg-white/10 hover:border-white/30 transition-all duration-500 shadow-xl relative overflow-hidden">
-                        {k.pulse && <div className="green-light-bar" />}
+                    <div key={i} className={`glass-card p-8 rounded-[2.5rem] group hover:bg-white/10 hover:border-white/30 transition-all duration-500 shadow-xl relative overflow-hidden ${k.pulse && k.label === 'Low Stock Alerts' ? 'border-red-500/30' : ''}`}>
+                        {k.pulse && (k.label === 'Low Stock Alerts' ? <div className="red-light-bar" /> : <div className="green-light-bar" />)}
                         <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform duration-700">
                             <div style={{ color: k.color }}>{k.icon}</div>
                         </div>
@@ -239,6 +244,7 @@ export const KitInventory: React.FC = () => {
                             <tr className="border-b border-white/5 bg-white/5">
                                 <th className="p-8 text-[9px] font-black text-white/30 uppercase tracking-[0.3em] italic">EQUIPMENT_ASSET</th>
                                 <th className="p-8 text-[9px] font-black text-white/30 uppercase tracking-[0.3em] italic">QUANTITY</th>
+                                <th className="p-8 text-[9px] font-black text-white/30 uppercase tracking-[0.3em] italic">UNIT_VALUE</th>
                                 <th className="p-8 text-[9px] font-black text-white/30 uppercase tracking-[0.3em] italic">CONDITION_LEVEL</th>
                                 <th className="p-8 text-[9px] font-black text-white/30 uppercase tracking-[0.3em] italic">LAST_INSPECTED</th>
                                 <th className="p-8 text-[9px] font-black text-white/30 uppercase tracking-[0.3em] italic text-right">CONTROLS</th>
@@ -259,7 +265,23 @@ export const KitInventory: React.FC = () => {
                                         </div>
                                     </td>
                                     <td className="p-8">
-                                        <span className="text-base font-black text-white bg-white/5 px-4 py-2 rounded-xl border border-white/10 italic tracking-tighter">{item.quantity} <span className="text-[8px] text-white/20 uppercase ml-1">UNITS</span></span>
+                                        <div className="flex flex-col gap-2">
+                                            <span className="text-base font-black text-white bg-white/5 px-4 py-2 rounded-xl border border-white/10 italic tracking-tighter w-fit">
+                                                {item.quantity} <span className="text-[8px] text-white/20 uppercase ml-1">UNITS</span>
+                                            </span>
+                                            {item.minStock && item.quantity <= item.minStock && (
+                                                <div className="flex items-center gap-1.5 px-2 py-0.5 bg-red-500/10 border border-red-500/20 rounded-md w-fit">
+                                                    <AlertCircle size={8} className="text-red-500" />
+                                                    <span className="text-[7px] font-black text-red-500 uppercase tracking-tighter italic">LOW_STOCK</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </td>
+                                    <td className="p-8">
+                                        <div className="flex flex-col">
+                                            <span className="text-sm font-black text-white italic tracking-tighter">${(item.unitCost || 0).toLocaleString()}</span>
+                                            <span className="text-[8px] text-white/20 font-black uppercase tracking-widest mt-1 italic">TOTAL: ${(item.quantity * (item.unitCost || 0)).toLocaleString()}</span>
+                                        </div>
                                     </td>
                                     <td className="p-8">
                                         <div className={`flex items-center gap-2 px-4 py-2 rounded-full border w-fit shadow-sm ${
@@ -297,7 +319,7 @@ export const KitInventory: React.FC = () => {
                             ))}
                             {filteredInventory.length === 0 && (
                                 <tr>
-                                    <td colSpan={5} className="p-32 text-center">
+                                    <td colSpan={6} className="p-32 text-center">
                                         <div className="flex flex-col items-center opacity-10">
                                             <Package size={80} className="mb-6" />
                                             <p className="text-xl font-black uppercase tracking-[0.5em] italic text-white">NO_ASSETS_FOUND</p>
@@ -410,7 +432,7 @@ export const KitInventory: React.FC = () => {
                                     <label className="text-[9px] font-black text-white/30 uppercase tracking-[0.25em] ml-2 mb-2 block">Item Name</label>
                                     <input 
                                         type="text"
-                                        value={isAddingItem ? (editingItem?.name || '') : (editingItem?.name || '')}
+                                        value={editingItem?.name || ''}
                                         onChange={(e) => setEditingItem({ ...(editingItem as InventoryItem), name: e.target.value })}
                                         className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-sm font-black text-white focus:outline-none focus:border-brand-500/50 transition-all italic uppercase tracking-wider"
                                         placeholder="EX: TRAINING CONES"
@@ -424,6 +446,28 @@ export const KitInventory: React.FC = () => {
                                             type="number"
                                             value={editingItem?.quantity || 0}
                                             onChange={(e) => setEditingItem({ ...(editingItem as InventoryItem), quantity: parseInt(e.target.value) || 0 })}
+                                            className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-sm font-black text-white focus:outline-none focus:border-brand-500/50 transition-all italic uppercase tracking-wider"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-[9px] font-black text-white/30 uppercase tracking-[0.25em] ml-2 mb-2 block">Min Stock Alert</label>
+                                        <input 
+                                            type="number"
+                                            value={editingItem?.minStock || 0}
+                                            onChange={(e) => setEditingItem({ ...(editingItem as InventoryItem), minStock: parseInt(e.target.value) || 0 })}
+                                            className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-sm font-black text-white focus:outline-none focus:border-brand-500/50 transition-all italic uppercase tracking-wider"
+                                            placeholder="EX: 5"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="text-[9px] font-black text-white/30 uppercase tracking-[0.25em] ml-2 mb-2 block">Unit Cost ($)</label>
+                                        <input 
+                                            type="number"
+                                            value={editingItem?.unitCost || 0}
+                                            onChange={(e) => setEditingItem({ ...(editingItem as InventoryItem), unitCost: parseFloat(e.target.value) || 0 })}
                                             className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-sm font-black text-white focus:outline-none focus:border-brand-500/50 transition-all italic uppercase tracking-wider"
                                         />
                                     </div>

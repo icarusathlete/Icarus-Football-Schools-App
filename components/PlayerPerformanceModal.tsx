@@ -5,11 +5,12 @@ import { StorageService } from '../services/storageService';
 
 interface Props {
   player: Player;
-  onCancel: () => void;
-  onUpdate: (updatedPlayer: Player) => void;
+  onClose: () => void;
+  onUpdate?: (updatedPlayer: Player) => void;
+  role?: string;
 }
 
-export const PlayerPerformanceModal: React.FC<Props> = ({ player, onCancel, onUpdate }) => {
+export const PlayerPerformanceModal: React.FC<Props> = ({ player, onClose, onUpdate, role }) => {
   const [activeTab, setActiveTab] = useState<'timeline' | 'kpis' | 'attachments'>('timeline');
   const [newAttachmentUrl, setNewAttachmentUrl] = useState('');
   const [newAttachmentNote, setNewAttachmentNote] = useState('');
@@ -73,7 +74,7 @@ export const PlayerPerformanceModal: React.FC<Props> = ({ player, onCancel, onUp
       }],
     };
     StorageService.updatePlayer(updated);
-    onUpdate(updated);
+    onUpdate?.(updated);
     setNewAttachmentUrl('');
     setNewAttachmentNote('');
   };
@@ -119,7 +120,7 @@ export const PlayerPerformanceModal: React.FC<Props> = ({ player, onCancel, onUp
             </div>
           </div>
           <button
-            onClick={onCancel}
+            onClick={onClose}
             className="p-2.5 bg-white/5 hover:bg-white/10 rounded-2xl text-white/40 hover:text-white transition-all border border-white/10 shadow-lg relative z-10 flex-shrink-0 ml-3"
           >
             <X size={20} />
@@ -262,50 +263,52 @@ export const PlayerPerformanceModal: React.FC<Props> = ({ player, onCancel, onUp
                 )}
               </div>
 
-              {/* Add attachment form */}
-              <div className="bg-brand-950/50 p-6 rounded-[2rem] border border-white/[0.06]">
-                <h4 className="text-white font-black italic uppercase tracking-tight mb-5 flex items-center gap-2.5 text-[13px]">
-                  <Paperclip size={16} className="text-brand-500" /> Add Record
-                </h4>
-                <div className="space-y-4">
-                  {/* Type toggle */}
-                  <div className="flex gap-4">
-                    {(['image', 'video'] as const).map(type => (
-                      <label key={type} className="flex items-center gap-2 text-[10px] font-black text-white/40 uppercase tracking-widest italic cursor-pointer">
-                        <input
-                          type="radio"
-                          checked={newAttachmentType === type}
-                          onChange={() => setNewAttachmentType(type)}
-                          className="w-4 h-4 accent-brand-500"
-                        />
-                        <span className={newAttachmentType === type ? 'text-brand-500' : ''}>
-                          {type.toUpperCase()}
-                        </span>
-                      </label>
-                    ))}
+              {/* Add attachment form — ONLY FOR COACH/ADMIN */}
+              {(role === 'admin' || role === 'coach') && (
+                <div className="bg-brand-950/50 p-6 rounded-[2rem] border border-white/[0.06]">
+                  <h4 className="text-white font-black italic uppercase tracking-tight mb-5 flex items-center gap-2.5 text-[13px]">
+                    <Paperclip size={16} className="text-brand-500" /> Add Record
+                  </h4>
+                  <div className="space-y-4">
+                    {/* Type toggle */}
+                    <div className="flex gap-4">
+                      {(['image', 'video'] as const).map(type => (
+                        <label key={type} className="flex items-center gap-2 text-[10px] font-black text-white/40 uppercase tracking-widest italic cursor-pointer">
+                          <input
+                            type="radio"
+                            checked={newAttachmentType === type}
+                            onChange={() => setNewAttachmentType(type)}
+                            className="w-4 h-4 accent-brand-500"
+                          />
+                          <span className={newAttachmentType === type ? 'text-brand-500' : ''}>
+                            {type.toUpperCase()}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                    <input
+                      type="text"
+                      placeholder={newAttachmentType === 'image' ? 'IMAGE URL' : 'VIDEO URL'}
+                      value={newAttachmentUrl}
+                      onChange={e => setNewAttachmentUrl(e.target.value)}
+                      className="w-full bg-brand-900 border border-white/10 rounded-xl p-4 text-white text-[11px] font-black italic uppercase tracking-widest outline-none focus:border-brand-500 transition-colors placeholder:text-white/20"
+                    />
+                    <input
+                      type="text"
+                      placeholder="NOTES (OPTIONAL)"
+                      value={newAttachmentNote}
+                      onChange={e => setNewAttachmentNote(e.target.value)}
+                      className="w-full bg-brand-900 border border-white/10 rounded-xl p-4 text-white text-[11px] font-black italic uppercase tracking-widest outline-none focus:border-brand-500 transition-colors placeholder:text-white/20"
+                    />
+                    <button
+                      onClick={handleAddAttachment}
+                      className="w-full py-4 bg-brand-500 text-brand-950 font-black rounded-2xl text-[10px] uppercase tracking-[0.3em] transition-all hover:bg-brand-500/90 active:scale-95 shadow-xl shadow-brand-500/20 italic"
+                    >
+                      SAVE TO PROFILE
+                    </button>
                   </div>
-                  <input
-                    type="text"
-                    placeholder={newAttachmentType === 'image' ? 'IMAGE URL' : 'VIDEO URL'}
-                    value={newAttachmentUrl}
-                    onChange={e => setNewAttachmentUrl(e.target.value)}
-                    className="w-full bg-brand-900 border border-white/10 rounded-xl p-4 text-white text-[11px] font-black italic uppercase tracking-widest outline-none focus:border-brand-500 transition-colors placeholder:text-white/20"
-                  />
-                  <input
-                    type="text"
-                    placeholder="NOTES (OPTIONAL)"
-                    value={newAttachmentNote}
-                    onChange={e => setNewAttachmentNote(e.target.value)}
-                    className="w-full bg-brand-900 border border-white/10 rounded-xl p-4 text-white text-[11px] font-black italic uppercase tracking-widest outline-none focus:border-brand-500 transition-colors placeholder:text-white/20"
-                  />
-                  <button
-                    onClick={handleAddAttachment}
-                    className="w-full py-4 bg-brand-500 text-brand-950 font-black rounded-2xl text-[10px] uppercase tracking-[0.3em] transition-all hover:bg-brand-500/90 active:scale-95 shadow-xl shadow-brand-500/20 italic"
-                  >
-                    SAVE TO PROFILE
-                  </button>
                 </div>
-              </div>
+              )}
             </div>
           )}
         </div>

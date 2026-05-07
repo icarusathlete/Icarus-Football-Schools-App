@@ -268,5 +268,35 @@ export interface InventoryItem {
   quantity: number;
   condition: 'Excellent' | 'Good' | 'Fair' | 'Poor';
   lastCheckedDate: string;
+  unitCost?: number;
+  minStock?: number;
   notes?: string;
+}
+
+export interface Certificate {
+  id: string;
+  playerId: string;
+  type: 'participation' | 'motm' | 'ranking';
+  title: string;
+  date: string;
+  pdfUrl: string;
+}
+
+export interface CoachMessage {
+  id: string;
+  playerId: string;
+  coachId: string;
+  sender: 'player' | 'coach';
+  text: string;
+  timestamp: number;
+  read: boolean;
+}
+
+export interface WeeklyTip {
+  id: string;
+  batchId: string;
+  tip: string;
+  setByCoach: string; // Coach name
+  date: string;
+  week: number;
 }

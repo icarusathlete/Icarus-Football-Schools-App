@@ -251,8 +251,8 @@ export const PlayerManager: React.FC = () => {
     <div className="space-y-6 pb-32 animate-in fade-in duration-700 font-display">
       {/* Functional Header */}
       <PageHeader 
-        title="SQUAD MANAGEMENT" 
-        subtitle="ACADEMY ROSTER · PERSONNEL COORDINATION"
+        title="PLAYER MANAGEMENT" 
+        subtitle="ACADEMY ROSTER · SQUAD COORDINATION"
         extra={
           <>
             <button 
@@ -265,7 +265,7 @@ export const PlayerManager: React.FC = () => {
                 onClick={() => setActiveTab('coaches')}
                 className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 italic flex items-center gap-2 ${activeTab === 'coaches' ? 'bg-white/10 text-white' : 'text-white/40 hover:text-white/80 hover:bg-white/5'}`}
             >
-                <Shield size={12} /> COMMAND STAFF
+                <Shield size={12} /> COACHING STAFF
             </button>
           </>
         }
@@ -295,7 +295,7 @@ export const PlayerManager: React.FC = () => {
               value={filterVenue}
               onChange={(e) => setFilterVenue(e.target.value)}
             >
-              <option value="ALL">All Sectors</option>
+              <option value="ALL">All Venues</option>
               {venues.map(v => <option key={v.id} value={v.name}>{v.name}</option>)}
             </select>
             <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-white/20">
@@ -323,10 +323,10 @@ export const PlayerManager: React.FC = () => {
       {/* KPI Grid Integration (Moved below filters) */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 mx-1">
         {[
-          { label: 'Total Roster', value: stats.totalPlayers, sub: 'Active Assets', icon: <Users size={18} />, color: '#C3F629' },
+          { label: 'Total Players', value: stats.totalPlayers, sub: 'Active Members', icon: <Users size={18} />, color: '#C3F629' },
           { label: 'New Joiners', value: stats.newThisMonth, sub: 'This Month', icon: <Zap size={18} />, color: stats.newThisMonth > 0 ? '#C3F629' : 'rgba(255,255,255,0.4)' },
           { label: 'Command staff', value: stats.activeCoaches, sub: 'Active Personnel', icon: <Shield size={18} />, color: '#60a5fa' },
-          { label: 'OPERATIONAL SECTORS', value: stats.venuesCount, sub: 'Active Venues', icon: <MapPin size={18} />, color: '#f59e0b' }
+          { label: 'TRAINING VENUES', value: stats.venuesCount, sub: 'Active Locations', icon: <MapPin size={18} />, color: '#f59e0b' }
         ].map((k, i) => (
           <div key={i} className="glass-card-alt p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2rem] group/kpi hover:bg-white/10 hover:border-white/30 transition-all duration-500 shadow-xl relative overflow-hidden border border-white/5">
             <div className="green-light-bar" />
@@ -390,7 +390,7 @@ export const PlayerManager: React.FC = () => {
                     <div className="flex items-center justify-between p-3 sm:p-4 bg-white/5 rounded-xl sm:rounded-2xl border border-white/5 group-hover:bg-white/10 transition-colors">
                         <div className="flex items-center gap-3">
                             <Layers size={12} className="text-white/20" />
-                            <span className="text-[9px] sm:text-[11px] font-black text-white/40 uppercase italic tracking-widest">Sector</span>
+                            <span className="text-[9px] sm:text-[11px] font-black text-white/40 uppercase italic tracking-widest">Program</span>
                         </div>
                         <span className="text-[10px] sm:text-[12px] font-black text-white italic uppercase">{player.batch}</span>
                     </div>
@@ -429,7 +429,7 @@ export const PlayerManager: React.FC = () => {
             <div className="col-span-full py-40 text-center">
               <div className="flex flex-col items-center gap-4 opacity-10">
                 <Users size={64} className="text-white" />
-                <p className="text-sm font-black uppercase tracking-[0.5em] text-white italic">NO SQUAD PERSONNEL DETECTED</p>
+                <p className="text-sm font-black uppercase tracking-[0.5em] text-white italic">NO PLAYERS FOUND</p>
               </div>
             </div>
           )}
@@ -478,7 +478,7 @@ export const PlayerManager: React.FC = () => {
                 <div className="space-y-6 flex-1">
                   <div className="space-y-3">
                     <div className="flex items-center justify-between text-[9px] font-black uppercase tracking-[0.2em] italic text-white/30 px-1">
-                      <span>SECTOR ASSIGNMENT</span>
+                      <span>VENUE ASSIGNMENT</span>
                       <MapPin size={10} />
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -494,7 +494,7 @@ export const PlayerManager: React.FC = () => {
                   
                   <div className="space-y-3">
                     <div className="flex items-center justify-between text-[9px] font-black uppercase tracking-[0.2em] italic text-white/30 px-1">
-                      <span>OPERATIONAL REACH</span>
+                      <span>BATCH REACH</span>
                       <Layers size={10} />
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -503,7 +503,7 @@ export const PlayerManager: React.FC = () => {
                           {b}
                         </span>
                       )) : (
-                        <div className="w-full py-3 border border-dashed border-white/10 rounded-xl text-center text-[10px] font-bold text-white/20 uppercase tracking-widest italic">NO DIVISION</div>
+                        <div className="w-full py-3 border border-dashed border-white/10 rounded-xl text-center text-[10px] font-bold text-white/20 uppercase tracking-widest italic">NO ASSIGNMENTS</div>
                       )}
                     </div>
                   </div>
@@ -514,7 +514,7 @@ export const PlayerManager: React.FC = () => {
                     onClick={() => openEditModal(coach, 'coach')}
                     className="flex-1 h-12 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black text-white/40 uppercase tracking-widest italic hover:bg-white/10 hover:text-white transition-all flex items-center justify-center gap-2"
                   >
-                    <Edit2 size={14} /> RECALIBRATE
+                    <Edit2 size={14} /> EDIT PROFILE
                   </button>
                   <button 
                     onClick={() => handleSecureDelete(coach, 'coach')}
@@ -529,7 +529,7 @@ export const PlayerManager: React.FC = () => {
             <div className="col-span-full py-40 text-center">
               <div className="flex flex-col items-center gap-6 opacity-20">
                 <Shield size={80} className="text-white" />
-                <p className="text-sm font-black uppercase tracking-[0.5em] text-white italic">NO COMMAND PERSONNEL DETECTED</p>
+                <p className="text-sm font-black uppercase tracking-[0.5em] text-white italic">NO COACHING STAFF FOUND</p>
               </div>
             </div>
           )}
@@ -544,8 +544,8 @@ export const PlayerManager: React.FC = () => {
                   <div className="green-light-bar" />
                   <div className="p-8 md:p-10 border-b border-white/10 flex justify-between items-center bg-white/5 shrink-0">
                       <div>
-                        <h3 className="text-xl sm:text-2xl md:text-3xl font-black text-white italic uppercase tracking-tighter">DATA <span className="premium-gradient-text">RECALIBRATION</span></h3>
-                        <p className="text-[8px] sm:text-[9px] font-black text-white/50 uppercase tracking-[0.4em] mt-2 italic flex items-center gap-2"><Zap size={10} className="text-brand-accent" /> PLAYER PROFILE MODIFICATION UNIT</p>
+                        <h3 className="text-xl sm:text-2xl md:text-3xl font-black text-white italic uppercase tracking-tighter">PLAYER <span className="premium-gradient-text">PROFILE</span></h3>
+                        <p className="text-[8px] sm:text-[9px] font-black text-white/50 uppercase tracking-[0.4em] mt-2 italic flex items-center gap-2"><Zap size={10} className="text-brand-accent" /> EDIT PLAYER PROFILE</p>
                       </div>
                       <button onClick={() => setEditingPlayer(null)} className="w-14 h-14 bg-white/10 rounded-2xl text-white/60 hover:text-brand-accent hover:bg-brand-accent/10 flex items-center justify-center border border-white/10 hover:border-brand-accent/20 transition-all duration-300 group">
                           <X size={24} className="group-hover:rotate-90 transition-transform duration-300" />
@@ -595,7 +595,7 @@ export const PlayerManager: React.FC = () => {
                                                 <Camera size={24} />
                                               </div>
                                               <div className="text-center">
-                                                <span className="text-[10px] font-black text-white/40 uppercase tracking-widest block">Awaiting Tactical Feed</span>
+                                                <span className="text-[10px] font-black text-white/40 uppercase tracking-widest block">No Profile Photo</span>
                                                 <span className="text-[8px] font-bold text-white/20 uppercase tracking-[0.2em] mt-1 block">Click to upload action shot</span>
                                               </div>
                                           </div>
@@ -604,22 +604,22 @@ export const PlayerManager: React.FC = () => {
                                   <input type="file" ref={scoutPhotoInputRef} className="hidden" accept="image/*" onChange={handleScoutPhotoChange} />
                               </div>
                               <p className="text-[9px] font-medium text-white/30 italic text-center px-4 leading-relaxed">
-                                Use transparent PNGs or cutouts for the best results in the Elite Scout Dossier export.
+                                Use transparent PNGs or cutouts for the best results in the Scout Report export.
                               </p>
                           </div>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
                           {[
-                            { label: 'UNIT IDENTIFICATION (UID)', val: editingPlayer.memberId, key: 'memberId', type: 'text', readOnly: true },
-                            { label: 'ASSET DESIGNATION', val: editingPlayer.fullName, key: 'fullName', type: 'text', readOnly: false },
-                            { label: 'OPERATIONAL SECTOR', val: editingPlayer.venue, key: 'venue', type: 'select', opts: venues, readOnly: false },
-                            { label: 'TACTICAL DIVISION', val: editingPlayer.batch, key: 'batch', type: 'select', opts: batches, readOnly: false },
-                            { label: 'COMBAT POSITION', val: editingPlayer.position, key: 'position', type: 'select', opts: ['Forward','Midfielder','Defender','Goalkeeper'], readOnly: false },
-                            { label: 'COMMS FREQUENCY', val: editingPlayer.contactNumber, key: 'contactNumber', type: 'text', readOnly: false },
-                            { label: 'DIGITAL ADDRESS', val: editingPlayer.email || '', key: 'email', type: 'email', readOnly: false },
-                            { label: 'GENESIS DATE (DOB)', val: editingPlayer.dateOfBirth, key: 'dateOfBirth', type: 'date', readOnly: false },
-                            { label: 'PRIME GUARDIAN', val: editingPlayer.parentName, key: 'parentName', type: 'text', readOnly: false }
+                            { label: 'MEMBER ID (UID)', val: editingPlayer.memberId, key: 'memberId', type: 'text', readOnly: true },
+                            { label: 'PLAYER NAME', val: editingPlayer.fullName, key: 'fullName', type: 'text', readOnly: false },
+                            { label: 'TRAINING BATCH', val: editingPlayer.batch, key: 'batch', type: 'select', opts: batches, readOnly: false },
+                            { label: 'TRAINING VENUE', val: editingPlayer.venue, key: 'venue', type: 'select', opts: venues, readOnly: false },
+                            { label: 'PLAYER POSITION', val: editingPlayer.position, key: 'position', type: 'select', opts: ['Forward','Midfielder','Defender','Goalkeeper'], readOnly: false },
+                            { label: 'CONTACT NUMBER', val: editingPlayer.contactNumber, key: 'contactNumber', type: 'text', readOnly: false },
+                            { label: 'EMAIL ADDRESS', val: editingPlayer.email || '', key: 'email', type: 'email', readOnly: false },
+                            { label: 'DATE OF BIRTH', val: editingPlayer.dateOfBirth, key: 'dateOfBirth', type: 'date', readOnly: false },
+                            { label: 'PRIMARY GUARDIAN', val: editingPlayer.parentName, key: 'parentName', type: 'text', readOnly: false }
                           ].map((field: any, idx) => (
                             <div key={idx} className="space-y-3">
                                 <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.25em] italic ml-1">{field.label}</label>
@@ -650,10 +650,10 @@ export const PlayerManager: React.FC = () => {
                             </div>
                           ))}
                           <div className="space-y-3 md:col-span-2">
-                              <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.25em] italic ml-1">HQ RESIDENCY (ADDRESS)</label>
+                              <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.25em] italic ml-1">RESIDENTIAL ADDRESS</label>
                               <textarea 
                                 className="w-full p-6 bg-white/5 border border-white/10 rounded-2xl text-[13px] font-black text-white italic outline-none focus:border-brand-accent/40 focus:bg-white/10 transition-all min-h-[100px] uppercase tracking-widest placeholder:text-white/20" 
-                                placeholder="ENTER FULL GEO-LOCATION DATA"
+                                placeholder="ENTER FULL ADDRESS DETAILS"
                                 value={editingPlayer.address || ''} 
                                 onChange={e => setEditingPlayer({...editingPlayer, address: e.target.value})} 
                               />
@@ -662,7 +662,7 @@ export const PlayerManager: React.FC = () => {
                   </form>
                   
                   <div className="p-6 sm:p-8 md:p-10 border-t border-white/10 bg-white/5 shrink-0">
-                      <button onClick={savePlayerChanges} className="w-full py-6 bg-gradient-to-r from-brand-accent to-green-400 text-brand-950 font-black rounded-2xl uppercase tracking-[0.4em] shadow-[0_20px_40px_rgba(195,246,41,0.2)] hover:scale-[1.01] hover:shadow-[0_20px_50px_rgba(195,246,41,0.3)] active:scale-[0.98] transition-all duration-300 text-xs italic">SYNC OPERATIONAL DATA</button>
+                      <button onClick={savePlayerChanges} className="w-full py-6 bg-gradient-to-r from-brand-accent to-green-400 text-brand-950 font-black rounded-2xl uppercase tracking-[0.4em] shadow-[0_20px_40px_rgba(195,246,41,0.2)] hover:scale-[1.01] hover:shadow-[0_20px_50px_rgba(195,246,41,0.3)] active:scale-[0.98] transition-all duration-300 text-xs italic">SAVE PLAYER DETAILS</button>
                   </div>
               </div>
           </div>
@@ -679,8 +679,8 @@ export const PlayerManager: React.FC = () => {
                            <Shield size={28} />
                         </div>
                         <div>
-                          <h3 className="text-2xl md:text-3xl font-black text-white italic uppercase tracking-tighter leading-none">COMMANDER <span className="premium-gradient-text">RECORDS</span></h3>
-                          <p className="text-[9px] font-black text-white/50 uppercase tracking-[0.4em] mt-2 italic">OFFICIAL CREDENTIALS MANAGEMENT</p>
+                          <h3 className="text-2xl md:text-3xl font-black text-white italic uppercase tracking-tighter leading-none">COACH <span className="premium-gradient-text">PROFILE</span></h3>
+                          <p className="text-[9px] font-black text-white/50 uppercase tracking-[0.4em] mt-2 italic">OFFICIAL ACADEMY CREDENTIALS</p>
                         </div>
                       </div>
                       <button onClick={() => setEditingCoach(null)} className="w-14 h-14 bg-white/10 rounded-2xl text-white/60 hover:text-brand-accent hover:bg-brand-accent/10 flex items-center justify-center border border-white/10 hover:border-brand-accent/20 transition-all duration-300 group">
@@ -695,7 +695,7 @@ export const PlayerManager: React.FC = () => {
                            <input required className={getInputClass()} value={editingCoach.username} onChange={e => setEditingCoach({...editingCoach, username: e.target.value})} />
                         </div>
                         <div className="space-y-3">
-                           <label className="text-[10px] font-black text-red-500/50 uppercase tracking-[0.25em] italic ml-1">SECURITY ACCESS SHA (PASSWORD)</label>
+                           <label className="text-[10px] font-black text-red-500/50 uppercase tracking-[0.25em] italic ml-1">PASSWORD</label>
                            <input required className="w-full p-6 bg-red-500/10 border border-red-500/20 rounded-2xl text-white font-mono text-xs outline-none focus:border-red-500/40 transition-all" value={editingCoach.password} onChange={e => setEditingCoach({...editingCoach, password: e.target.value})} />
                         </div>
                       </div>
@@ -704,7 +704,7 @@ export const PlayerManager: React.FC = () => {
                         <div className="space-y-6">
                            <div className="flex items-center justify-between">
                               <label className="text-[11px] font-black text-white/80 uppercase tracking-[0.2em] flex items-center gap-3 italic">
-                                  <MapPin size={18} className="text-brand-accent" /> SECTOR ASSIGNMENTS
+                                  <MapPin size={18} className="text-brand-accent" /> VENUE ASSIGNMENTS
                               </label>
                               <span className="text-[9px] font-black text-white/40 uppercase tracking-[0.1em]">{editingCoach.assignedVenues?.length || 0} ACTIVE</span>
                            </div>
@@ -718,7 +718,7 @@ export const PlayerManager: React.FC = () => {
                         <div className="space-y-6">
                            <div className="flex items-center justify-between">
                               <label className="text-[11px] font-black text-white/80 uppercase tracking-[0.2em] flex items-center gap-3 italic">
-                                  <Layers size={18} className="text-brand-accent" /> DIVISION OPERATIONS
+                                  <Layers size={18} className="text-brand-accent" /> BATCH ASSIGNMENTS
                               </label>
                               <span className="text-[9px] font-black text-white/40 uppercase tracking-[0.1em]">{editingCoach.assignedBatches?.length || 0} ACTIVE</span>
                            </div>
@@ -732,7 +732,7 @@ export const PlayerManager: React.FC = () => {
                   </form>
 
                   <div className="p-6 sm:p-8 md:p-10 border-t border-white/10 bg-white/5 shrink-0">
-                    <button onClick={saveCoachChanges} className="w-full py-6 bg-gradient-to-r from-brand-accent to-green-400 text-brand-950 font-black rounded-2xl uppercase tracking-[0.4em] shadow-[0_20px_40px_rgba(195,246,41,0.2)] hover:scale-[1.01] hover:shadow-[0_20px_50px_rgba(195,246,41,0.3)] active:scale-[0.98] transition-all duration-300 text-xs italic">SYNC COMMANDER CREDENTIALS</button>
+                    <button onClick={saveCoachChanges} className="w-full py-6 bg-gradient-to-r from-brand-accent to-green-400 text-brand-950 font-black rounded-2xl uppercase tracking-[0.4em] shadow-[0_20px_40px_rgba(195,246,41,0.2)] hover:scale-[1.01] hover:shadow-[0_20px_50px_rgba(195,246,41,0.3)] active:scale-[0.98] transition-all duration-300 text-xs italic">SAVE COACH CREDENTIALS</button>
                   </div>
                </div>
            </div>

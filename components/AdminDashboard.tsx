@@ -1,44 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { StorageService } from '../services/storageService';
-import { AttendanceStatus } from '../types';
+import { AttendanceStatus, Player, Venue, Batch, AttendanceRecord, Match, FeeRecord, SupportTicket, InventoryItem } from '../types';
 import {
   Users, Activity, Command, Star, Clock, Receipt,
   UserPlus, Trophy, AlertTriangle, Timer, XCircle,
   ChevronLeft, Shield, Radio, TrendingUp, Zap,
   ArrowUp, ArrowDown, Minus, CalendarPlus, Medal,
-  MapPin, Layers, ChevronDown
+  MapPin, Layers, ChevronDown, Truck, LifeBuoy
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { PageHeader } from './ui/PageHeader';
+import { 
+  CentreStat, PlayerRow, ChartPoint, AgePoint, LeagueRanking, DashboardAlert,
+  LogisticsStats, SupportStats,
+  computeCompositeScore, groupDataByPlayer, getAgeGroup, getDateOffset, getDayLabel, isPresent,
+  initials, nameColor, rateColor, computeLogisticsStats, computeSupportStats
+} from '../utils/dashboardHelpers';
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function getDateOffset(n: number) {
-  const d = new Date(); d.setDate(d.getDate() + n);
-  return d.toISOString().split('T')[0];
-}
-function dayLabel(iso: string) {
-  return new Date(iso + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
-}
-function ageGroup(dob: string) {
-  if (!dob) return 'U12';
-  const a = new Date().getFullYear() - new Date(dob).getFullYear();
-  if (a <= 8) return 'U8';
-  if (a <= 10) return 'U10';
-  return 'U12';
-}
-function initials(name: string) {
-  const p = name.trim().split(' ');
-  return p.length >= 2 ? `${p[0][0]}${p[p.length - 1][0]}`.toUpperCase() : name.slice(0, 2).toUpperCase();
-}
-function nameColor(name: string) {
-  const palette = ['#CCFF00', '#60a5fa', '#f59e0b', '#4ade80', '#a78bfa', '#f87171', '#22d3ee'];
-  let h = 0; for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
-  return palette[Math.abs(h) % palette.length];
-}
-function rateColor(r: number) {
-  return r >= 75 ? '#CCFF00' : r >= 50 ? '#f59e0b' : r > 0 ? '#f87171' : 'rgba(255,255,255,0.15)';
-}
+// Ring Meter Component moved to separate UI or kept here if small
 
 // ─── Ring Meter ───────────────────────────────────────────────────────────────
 
@@ -64,32 +43,6 @@ const Ring: React.FC<{ value: number; size?: number; stroke?: number }> = ({ val
     </div>
   );
 };
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-interface CentreStat {
-  name: string; players: number; presentToday: number;
-  attendanceRate: number; avgRating: number; pendingFees: number;
-}
-interface PlayerRow {
-  name: string; memberId: string; sessions: number; present: number; rate: number; rating: number;
-}
-interface ChartPoint { name: string; present: number; absent: number; }
-interface AgePoint { name: string; value: number; color: string; }
-interface LeagueRanking {
-  rank: number;
-  prevRank: number; // 0 = new entry (no history)
-  name: string;
-  venue: string;
-  memberId: string;
-  compositeScore: number; // 0–100
-  attendanceRate: number;
-  overallRating: number;
-  scoutScore: number; // avg of 6 skill metrics 0–10
-  developmentAreas: string[];
-  trend: 'up' | 'down' | 'stable' | 'new';
-  posChange: number; // absolute positions moved
-}
 
 // ─── Centre Card ──────────────────────────────────────────────────────────────
 
@@ -175,108 +128,296 @@ export const AdminDashboard: React.FC = () => {
   const [selectedVenue, setSelectedVenue] = useState<string>('all');
   const [selectedBatch, setSelectedBatch] = useState<string>('all');
 
-  const [availableVenues, setAvailableVenues] = useState<string[]>([]);
-  const [availableBatches, setAvailableBatches] = useState<string[]>([]);
+  // Raw Data State
+  const [rawData, setRawData] = useState<{
+    players: Player[];
+    venues: Venue[];
+    batches: Batch[];
+    attendance: AttendanceRecord[];
+    matches: Match[];
+    fees: FeeRecord[];
+    tickets: SupportTicket[];
+    inventory: InventoryItem[];
+  }>({
+    players: [],
+    venues: [],
+    batches: [],
+    attendance: [],
+    matches: [],
+    fees: [],
+    tickets: [],
+    inventory: []
+  });
 
-  // Analytics Data
-  const [centres, setCentres] = useState<CentreStat[]>([]);
-  const [globalStats, setGlobalStats] = useState({ players: 0, presentToday: 0, rate: 0, alerts: 0, overdueCount: 0, expiringCount: 0, newThisMonth: 0 });
-  const [alertItems, setAlertItems] = useState<{ id: string; severity: 'critical' | 'warning' | 'info'; icon: React.ReactNode; label: string; detail: string }[]>([]);
-  const [chartAll, setChartAll] = useState<ChartPoint[]>([]);
-  const [ageAll, setAgeAll] = useState<AgePoint[]>([]);
-  const [topPerformers, setTopPerformers] = useState<{ name: string; rating: number; venue: string }[]>([]);
-  const [activityFeed, setActivityFeed] = useState<{ id: string; type: 'player' | 'match' | 'fee'; label: string; sub: string; ts: number }[]>([]);
-  const [leagueRankings, setLeagueRankings] = useState<LeagueRanking[]>([]);
-  const [playerRoster, setPlayerRoster] = useState<PlayerRow[]>([]);
+  useEffect(() => {
+    const loadData = () => {
+      setRawData({
+        players: StorageService.getPlayers(),
+        venues: StorageService.getVenues(),
+        batches: StorageService.getBatches(),
+        attendance: StorageService.getAttendance(),
+        matches: StorageService.getMatches(),
+        fees: StorageService.getFees(),
+        tickets: StorageService.getTickets(),
+        inventory: StorageService.getInventory(),
+      });
+    };
+    loadData();
+    window.addEventListener('academy_data_update', loadData);
+    return () => window.removeEventListener('academy_data_update', loadData);
+  }, []);
 
   const AGE_GROUPS = ['U12', 'U10', 'U8'];
   const AGE_COLORS = ['#CCFF00', '#a3e635', '#4ade80'];
 
-  useEffect(() => {
-    const loadData = () => {
-      const allPlayers = StorageService.getPlayers();
-      const allVenues = StorageService.getVenues();
-    const allBatches = StorageService.getBatches();
-    const allAttendance = StorageService.getAttendance();
-    const allMatches = StorageService.getMatches();
-    const allFees = StorageService.getFees();
+  // ── Derivations ────────────────────────────────────────────────────────────
+  const today = useMemo(() => getDateOffset(0), []);
+  const ago30 = useMemo(() => getDateOffset(-30), []);
+  const in30 = useMemo(() => getDateOffset(30), []);
 
-    // Populate dropdowns
-    setAvailableVenues(allVenues.map(v => v.name));
-    setAvailableBatches(allBatches.map(b => b.name));
+  // ── Indexed Data ───────────────────────────────────────────────────────────
+  const indexedData = useMemo(() => {
+    const playersById: Record<string, Player> = {};
+    const playersByVenue: Record<string, Player[]> = {};
+    rawData.players.forEach(p => {
+      playersById[p.id] = p;
+      if (!playersByVenue[p.venue]) playersByVenue[p.venue] = [];
+      playersByVenue[p.venue].push(p);
+    });
 
-    // Apply Filters
-    let players = allPlayers;
-    if (selectedVenue !== 'all') {
-      players = players.filter(p => p.venue === selectedVenue);
-    }
-    if (selectedBatch !== 'all') {
-      players = players.filter(p => p.batch === selectedBatch);
-    }
-
-    const playerIds = new Set(players.map(p => p.id));
-    const attendance = allAttendance.filter(a => playerIds.has(a.playerId));
-    const fees = allFees.filter(f => playerIds.has(f.playerId));
+    const attendanceByPlayer = groupDataByPlayer(rawData.attendance);
+    const attendanceByDateVenue: Record<string, Record<string, { records: AttendanceRecord[], present: number, absent: number }>> = {};
+    const globalAttendanceByDate: Record<string, { present: number, absent: number }> = {};
     
-    // activity feed includes matches, which aren't strictly filtered by player except conceptually.
-    // we will leave matches global unless explicitly wanted, but the feed will show them.
+    rawData.attendance.forEach(r => {
+      if (!attendanceByDateVenue[r.date]) attendanceByDateVenue[r.date] = {};
+      if (!attendanceByDateVenue[r.date][r.venue]) {
+        attendanceByDateVenue[r.date][r.venue] = { records: [], present: 0, absent: 0 };
+      }
+      if (!globalAttendanceByDate[r.date]) {
+        globalAttendanceByDate[r.date] = { present: 0, absent: 0 };
+      }
+      
+      const entry = attendanceByDateVenue[r.date][r.venue];
+      entry.records.push(r);
+      const isP = isPresent(r.status);
+      const isA = String(r.status).toUpperCase() === AttendanceStatus.ABSENT;
+      
+      if (isP) {
+        entry.present++;
+        globalAttendanceByDate[r.date].present++;
+      } else if (isA) {
+        entry.absent++;
+        globalAttendanceByDate[r.date].absent++;
+      }
+    });
 
-    const today = getDateOffset(0);
-    const ago30 = getDateOffset(-30);
-    const in30 = getDateOffset(30);
+    const feesByPlayer = groupDataByPlayer(rawData.fees);
+    const feesByVenue: Record<string, FeeRecord[]> = {};
+    const feesByBatch: Record<string, FeeRecord[]> = {};
+    const pendingFeesCountByVenue: Record<string, number> = {};
+    
+    rawData.fees.forEach(f => {
+      const pl = playersById[f.playerId];
+      if (pl) {
+        if (!feesByVenue[pl.venue]) feesByVenue[pl.venue] = [];
+        feesByVenue[pl.venue].push(f);
+        
+        if (!feesByBatch[pl.batch]) feesByBatch[pl.batch] = [];
+        feesByBatch[pl.batch].push(f);
 
-    // ── Centre stats (always show based on current filtered context) ──────────
-    // If a specific venue is selected, this will just yield 1 centre card. If 'all', all centres.
-    const centreData: CentreStat[] = allVenues
+        if (f.status === 'PENDING' || f.status === 'OVERDUE') {
+          pendingFeesCountByVenue[pl.venue] = (pendingFeesCountByVenue[pl.venue] || 0) + 1;
+        }
+      }
+    });
+
+    // Advanced Indexing for KPIs
+    const recentAttendanceStats: Record<string, { rate30d: number, presentCount: number, totalCount: number }> = {};
+    const activeFeeSummaries: Record<string, { hasOverdue: boolean, hasExpiring: boolean }> = {};
+    
+    rawData.players.forEach(p => {
+      const recs = (attendanceByPlayer[p.id] || []).filter(r => r.date >= ago30);
+      const present = recs.filter(r => isPresent(r.status)).length;
+      recentAttendanceStats[p.id] = {
+        rate30d: recs.length > 0 ? Math.round((present / recs.length) * 100) : 0,
+        presentCount: present,
+        totalCount: recs.length
+      };
+      
+      const pFees = feesByPlayer[p.id] || [];
+      activeFeeSummaries[p.id] = {
+        hasOverdue: pFees.some(f => f.status === 'OVERDUE'),
+        hasExpiring: pFees.some(f => f.invoice?.validTill && f.status === 'PAID' && f.invoice.validTill >= today && f.invoice.validTill <= in30)
+      };
+    });
+
+    const sortedMatches = [...rawData.matches].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const sortedPlayersByRegistrationDate = [...rawData.players].sort((a, b) => new Date(b.registeredAt).getTime() - new Date(a.registeredAt).getTime());
+
+    return {
+      playersById,
+      playersByVenue,
+      attendanceByPlayer,
+      attendanceByDateVenue,
+      globalAttendanceByDate,
+      feesByPlayer,
+      feesByVenue,
+      feesByBatch,
+      pendingFeesCountByVenue,
+      recentAttendanceStats,
+      activeFeeSummaries,
+      sortedMatches,
+      sortedPlayersByRegistrationDate
+    };
+  }, [rawData.players, rawData.attendance, rawData.fees, rawData.matches, today, ago30, in30]);
+
+  // ── Available Filters ──────────────────────────────────────────────────────
+  const availableVenues = useMemo(() => rawData.venues.map(v => v.name), [rawData.venues]);
+  const availableBatches = useMemo(() => rawData.batches.map(b => b.name), [rawData.batches]);
+
+  // ── Filtered Players ───────────────────────────────────────────────────────
+  const filteredPlayers = useMemo(() => {
+    let p = rawData.players;
+    if (selectedVenue !== 'all') p = p.filter(x => x.venue === selectedVenue);
+    if (selectedBatch !== 'all') p = p.filter(x => x.batch === selectedBatch);
+    return p;
+  }, [rawData.players, selectedVenue, selectedBatch]);
+
+
+  // Centres
+  const centres = useMemo(() => {
+    return rawData.venues
       .filter(v => selectedVenue === 'all' || v.name === selectedVenue)
       .map(v => {
-        const vp = players.filter(p => p.venue === v.name);
-        const vPresent = attendance.filter(r => r.venue === v.name && r.date === today && String(r.status).toUpperCase() === AttendanceStatus.PRESENT).length;
+        const vp = indexedData.playersByVenue[v.name] || [];
+        const vAttendance = (indexedData.attendanceByDateVenue[today] || {})[v.name] || { records: [], present: 0, absent: 0 };
+        const vPresent = vAttendance.present;
+        
         const evaluated = vp.filter(p => p.evaluation?.overallRating);
-        const avgR = evaluated.length > 0 ? Math.round((evaluated.reduce((s, p) => s + (p.evaluation?.overallRating ?? 0), 0) / evaluated.length) * 10) / 10 : 0;
-        const vFees = fees.filter(f => { const pl = players.find(x => x.id === f.playerId); return pl?.venue === v.name && (f.status === 'PENDING' || f.status === 'OVERDUE'); }).length;
-        return { name: v.name, players: vp.length, presentToday: vPresent, attendanceRate: vp.length > 0 ? Math.round((vPresent / vp.length) * 100) : 0, avgRating: avgR, pendingFees: vFees };
+        const avgR = evaluated.length > 0 
+          ? Math.round((evaluated.reduce((s, p) => s + (p.evaluation?.overallRating ?? 0), 0) / evaluated.length) * 10) / 10 
+          : 0;
+
+        const vPendingFeesCount = indexedData.pendingFeesCountByVenue[v.name] || 0;
+
+        return { 
+          name: v.name, 
+          players: vp.length, 
+          presentToday: vPresent, 
+          attendanceRate: vp.length > 0 ? Math.round((vPresent / vp.length) * 100) : 0, 
+          avgRating: avgR, 
+          pendingFees: vPendingFeesCount 
+        };
       });
-    setCentres(centreData);
+  }, [rawData.venues, indexedData, today, selectedVenue]);
 
-    // ── Alerts ───────────────────────────────────────────────────────────────
-    const newAlerts: typeof alertItems = [];
-    const overdueCount = fees.filter(f => f.status === 'OVERDUE').length;
-    const expiringPkgs = fees.filter(f => f.invoice?.validTill && f.status === 'PAID' && f.invoice.validTill >= today && f.invoice.validTill <= in30).length;
-    const lowAttPlayers = players.filter(p => {
-      const rec = attendance.filter(r => r.playerId === p.id && r.date >= ago30);
-      if (rec.length < 3) return false;
-      return rec.filter(r => String(r.status).toUpperCase() === AttendanceStatus.PRESENT).length / rec.length < 0.6;
+  // Global Stats & Alerts
+  const { globalStats, alertItems, logisticsStats, supportStats } = useMemo(() => {
+    let overdueCount = 0;
+    let expiringCount = 0;
+    let lowAttCount = 0;
+    let lowAttPlayerNames: string[] = [];
+    let globalPresent = 0;
+    
+    const thisMonth = today.substring(0, 7);
+    let newThisMonth = 0;
+
+    filteredPlayers.forEach(p => {
+      const feeSum = indexedData.activeFeeSummaries[p.id];
+      if (feeSum?.hasOverdue) overdueCount++;
+      if (feeSum?.hasExpiring) expiringCount++;
+
+      const attSum = indexedData.recentAttendanceStats[p.id];
+      if (attSum && attSum.totalCount >= 3 && attSum.rate30d < 60) {
+        lowAttCount++;
+        if (lowAttPlayerNames.length < 2) lowAttPlayerNames.push(p.fullName.split(' ')[0]);
+      }
+
+      if ((p.registeredAt || '').startsWith(thisMonth)) newThisMonth++;
     });
-    const underCentres = centreData.filter(v => v.players > 0 && v.players < 3);
 
-    if (overdueCount > 0) newAlerts.push({ id: 'ov', severity: 'critical', icon: <XCircle size={13} />, label: `${overdueCount} Overdue ${overdueCount > 1 ? 'Fees' : 'Fee'}`, detail: 'Needs immediate collection' });
-    if (expiringPkgs > 0) newAlerts.push({ id: 'ex', severity: 'warning', icon: <Timer size={13} />, label: `${expiringPkgs} Package${expiringPkgs > 1 ? 's' : ''} Expiring`, detail: 'Within next 30 days' });
-    if (lowAttPlayers.length > 0) newAlerts.push({ id: 'la', severity: 'warning', icon: <Activity size={13} />, label: `${lowAttPlayers.length} Low Attendance`, detail: lowAttPlayers.slice(0, 2).map(p => p.fullName.split(' ')[0]).join(', ') + (lowAttPlayers.length > 2 ? ` +${lowAttPlayers.length - 2}` : '') });
-    if (underCentres.length > 0) newAlerts.push({ id: 'uc', severity: 'info', icon: <Users size={13} />, label: `${underCentres.length} Centre${underCentres.length > 1 ? 's' : ''} Under-Enrolled`, detail: underCentres.map(v => v.name.split(',')[0]).join(', ') });
-    setAlertItems(newAlerts);
+    // Attendance today
+    const attendanceTodayByVenue = indexedData.attendanceByDateVenue[today] || {};
+    if (selectedVenue === 'all') {
+      Object.values(attendanceTodayByVenue).forEach(v => {
+        globalPresent += v.present;
+      });
+    } else {
+      globalPresent = attendanceTodayByVenue[selectedVenue]?.present || 0;
+    }
 
-    // ── Global stats ─────────────────────────────────────────────────────────
-    const global_present = attendance.filter(r => r.date === today && String(r.status).toUpperCase() === AttendanceStatus.PRESENT).length;
-    const thisMonth = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
-    const newThisMonth = players.filter(p => (p.registeredAt || '').startsWith(thisMonth)).length;
-    setGlobalStats({ players: players.length, presentToday: global_present, rate: players.length > 0 ? Math.round((global_present / players.length) * 100) : 0, alerts: newAlerts.length, overdueCount, expiringCount: expiringPkgs, newThisMonth });
+    const underCentres = centres.filter(v => v.players > 0 && v.players < 3);
+    const logStats = computeLogisticsStats(rawData.inventory);
+    const supStats = computeSupportStats(rawData.tickets);
 
-    // ── 7-day chart (filtered) ────────────────────────────────────────────────
-    setChartAll(Array.from({ length: 7 }, (_, i) => {
+    const alerts: (DashboardAlert & { icon: React.ReactNode })[] = [];
+    if (overdueCount > 0) alerts.push({ id: 'ov', severity: 'critical', icon: <XCircle size={13} />, label: `${overdueCount} Overdue Fee${overdueCount > 1 ? 's' : ''}`, detail: 'Needs immediate collection' });
+    if (expiringCount > 0) alerts.push({ id: 'ex', severity: 'warning', icon: <Timer size={13} />, label: `${expiringCount} Package${expiringCount > 1 ? 's' : ''} Expiring`, detail: 'Within next 30 days' });
+    if (lowAttCount > 0) alerts.push({ id: 'la', severity: 'warning', icon: <Activity size={13} />, label: `${lowAttCount} Low Attendance`, detail: lowAttPlayerNames.join(', ') + (lowAttCount > 2 ? ` +${lowAttCount - 2}` : '') });
+    if (underCentres.length > 0) alerts.push({ id: 'uc', severity: 'info', icon: <Users size={13} />, label: `${underCentres.length} Centre${underCentres.length > 1 ? 's' : ''} Under-Enrolled`, detail: underCentres.map(v => v.name.split(',')[0]).join(', ') });
+    
+    if (logStats.lowStockItems > 0) {
+      alerts.push({ id: 'ls', severity: 'warning', icon: <Truck size={13} />, label: `${logStats.lowStockItems} Low Stock Items`, detail: logStats.criticalItems.length > 0 ? `Critical: ${logStats.criticalItems.join(', ')}` : 'Check inventory' });
+    }
+    if (supStats.urgentTickets > 0) {
+      alerts.push({ id: 'ut', severity: 'critical', icon: <LifeBuoy size={13} />, label: `${supStats.urgentTickets} Urgent Ticket${supStats.urgentTickets > 1 ? 's' : ''}`, detail: 'Immediate action required' });
+    }
+
+    const stats = {
+      players: filteredPlayers.length,
+      presentToday: globalPresent,
+      rate: filteredPlayers.length > 0 ? Math.round((globalPresent / filteredPlayers.length) * 100) : 0,
+      alerts: alerts.length,
+      overdueCount,
+      expiringCount,
+      newThisMonth
+    };
+
+    return { globalStats: stats, alertItems: alerts, logisticsStats: logStats, supportStats: supStats };
+  }, [filteredPlayers, indexedData, centres, today, rawData.inventory, rawData.tickets]);
+
+  // Chart
+  const chartAll = useMemo(() => {
+    return Array.from({ length: 7 }, (_, i) => {
       const date = getDateOffset(i - 6);
-      const day = attendance.filter(r => r.date === date);
-      return { name: dayLabel(date), present: day.filter(r => String(r.status).toUpperCase() === AttendanceStatus.PRESENT).length, absent: day.filter(r => String(r.status).toUpperCase() === AttendanceStatus.ABSENT).length };
-    }));
+      
+      let present = 0;
+      let absent = 0;
 
-    // ── Age dist (filtered) ───────────────────────────────────────────────────
+      if (selectedVenue === 'all') {
+        const globalStats = indexedData.globalAttendanceByDate[date];
+        if (globalStats) {
+          present = globalStats.present;
+          absent = globalStats.absent;
+        }
+      } else {
+        const vData = (indexedData.attendanceByDateVenue[date] || {})[selectedVenue];
+        if (vData) {
+          present = vData.present;
+          absent = vData.absent;
+        }
+      }
+
+      return { 
+        name: getDayLabel(date), 
+        present, 
+        absent 
+      };
+    });
+  }, [indexedData.globalAttendanceByDate, indexedData.attendanceByDateVenue, selectedVenue]);
+
+  // Age Distribution
+  const ageAll = useMemo(() => {
     const ac: Record<string, number> = {};
     AGE_GROUPS.forEach(g => ac[g] = 0);
-    players.forEach(p => { const g = ageGroup(p.dateOfBirth); ac[g] = (ac[g] || 0) + 1; });
-    setAgeAll(AGE_GROUPS.map((g, i) => ({ name: g, value: ac[g] || 0, color: AGE_COLORS[i] })));
+    filteredPlayers.forEach(p => { const g = getAgeGroup(p.dateOfBirth); ac[g] = (ac[g] || 0) + 1; });
+    return AGE_GROUPS.map((g, i) => ({ name: g, value: ac[g] || 0, color: AGE_COLORS[i] }));
+  }, [filteredPlayers]);
 
-    // ── Top performers (filtered) ─────────────────────────────────────────────
-    const tp = players
+  // Top Performers
+  const topPerformers = useMemo(() => {
+    return filteredPlayers
       .filter(p => p.evaluation?.overallRating)
       .sort((a, b) => (b.evaluation?.overallRating ?? 0) - (a.evaluation?.overallRating ?? 0))
       .slice(0, 5)
@@ -285,51 +426,65 @@ export const AdminDashboard: React.FC = () => {
         rating: p.evaluation?.overallRating || 0,
         venue: p.venue || '—'
       }));
-    setTopPerformers(tp);
+  }, [filteredPlayers]);
 
-    // ── Activity feed (filtered) ──────────────────────────────────────────────
-    const feed: typeof activityFeed = [];
-    [...players].sort((a, b) => new Date(b.registeredAt).getTime() - new Date(a.registeredAt).getTime()).slice(0, 3).forEach(p => feed.push({ id: `p-${p.id}`, type: 'player', label: `${p.fullName} joined`, sub: p.venue || 'No centre', ts: new Date(p.registeredAt).getTime() }));
-    // To filter matches to specific venue involves more mapping, we will let match feed remain global contextual
-    [...allMatches].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 3).forEach(m => feed.push({ id: `m-${m.id}`, type: 'match', label: `${m.result === 'W' ? 'Won' : m.result === 'L' ? 'Lost' : 'Drew'} vs ${m.opponent}`, sub: `${m.scoreFor}–${m.scoreAgainst} · ${new Date(m.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`, ts: new Date(m.date).getTime() }));
-    [...fees].filter(f => f.invoice).sort((a, b) => new Date(b.invoice?.date || 0).getTime() - new Date(a.invoice?.date || 0).getTime()).slice(0, 3).forEach(f => { 
-      const pl = players.find(p => p.id === f.playerId); 
-      if (pl && f.invoice) {
-        feed.push({ 
-          id: `f-${f.id}`, 
-          type: 'fee', 
-          label: `₹${f.invoice.amount.toLocaleString('en-IN')} collected`, 
-          sub: `${pl.fullName} · Invoice ${f.invoice.invoiceNo}`, 
-          ts: new Date(f.invoice.date).getTime() 
-        }); 
+  // Activity Feed
+  const activityFeed = useMemo(() => {
+    const feed: { id: string; type: 'player' | 'match' | 'fee'; label: string; sub: string; ts: number }[] = [];
+    
+    // New Players (Using pre-sorted index)
+    indexedData.sortedPlayersByRegistrationDate
+      .filter(p => (selectedVenue === 'all' || p.venue === selectedVenue) && (selectedBatch === 'all' || p.batch === selectedBatch))
+      .slice(0, 3)
+      .forEach(p => feed.push({ id: `p-${p.id}`, type: 'player', label: `${p.fullName} joined`, sub: p.venue || 'No centre', ts: new Date(p.registeredAt).getTime() }));
+
+    // Matches (Pre-sorted index)
+    indexedData.sortedMatches
+      .slice(0, 3)
+      .forEach(m => feed.push({ id: `m-${m.id}`, type: 'match', label: `${m.result === 'W' ? 'Won' : m.result === 'L' ? 'Lost' : 'Drew'} vs ${m.opponent}`, sub: `${m.scoreFor}–${m.scoreAgainst} · ${new Date(m.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`, ts: new Date(m.date).getTime() }));
+
+    // Fees (Using pre-grouped index)
+    let filteredFees: FeeRecord[] = [];
+    if (selectedVenue !== 'all') {
+      filteredFees = indexedData.feesByVenue[selectedVenue] || [];
+      if (selectedBatch !== 'all') {
+        filteredFees = filteredFees.filter(f => {
+          const p = indexedData.playersById[f.playerId];
+          return p && p.batch === selectedBatch;
+        });
       }
-    });
-    setActivityFeed(feed.sort((a, b) => b.ts - a.ts).slice(0, 8));
+    } else if (selectedBatch !== 'all') {
+      filteredFees = indexedData.feesByBatch[selectedBatch] || [];
+    } else {
+      filteredFees = rawData.fees;
+    }
+    
+    [...filteredFees]
+      .filter(f => f.invoice)
+      .sort((a, b) => new Date(b.invoice?.date || 0).getTime() - new Date(a.invoice?.date || 0).getTime())
+      .slice(0, 3)
+      .forEach(f => { 
+        const pl = indexedData.playersById[f.playerId]; 
+        if (pl && f.invoice) {
+          feed.push({ 
+            id: `f-${f.id}`, 
+            type: 'fee', 
+            label: `₹${f.invoice.amount.toLocaleString('en-IN')} collected`, 
+            sub: `${pl.fullName} · Invoice ${f.invoice.invoiceNo}`, 
+            ts: new Date(f.invoice.date).getTime() 
+          }); 
+        }
+      });
 
-    // ── Academy League Rankings (filtered) ────────────────────────────────────
-    const computeScore = (overallRating: number, attRate: number, metrics?: Partial<{ passing: number; juggling: number; shooting: number; beepTest: number; weakFoot: number; longPass: number }>) => {
-      const ratingPart = (overallRating / 10) * 40;
-      const attPart = (attRate / 100) * 35;
-      
-      const m: any = metrics || {};
-      const avgMetric = (
-        (m.passing || 0) + 
-        (m.juggling || 0) + 
-        (m.shooting || 0) + 
-        (m.beepTest || 0) + 
-        (m.weakFoot || 0) + 
-        (m.longPass || 0)
-      ) / 6;
+    return feed.sort((a, b) => b.ts - a.ts).slice(0, 8);
+  }, [indexedData.sortedPlayersByRegistrationDate, indexedData.sortedMatches, indexedData.feesByVenue, indexedData.feesByBatch, indexedData.playersById, rawData.fees, selectedVenue, selectedBatch]);
 
-      const metricPart = (avgMetric / 10) * 25;
-      return Math.round((ratingPart + attPart + metricPart) * 10) / 10;
-    };
-
-    const evaluated = players.filter(p => p.evaluation?.overallRating);
+  // League Rankings
+  const leagueRankings = useMemo(() => {
+    const evaluated = filteredPlayers.filter(p => p.evaluation?.overallRating);
     const playerScores = evaluated.map(p => {
-      const rec30 = attendance.filter(r => r.playerId === p.id && r.date >= ago30);
-      const present30 = rec30.filter(r => String(r.status).toUpperCase() === AttendanceStatus.PRESENT).length;
-      const attRate = rec30.length > 0 ? Math.round((present30 / rec30.length) * 100) : 0;
+      const attSum = indexedData.recentAttendanceStats[p.id] || { rate30d: 0, presentCount: 0, totalCount: 0 };
+      const attRate = attSum.rate30d;
       const m: any = p.evaluation?.metrics || {};
       const scoutScore = Math.round((
         ((m.passing || 0) + (m.juggling || 0) + (m.shooting || 0) + (m.beepTest || 0) + (m.weakFoot || 0) + (m.longPass || 0)) / 6
@@ -343,7 +498,7 @@ export const AdminDashboard: React.FC = () => {
         overallRating: p.evaluation?.overallRating || 0,
         attRate,
         scoutScore,
-        compositeScore: computeScore(p.evaluation?.overallRating || 0, attRate, m),
+        compositeScore: computeCompositeScore(p.evaluation?.overallRating || 0, attRate, m),
         developmentAreas: p.evaluation?.developmentAreas || [],
         prevEval: p.evaluationHistory && p.evaluationHistory.length > 0
           ? p.evaluationHistory[p.evaluationHistory.length - 1]
@@ -356,14 +511,14 @@ export const AdminDashboard: React.FC = () => {
       .map(ps => {
         const prevE = ps.prevEval!;
         const m2 = prevE.metrics || {};
-        return { id: ps.id, prevScore: computeScore(prevE.overallRating || 0, ps.attRate, m2) };
+        return { id: ps.id, prevScore: computeCompositeScore(prevE.overallRating || 0, ps.attRate, m2) };
       })
       .sort((a, b) => b.prevScore - a.prevScore);
 
     const prevRankMap: Record<string, number> = {};
     prevScores.forEach((ps, idx) => { prevRankMap[ps.id] = idx + 1; });
 
-    const rankings: LeagueRanking[] = playerScores.slice(0, 10).map((ps, idx) => {
+    return playerScores.slice(0, 10).map((ps, idx) => {
       const currentRank = idx + 1;
       const prevRank = prevRankMap[ps.id] ?? 0;
       let trend: LeagueRanking['trend'] = 'new';
@@ -379,35 +534,31 @@ export const AdminDashboard: React.FC = () => {
         venue: ps.venue,
         memberId: ps.memberId,
         compositeScore: ps.compositeScore,
-        attendanceRate: ps.attRate,
+        attendanceRate: ps.attendanceRate,
         overallRating: ps.overallRating,
         scoutScore: ps.scoutScore,
         developmentAreas: ps.developmentAreas,
         trend,
         posChange: Math.abs(posChange),
-      };
+      } as LeagueRanking;
     });
-    setLeagueRankings(rankings);
+  }, [filteredPlayers, indexedData.recentAttendanceStats]);
 
-    // ── Player Roster (for filtered lists) ────────────────────────────────────
-    setPlayerRoster(players.map(p => {
-      const rec = attendance.filter(r => r.playerId === p.id && r.date >= ago30);
-      const present = rec.filter(r => String(r.status).toUpperCase() === AttendanceStatus.PRESENT).length;
+  // Player Roster
+  const playerRoster = useMemo(() => {
+    return filteredPlayers.map(p => {
+      const attSum = indexedData.recentAttendanceStats[p.id] || { rate30d: 0, presentCount: 0, totalCount: 0 };
       return { 
         name: p.fullName, 
         memberId: p.memberId || '', 
-        sessions: rec.length, 
-        present, 
-        rate: rec.length > 0 ? Math.round((present / rec.length) * 100) : 0, 
+        sessions: attSum.totalCount, 
+        present: attSum.presentCount, 
+        rate: attSum.rate30d, 
         rating: p.evaluation?.overallRating ?? 0 
       };
-    }).sort((a, b) => a.rate - b.rate));
-    };
+    }).sort((a, b) => a.rate - b.rate);
+  }, [filteredPlayers, indexedData.recentAttendanceStats]);
 
-    loadData();
-    window.addEventListener('academy_data_update', loadData);
-    return () => window.removeEventListener('academy_data_update', loadData);
-  }, [selectedVenue, selectedBatch]);
 
   // ── Render helpers ────────────────────────────────────────────────────────
 
@@ -512,12 +663,14 @@ export const AdminDashboard: React.FC = () => {
       />
 
       {/* KPI grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4">
         {[
           { label: 'Total Enrolled', value: globalStats.players, sub: 'active players', icon: <Users size={16} />, color: '#CCFF00', accent: 'glass-card border-white/10 shadow-[0_15px_30px_rgba(13,27,138,0.2)]', showBar: true },
           { label: 'New This Month', value: globalStats.newThisMonth, sub: new Date().toLocaleString('en-IN', { month: 'long' }), icon: <CalendarPlus size={16} />, color: '#CCFF00', accent: 'glass-card border-white/10', showBar: false },
           { label: "Daily Attendance", value: `${globalStats.rate}%`, sub: `${globalStats.presentToday} present`, icon: <Activity size={16} />, color: '#CCFF00', accent: 'glass-card border-white/10 shadow-[0_15px_30px_rgba(13,27,138,0.2)]', showBar: true },
           { label: 'Fees Overdue', value: globalStats.overdueCount, sub: `${globalStats.expiringCount} soon`, icon: <Receipt size={16} />, color: globalStats.overdueCount > 0 ? '#f87171' : '#CCFF00', accent: 'glass-card border-white/10', showBar: false },
+          { label: 'Active Support', value: supportStats.activeTickets, sub: `${supportStats.urgentTickets} urgent`, icon: <LifeBuoy size={16} />, color: supportStats.urgentTickets > 0 ? '#f87171' : '#CCFF00', accent: 'glass-card border-white/10', showBar: false },
+          { label: 'Inventory Alerts', value: logisticsStats.lowStockItems, sub: logisticsStats.totalValue ? `$${logisticsStats.totalValue.toLocaleString()} ASSET VALUE` : 'low stock items', icon: <Truck size={16} />, color: logisticsStats.lowStockItems > 0 ? '#f59e0b' : '#CCFF00', accent: 'glass-card border-white/10', showBar: false },
           { label: 'System Alerts', value: alertItems.length, sub: alertItems.length > 0 ? 'review below' : 'all clear', icon: <AlertTriangle size={16} />, color: alertItems.length > 0 ? '#f59e0b' : '#CCFF00', accent: 'glass-card border-white/10', showBar: false },
         ].map((k, i) => (
           <div key={i} className={`rounded-[2rem] border p-6 group transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl relative overflow-hidden ${k.accent}`}>

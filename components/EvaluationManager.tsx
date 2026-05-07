@@ -457,7 +457,7 @@ export const EvaluationManager: React.FC<EvaluationManagerProps> = ({ onBreadcru
     if (file) {
       // Validation: Size (2MB) and Type
       if (file.size > 2 * 1024 * 1024) {
-        alert("FILE_OVERSIZE: Maximum 2MB permitted for tactical uploads.");
+        alert("Maximum 2MB permitted for photo uploads.");
         return;
       }
       if (!file.type.startsWith('image/')) {
@@ -562,8 +562,8 @@ export const EvaluationManager: React.FC<EvaluationManagerProps> = ({ onBreadcru
               <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-500/40 group-focus-within:text-brand-accent transition-colors" />
               <input 
                 type="text" 
-                placeholder="SCAN SQUAD DATA..." 
-                className="w-full pl-14 pr-6 py-4 bg-brand-500/5 border border-brand-500/10 rounded-2xl outline-none focus:bg-brand-500/10 focus:border-brand-accent/30 transition-all text-[10px] font-black uppercase tracking-[0.2em] text-white placeholder:text-white/20 shadow-2xl italic"
+                placeholder="SEARCH PLAYERS..." 
+                className="w-full bg-white/5 border border-white/10 rounded-2xl p-6 pl-14 text-sm font-black text-white italic outline-none focus:border-brand-accent/40 focus:ring-1 focus:ring-brand-accent/20 transition-all uppercase tracking-widest placeholder:text-white/20"
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
               />
@@ -571,7 +571,7 @@ export const EvaluationManager: React.FC<EvaluationManagerProps> = ({ onBreadcru
             
             <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-500/5 border border-brand-500/10">
               <Activity size={12} className="text-brand-accent" />
-              <span className="text-[9px] font-black text-brand-500/60 uppercase tracking-widest italic">PERFORMANCE SENSORS ACTIVE</span>
+              <span className="text-[9px] font-black text-brand-500/60 uppercase tracking-widest italic">EVALUATION SYSTEM ACTIVE</span>
             </div>
           </div>
 
@@ -767,7 +767,7 @@ export const EvaluationManager: React.FC<EvaluationManagerProps> = ({ onBreadcru
                                          <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-white"><Timer size={18} strokeWidth={3} /></div>
                                         TIME TRIALS
                                     </h4>
-                                     <span className="text-[8px] font-black text-white/30 uppercase tracking-[0.4em] italic font-mono">REALTIME_SENSORS_ACTIVE</span>
+                                     <span className="text-[8px] font-black text-white/30 uppercase tracking-[0.4em] italic font-mono">SYSTEM_READY</span>
                                 </div>
                                 <div className="space-y-8">
                                     <StopwatchTool 
@@ -801,8 +801,8 @@ export const EvaluationManager: React.FC<EvaluationManagerProps> = ({ onBreadcru
                                         <span className="truncate">TECHNICAL DATA ANALYSIS</span>
                                     </h4>
                                     <div className="hidden md:flex flex-col items-end shrink-0">
-                                        <span className="text-[8px] font-black text-white/20 uppercase tracking-[0.5em] italic mb-1 opacity-40 font-mono">SENSORY_PRECISION</span>
-                                         <span className="text-[10px] font-black text-brand-accent uppercase tracking-widest italic font-mono bg-brand-accent/10 px-3 py-1 rounded-full border border-brand-accent/20">V_1.0_PRO</span>
+                                        <span className="text-[8px] font-black text-white/20 uppercase tracking-[0.5em] italic mb-1 opacity-40 font-mono">TECHNICAL_RATING</span>
+                                         <span className="text-[10px] font-black text-brand-accent uppercase tracking-widest italic">PLAYER RATING</span>
                                     </div>
                                 </div>
                                 
@@ -940,7 +940,7 @@ export const EvaluationManager: React.FC<EvaluationManagerProps> = ({ onBreadcru
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-brand-accent/10 rounded-full blur-[60px] -mr-16 -mt-16 group-hover:bg-brand-accent/20 transition-colors" />
                                 <h4 className="text-[11px] font-black text-brand-accent uppercase tracking-[0.5em] flex items-center gap-4 mb-8 italic relative z-10 font-orbitron">
                                     <div className="w-8 h-8 rounded-xl bg-brand-accent/20 flex items-center justify-center text-brand-accent shadow-[0_0_15px_rgba(204,255,0,0.4)]"><Award size={18} strokeWidth={3} /></div>
-                                    ELITE_COACH_VERDICT
+                                    COACH'S EVALUATION
                                 </h4>
                                 
                                 <div className="relative z-10">
@@ -949,7 +949,7 @@ export const EvaluationManager: React.FC<EvaluationManagerProps> = ({ onBreadcru
                                     {/* PHRASE PICKER HUD */}
                                     <div className="mb-6 space-y-4">
                                         <div className="flex items-center justify-between">
-                                            <span className="text-[8px] font-black text-white/30 uppercase tracking-[0.4em] italic">PRO_PHRASE_DOCK</span>
+                                            <h4 className="text-[10px] font-black text-brand-accent uppercase tracking-[0.3em] mb-4 italic">QUICK NOTES</h4>
                                             <button 
                                                 onClick={handleMagicScribe}
                                                 disabled={isAiGenerating}
@@ -959,7 +959,7 @@ export const EvaluationManager: React.FC<EvaluationManagerProps> = ({ onBreadcru
                                                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer" />
                                                 )}
                                                 {isAiGenerating ? <Loader2 size={14} className="animate-spin relative z-10" /> : <Brain size={14} className="relative z-10 group-hover/magic:scale-110 transition-transform" />}
-                                                <span className="relative z-10">MAGIC_SCRIBE_AI</span>
+                                                <span className="relative z-10">AI ASSIST</span>
                                             </button>
                                         </div>
                                         <div className="flex gap-3 overflow-x-auto pb-4 custom-scrollbar-hide">
@@ -985,7 +985,7 @@ export const EvaluationManager: React.FC<EvaluationManagerProps> = ({ onBreadcru
                                             <div className="flex items-center justify-between px-2">
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-1.5 h-1.5 rounded-full bg-brand-accent animate-pulse shadow-[0_0_8px_#CCFF00]" />
-                                                    <span className="text-[9px] font-black text-brand-accent uppercase tracking-[0.4em] italic">AI_DOSSIER_VARIATIONS_LOADED</span>
+                                                    <span className="text-[9px] font-black text-brand-accent uppercase tracking-[0.4em] italic">AI SUGGESTIONS READY</span>
                                                 </div>
                                                 <div className="flex items-center gap-4">
                                                     <button 
@@ -1047,12 +1047,12 @@ export const EvaluationManager: React.FC<EvaluationManagerProps> = ({ onBreadcru
                             <section className="bg-white/5 p-5 sm:p-6 md:p-12 rounded-[2rem] md:rounded-[3.5rem] border border-white/10 shadow-xl relative overflow-hidden group">
                                  <h4 className="text-[11px] font-black text-white uppercase tracking-[0.5em] flex items-center gap-4 mb-8 italic relative z-10">
                                     <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-white"><Camera size={18} strokeWidth={3} /></div>
-                                    <span className="truncate">MEDIA_&_VERIFICATION_UNIT</span>
+                                    <span className="truncate">MEDIA & AUTHORIZATION</span>
                                 </h4>
                                 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                                     <div className="space-y-4">
-                                         <label className="text-[9px] font-black text-white/30 uppercase tracking-[0.4em] italic block">PERFORMANCE_ACTION_SHOT</label>
+                                         <label className="text-[9px] font-black text-white/30 uppercase tracking-[0.4em] italic block">PERFORMANCE PHOTO</label>
                                         <div className="relative group/upload h-48 rounded-3xl overflow-hidden border-2 border-dashed border-white/10 hover:border-brand-accent transition-all bg-white/5">
                                             {form.actionImageUrl ? (
                                                 <>
@@ -1067,7 +1067,7 @@ export const EvaluationManager: React.FC<EvaluationManagerProps> = ({ onBreadcru
                                             ) : (
                                                 <div className="flex flex-col items-center justify-center h-full gap-3">
                                                      <Camera className="text-white/20" size={32} />
-                                                    <span className="text-[8px] font-black text-white/20 uppercase tracking-widest italic text-center px-4">UPLOAD_KID_PLAYING</span>
+                                                    <span className="text-[8px] font-black text-white/20 uppercase tracking-widest italic text-center px-4">UPLOAD PLAYER PHOTO</span>
                                                     <input 
                                                         type="file" 
                                                         accept="image/*"
@@ -1080,7 +1080,7 @@ export const EvaluationManager: React.FC<EvaluationManagerProps> = ({ onBreadcru
                                     </div>
 
                                     <div className="space-y-4">
-                                         <label className="text-[9px] font-black text-white/30 uppercase tracking-[0.4em] italic block">HEAD_COACH_SIGNATURE</label>
+                                         <label className="text-[9px] font-black text-white/30 uppercase tracking-[0.4em] italic block">COACH SIGNATURE</label>
                                         <div className="relative group/upload h-48 rounded-3xl overflow-hidden border-2 border-dashed border-white/10 hover:border-brand-accent transition-all bg-white/5">
                                             {form.coachSignatureUrl ? (
                                                 <>
@@ -1095,7 +1095,7 @@ export const EvaluationManager: React.FC<EvaluationManagerProps> = ({ onBreadcru
                                             ) : (
                                                 <div className="flex flex-col items-center justify-center h-full gap-3">
                                                     <Plus className="text-brand-300" size={32} />
-                                                    <span className="text-[8px] font-black text-brand-400 uppercase tracking-widest italic text-center px-4">UPLOAD_OFFICIAL_SIGNATURE</span>
+                                                    <span className="text-[8px] font-black text-brand-400 uppercase tracking-widest italic text-center px-4">UPLOAD SIGNATURE</span>
                                                     <input 
                                                         type="file" 
                                                         accept="image/*"
@@ -1151,7 +1151,7 @@ export const EvaluationManager: React.FC<EvaluationManagerProps> = ({ onBreadcru
                                     onClick={() => setActiveStep(prev => prev + 1)}
                                     className="flex-1 md:flex-none px-10 py-4 bg-brand-950 text-white font-black rounded-xl shadow-lg hover:scale-[1.02] active:scale-95 transition-all text-[9px] uppercase tracking-[0.3em] flex items-center justify-center gap-3 italic"
                                 >
-                                    NEXT_STEP
+                                    NEXT
                                     <ChevronRight size={14} />
                                 </button>
                             ) : (
@@ -1160,7 +1160,7 @@ export const EvaluationManager: React.FC<EvaluationManagerProps> = ({ onBreadcru
                                     className="flex-1 md:flex-none px-10 py-4 bg-brand-accent text-brand-950 font-black rounded-xl shadow-[0_10px_30px_rgba(195,246,41,0.3)] hover:scale-[1.02] active:scale-95 transition-all text-[9px] uppercase tracking-[0.4em] flex items-center justify-center gap-3 italic"
                                 >
                                     <SaveAll size={16} />
-                                    UPLOAD_DATA_CENTRAL
+                                    SAVE EVALUATION
                                 </button>
                             )}
                         </div>

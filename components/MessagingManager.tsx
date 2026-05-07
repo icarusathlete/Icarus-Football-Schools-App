@@ -245,21 +245,21 @@ export const MessagingManager: React.FC = () => {
                                         {msg.type === 'email' ? <Mail size={120} className="text-white" /> : msg.type === 'sms' ? <MessageSquare size={120} className="text-white" /> : <Bell size={120} className="text-white" />}
                                     </div>
 
-                                    <div className="flex flex-col md:flex-row md:items-start justify-between gap-8 relative z-10">
-                                        <div className="space-y-6 flex-1">
-                                            <div className="flex flex-wrap items-center gap-3">
-                                                <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest italic flex items-center gap-2 border bg-white/10 text-white border-white/20`}>
-                                                    {msg.type === 'email' ? <Mail size={12} /> : msg.type === 'sms' ? <MessageSquare size={12} /> : <Bell size={12} />}
-                                                    {msg.type}
-                                                </span>
-                                                <span className="px-4 py-1.5 bg-white text-brand-secondary text-[9px] font-black uppercase tracking-widest italic rounded-full shadow-lg">
-                                                    {getTargetLabel(msg)}
-                                                </span>
-                                                <div className="h-1 w-1 rounded-full bg-white/20" />
-                                                <span className="text-[9px] text-white/60 font-bold uppercase tracking-widest italic">
-                                                    {new Date(msg.timestamp).toLocaleString()}
-                                                </span>
-                                            </div>
+                                        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 relative z-10">
+                                            <div className="space-y-6 flex-1">
+                                                <div className="flex flex-wrap items-center gap-3">
+                                                    <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest italic flex items-center gap-2 border bg-white/10 text-white border-white/20`}>
+                                                        {msg.type === 'email' ? <Mail size={12} /> : msg.type === 'sms' ? <MessageSquare size={12} /> : <Bell size={12} />}
+                                                        {msg.type}
+                                                    </span>
+                                                    <span className="px-4 py-1.5 bg-white text-brand-secondary text-[9px] font-black uppercase tracking-widest italic rounded-full shadow-lg">
+                                                        {getTargetLabel(msg)}
+                                                    </span>
+                                                    <div className="hidden sm:block h-1 w-1 rounded-full bg-white/20" />
+                                                    <span className="text-[9px] text-white/60 font-bold uppercase tracking-widest italic">
+                                                        {new Date(msg.timestamp).toLocaleString()}
+                                                    </span>
+                                                </div>
 
                                             <div className="space-y-3">
                                                 <h4 className="text-2xl font-black text-white italic uppercase tracking-tight">

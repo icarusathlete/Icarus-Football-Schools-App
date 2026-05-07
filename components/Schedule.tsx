@@ -12,10 +12,10 @@ import { PageHeader } from './ui/PageHeader';
 import { Role, ScheduleEvent, Drill, User, EventType, Venue } from '../types';
 
 interface ScheduleProps {
-  role: Role;
+  currentUser: User;
 }
 
-export const Schedule: React.FC<ScheduleProps> = ({ role }) => {
+export const Schedule: React.FC<ScheduleProps> = ({ currentUser }) => {
   const [events, setEvents] = useState<ScheduleEvent[]>([]);
   const [drills, setDrills] = useState<Drill[]>([]);
   const [coaches, setCoaches] = useState<User[]>([]);
@@ -151,9 +151,9 @@ export const Schedule: React.FC<ScheduleProps> = ({ role }) => {
 
   const getTypeStyles = (type: EventType) => {
       switch(type) {
-          case 'match': return { border: 'border-l-brand-500', bg: 'bg-brand-950/400/10', text: 'text-white', icon: <Trophy size={14} className="text-brand-500" />, dot: 'bg-brand-950/400' };
+          case 'match': return { border: 'border-l-brand-500', bg: 'bg-brand-primary/10', text: 'text-white', icon: <Trophy size={14} className="text-brand-500" />, dot: 'bg-brand-primary' };
           case 'social': return { border: 'border-l-lime', bg: 'bg-lime/10', text: 'text-white', icon: <PartyPopper size={14} className="text-lime" />, dot: 'bg-lime' };
-          default: return { border: 'border-l-brand-400', bg: 'bg-brand-950/40', text: 'text-white', icon: <Zap size={14} className="text-brand-500" />, dot: 'bg-brand-950/400' };
+          default: return { border: 'border-l-brand-400', bg: 'bg-brand-950/40', text: 'text-white', icon: <Zap size={14} className="text-brand-500" />, dot: 'bg-brand-primary' };
       }
   };
 
@@ -173,7 +173,7 @@ export const Schedule: React.FC<ScheduleProps> = ({ role }) => {
           const isToday = new Date().toISOString().split('T')[0] === dateStr;
 
           days.push(
-              <div key={d} className={`h-24 md:h-36 p-2 md:p-3 border border-white/10 transition-all hover:bg-brand-950/40 relative overflow-hidden group/day ${isToday ? 'bg-brand-950/400/5' : 'bg-brand-900/60 backdrop-blur-xl border-white/10'}`}>
+              <div key={d} className={`h-24 md:h-36 p-2 md:p-3 border border-white/10 transition-all hover:bg-brand-950/40 relative overflow-hidden group/day ${isToday ? 'bg-brand-primary/5' : 'bg-brand-900/60 backdrop-blur-xl border-white/10'}`}>
                   <div className="flex justify-between items-center mb-2">
                       <span className={`text-[10px] font-black italic tracking-widest ${isToday ? 'text-brand-500' : 'text-slate-300'}`}>{d}</span>
                       {isToday && <span className="text-[8px] font-black text-brand-500 uppercase tracking-widest italic animate-pulse">TODAY</span>}
@@ -199,15 +199,15 @@ export const Schedule: React.FC<ScheduleProps> = ({ role }) => {
           <div className="bg-brand-900/40 backdrop-blur-xl border-white/5 shadow-2xl">
               <div className="p-5 md:p-10 border-b border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-brand-950/40/50 backdrop-blur-xl">
                   <h3 className="text-xl md:text-2xl font-black text-white flex items-center gap-3 uppercase tracking-tighter italic">
-                      <div className="p-2 md:p-3 bg-brand-950/400/10 rounded-2xl border border-brand-500/20">
+                      <div className="p-2 md:p-3 bg-brand-primary/10 rounded-2xl border border-brand-500/20">
                         <CalendarIcon size={20} className="text-brand-500" />
                       </div>
                       {currentMonth.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
                   </h3>
                   <div className="flex gap-2">
-                      <button onClick={() => changeMonth(-1)} className="w-11 h-11 md:w-14 md:h-14 flex items-center justify-center bg-brand-900/60 backdrop-blur-xl border-white/10 border border-slate-200 text-slate-500 rounded-2xl hover:bg-brand-950/400 hover:text-white transition-all shadow-sm active:scale-90"><ChevronLeft size={18} strokeWidth={3} /></button>
+                      <button onClick={() => changeMonth(-1)} className="w-11 h-11 md:w-14 md:h-14 flex items-center justify-center bg-brand-900/60 backdrop-blur-xl border-white/10 border border-slate-200 text-slate-500 rounded-2xl hover:bg-brand-primary hover:text-white transition-all shadow-sm active:scale-90"><ChevronLeft size={18} strokeWidth={3} /></button>
                       <button onClick={() => setCurrentMonth(new Date())} className="px-5 md:px-8 bg-brand-950 text-white rounded-2xl text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] transition-all italic border border-white/10 hover:border-brand-500/40 active:scale-95">TODAY</button>
-                      <button onClick={() => changeMonth(1)} className="w-11 h-11 md:w-14 md:h-14 flex items-center justify-center bg-brand-900/60 backdrop-blur-xl border-white/10 border border-slate-200 text-slate-500 rounded-2xl hover:bg-brand-950/400 hover:text-white transition-all shadow-sm active:scale-90"><ChevronRight size={18} strokeWidth={3} /></button>
+                      <button onClick={() => changeMonth(1)} className="w-11 h-11 md:w-14 md:h-14 flex items-center justify-center bg-brand-900/60 backdrop-blur-xl border-white/10 border border-slate-200 text-slate-500 rounded-2xl hover:bg-brand-primary hover:text-white transition-all shadow-sm active:scale-90"><ChevronRight size={18} strokeWidth={3} /></button>
                   </div>
               </div>
               <div className="overflow-x-auto custom-scrollbar">
@@ -272,7 +272,7 @@ export const Schedule: React.FC<ScheduleProps> = ({ role }) => {
             ))}
 
             {/* Add Event */}
-            {(role === 'admin' || role === 'coach') && (
+            {(currentUser.role === 'admin' || currentUser.role === 'coach') && (
               <button
                 onClick={handleCreate}
                 className="flex items-center gap-2 bg-brand-500 text-brand-950 px-4 py-2 rounded-xl hover:scale-105 active:scale-95 transition-all font-black text-[9px] uppercase tracking-[0.2em] italic"
@@ -289,15 +289,14 @@ export const Schedule: React.FC<ScheduleProps> = ({ role }) => {
       <div className="space-y-4">
           <div className="flex items-center justify-between px-2">
               <div className="flex items-center gap-3">
-                  <div className="p-2 bg-brand-950/400/10 rounded-lg text-brand-500"><MapPin size={16} /></div>
+                  <div className="p-2 bg-brand-primary/10 rounded-lg text-brand-primary"><MapPin size={16} /></div>
                   <div>
-                      <h3 className="text-sm font-black text-white italic uppercase tracking-tighter leading-none">LOCATION HUB</h3>
-                      <p className="text-[9px] font-black text-white/50 uppercase tracking-[0.2em] italic mt-1">Satellite Feed Active</p>
+                      <h3 className="text-sm font-black text-white italic uppercase tracking-tighter leading-none">TRAINING LOCATIONS</h3>
                   </div>
               </div>
-              <div className="flex items-center gap-2 px-3 py-1 bg-brand-900/60 backdrop-blur-xl border-white/10 rounded-full border border-brand-500/10">
-                  <span className="w-1.5 h-1.5 rounded-full bg-brand-950/400 animate-pulse" />
-                  <span className="text-[9px] font-black text-white/60 uppercase tracking-widest italic">{availableVenues.length + 1} NODES CONNECTED</span>
+              <div className="flex items-center gap-2 px-3 py-1 bg-brand-900/60 backdrop-blur-xl border-white/10 rounded-full border border-brand-primary/10">
+                  <span className="w-1.5 h-1.5 rounded-full bg-brand-primary animate-pulse" />
+                  <span className="text-[9px] font-black text-white/60 uppercase tracking-widest italic">{availableVenues.length + 1} VENUES</span>
               </div>
           </div>
 
@@ -307,18 +306,18 @@ export const Schedule: React.FC<ScheduleProps> = ({ role }) => {
                       onClick={() => setSelectedVenue('All Locations')}
                       className={`relative min-w-[200px] p-6 rounded-[2rem] border transition-all duration-500 group/btn overflow-hidden ${
                           selectedVenue === 'All Locations'
-                          ? 'bg-brand-950/400 border-brand-500 text-white shadow-xl shadow-brand-500/20'
-                          : 'bg-brand-900/60 backdrop-blur-xl border-white/10 border-brand-500/10 text-white/50 hover:border-brand-500/30 hover:bg-brand-950/400/5'
+                          ? 'bg-brand-primary border-brand-primary text-brand-950 shadow-xl shadow-brand-primary/20'
+                          : 'bg-brand-900/60 backdrop-blur-xl border-white/10 text-white/50 hover:border-brand-primary/30'
                       }`}
                   >
                       <div className="relative z-10 flex flex-col items-start gap-4">
-                          <div className={`p-3 rounded-2xl transition-all duration-500 ${selectedVenue === 'All Locations' ? 'bg-brand-950 text-brand-500' : 'bg-brand-950/40 text-slate-500 group-hover/btn:scale-110'}`}>
+                          <div className={`p-3 rounded-2xl transition-all duration-500 ${selectedVenue === 'All Locations' ? 'bg-brand-950 text-brand-primary' : 'bg-brand-950/40 text-slate-500 group-hover/btn:scale-110'}`}>
                               <Layers size={20} />
                           </div>
                           <div className="text-left">
-                              <p className={`text-[9px] font-black uppercase tracking-[0.3em] italic mb-1 ${selectedVenue === 'All Locations' ? 'text-white/60' : 'text-slate-500'}`}>GLOBAL VIEW</p>
+                              <p className={`text-[9px] font-black uppercase tracking-[0.3em] italic mb-1 ${selectedVenue === 'All Locations' ? 'text-brand-950/60' : 'text-slate-500'}`}>SQUAD VIEW</p>
                               <p className="text-lg font-black uppercase italic tracking-tighter leading-none">ALL LOCATIONS</p>
-                              <p className={`text-[10px] font-bold mt-2 italic ${selectedVenue === 'All Locations' ? 'text-white' : 'text-brand-500'}`}>
+                              <p className={`text-[10px] font-bold mt-2 italic ${selectedVenue === 'All Locations' ? 'text-brand-950/60' : 'text-brand-primary'}`}>
                                   {venueStats['All Locations'] || 0} TOTAL PLAYERS
                               </p>
                           </div>
@@ -328,33 +327,38 @@ export const Schedule: React.FC<ScheduleProps> = ({ role }) => {
                       )}
                   </button>
 
-                  {availableVenues.map((venue) => (
+                  {availableVenues.map((venue) => {
+                      const isMyVenue = StorageService.getPlayers().find(p => p.id === currentUser.linkedPlayerId)?.venue === venue.name;
+                      return (
                       <button 
                           key={venue.id}
                           onClick={() => setSelectedVenue(venue.name)}
                           className={`relative min-w-[200px] p-6 rounded-[2rem] border transition-all duration-500 group/btn overflow-hidden ${
                               selectedVenue === venue.name
-                              ? 'bg-brand-950/400 border-brand-500 text-white shadow-xl shadow-brand-500/20'
-                              : 'bg-brand-900/60 backdrop-blur-xl border-white/10 border-white text-slate-500 hover:border-white/10 hover:bg-brand-950/40'
-                      }`}
-                  >
-                      <div className="relative z-10 flex flex-col items-start gap-4">
-                          <div className={`p-3 rounded-2xl transition-all duration-500 ${selectedVenue === venue.name ? 'bg-brand-950 text-brand-500' : 'bg-brand-950/40 text-slate-500 group-hover/btn:scale-110'}`}>
-                              <MapPin size={20} />
+                              ? 'bg-brand-primary border-brand-primary text-brand-950 shadow-xl shadow-brand-primary/20'
+                              : isMyVenue 
+                                ? 'bg-brand-primary/5 border-brand-primary/40 text-white shadow-lg'
+                                : 'bg-brand-900/60 backdrop-blur-xl border-white/10 text-white/50 hover:border-brand-primary/30'
+                          }`}
+                      >
+                          <div className="relative z-10 flex flex-col items-start gap-4">
+                              <div className={`p-3 rounded-2xl transition-all duration-500 ${selectedVenue === venue.name ? 'bg-brand-950 text-brand-primary' : 'bg-brand-950/40 text-slate-500 group-hover/btn:scale-110'}`}>
+                                  <MapPin size={20} />
+                              </div>
+                              <div className="text-left">
+                                  {isMyVenue && <p className="text-[8px] font-black text-brand-primary uppercase tracking-[0.3em] mb-1 italic">MY TRAINING BASE</p>}
+                                  <p className="text-lg font-black uppercase italic tracking-tighter leading-none truncate w-full">{venue.name}</p>
+                                  <p className={`text-[10px] font-bold mt-2 italic ${selectedVenue === venue.name ? 'text-brand-950/60' : 'text-brand-primary'}`}>
+                                      {venueStats[venue.name] || 0} PLAYERS
+                                  </p>
+                              </div>
                           </div>
-                          <div className="text-left">
-                              <p className={`text-[9px] font-black uppercase tracking-[0.3em] italic mb-1 ${selectedVenue === venue.name ? 'text-white/60' : 'text-slate-500'}`}>NODE ALPHA</p>
-                              <p className="text-lg font-black uppercase italic tracking-tighter leading-none truncate w-full">{venue.name}</p>
-                              <p className={`text-[10px] font-bold mt-2 italic ${selectedVenue === venue.name ? 'text-white' : 'text-brand-500'}`}>
-                                  {venueStats[venue.name] || 0} PLAYERS
-                              </p>
-                          </div>
-                      </div>
-                      {selectedVenue === venue.name && (
-                          <div className="absolute top-0 right-0 p-4 opacity-20"><Target size={40} /></div>
-                      )}
-                  </button>
-                  ))}
+                          {selectedVenue === venue.name && (
+                              <div className="absolute top-0 right-0 p-4 opacity-20"><Target size={40} /></div>
+                          )}
+                      </button>
+                      );
+                  })}
               </div>
           </div>
       </div>
@@ -403,7 +407,7 @@ export const Schedule: React.FC<ScheduleProps> = ({ role }) => {
 
                             {/* Mission Specs */}
                             <div className="flex-1 p-8 md:p-10 flex flex-col justify-center relative overflow-hidden">
-                                <div className="absolute -top-10 -right-10 w-40 h-40 bg-brand-950/400/5 blur-3xl rounded-full" />
+                                <div className="absolute -top-10 -right-10 w-40 h-40 bg-brand-primary/5 blur-3xl rounded-full" />
                                 
                                 <div className="flex items-center justify-between mb-6">
                                     <div className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em] flex items-center gap-2.5 bg-brand-950/40 border border-white/10`}>
@@ -432,7 +436,7 @@ export const Schedule: React.FC<ScheduleProps> = ({ role }) => {
                                     
                                     {event.type === 'training' && event.drillIds && event.drillIds.length > 0 && (
                                         <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 bg-brand-950/400/5 rounded-xl border border-brand-500/10 flex items-center justify-center">
+                                            <div className="w-10 h-10 bg-brand-primary/5 rounded-xl border border-brand-500/10 flex items-center justify-center">
                                               <ClipboardList size={18} className="text-brand-500" />
                                             </div>
                                             <div className="flex flex-col">
@@ -455,7 +459,7 @@ export const Schedule: React.FC<ScheduleProps> = ({ role }) => {
                             </div>
 
                             {/* Tactical Actions */}
-                            {(role === 'admin' || role === 'coach') && (
+                            {(currentUser.role === 'admin' || currentUser.role === 'coach') && (
                                 <div className="p-8 md:p-10 flex flex-row md:flex-col items-center justify-center gap-4 bg-brand-950/40 border-t md:border-t-0 md:border-l border-white/10">
                                    {!isPast ? (
                                        <>
@@ -487,7 +491,7 @@ export const Schedule: React.FC<ScheduleProps> = ({ role }) => {
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-brand-950/20 backdrop-blur-md animate-in fade-in duration-300">
           <div className="bg-brand-900/60 backdrop-blur-xl border-white/10 rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-[0_40px_100px_rgba(0,0,0,0.1)] w-full max-w-xl overflow-hidden border border-white/10 flex flex-col max-h-[95vh] sm:max-h-[90vh]">
             <div className="bg-brand-950/40 px-6 sm:px-10 py-6 sm:py-8 border-b border-white/10 flex justify-between items-center relative">
-                <div className="absolute bottom-0 left-0 w-full h-[2px] bg-brand-950/400 opacity-10" />
+                <div className="absolute bottom-0 left-0 w-full h-[2px] bg-brand-primary opacity-10" />
                 <div>
                    <h3 className="font-display font-black text-2xl sm:text-3xl text-white italic uppercase tracking-tight">{editingId ? 'EDIT' : 'ADD'} <span className="text-brand-500 uppercase">EVENT</span></h3>
                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mt-1">Event Information</p>
@@ -553,12 +557,12 @@ export const Schedule: React.FC<ScheduleProps> = ({ role }) => {
                               drills.map(drill => {
                                   const isSelected = form.drillIds.includes(drill.id);
                                   return (
-                                      <div key={drill.id} onClick={() => toggleDrill(drill.id)} className={`flex items-center justify-between p-5 rounded-2xl cursor-pointer transition-all border ${isSelected ? 'bg-brand-950/400/10 border-brand-500 shadow-sm' : 'bg-brand-950/40 border-white/10 hover:border-brand-500/30'}`}>
+                                      <div key={drill.id} onClick={() => toggleDrill(drill.id)} className={`flex items-center justify-between p-5 rounded-2xl cursor-pointer transition-all border ${isSelected ? 'bg-brand-primary/10 border-brand-500 shadow-sm' : 'bg-brand-950/40 border-white/10 hover:border-brand-500/30'}`}>
                                           <div className="flex flex-col">
                                               <span className={`text-sm font-display font-black italic uppercase ${isSelected ? 'text-brand-500' : 'text-white'}`}>{drill.title}</span>
                                               <span className="text-[9px] text-slate-300 font-black uppercase tracking-widest mt-1">{drill.category} • {drill.duration} MIN SESSION</span>
                                           </div>
-                                          {isSelected && <div className="bg-brand-950/400 text-white p-1.5 rounded-xl text-[8px] font-black px-3">SELECTED</div>}
+                                          {isSelected && <div className="bg-brand-primary text-white p-1.5 rounded-xl text-[8px] font-black px-3">SELECTED</div>}
                                       </div>
                                   );
                               })
@@ -572,7 +576,7 @@ export const Schedule: React.FC<ScheduleProps> = ({ role }) => {
 
             <div className="px-6 sm:px-10 py-6 sm:py-8 border-t border-white/10 bg-brand-950/40 flex gap-4">
                 <button type="button" onClick={() => setShowForm(false)} className="flex-1 py-4 text-slate-300 font-black hover:text-white rounded-2xl transition-all text-[10px] uppercase tracking-[0.3em] font-display">CANCEL</button>
-                <button onClick={handleSubmit} className="flex-[2] py-4 sm:py-5 bg-brand-950/400 text-white font-black rounded-2xl shadow-2xl shadow-brand-500/20 hover:scale-[1.02] transform active:scale-95 transition-all flex items-center justify-center gap-2 text-[10px] uppercase tracking-[0.3em] italic font-display border border-white/20">
+                <button onClick={handleSubmit} className="flex-[2] py-4 sm:py-5 bg-brand-primary text-white font-black rounded-2xl shadow-2xl shadow-brand-500/20 hover:scale-[1.02] transform active:scale-95 transition-all flex items-center justify-center gap-2 text-[10px] uppercase tracking-[0.3em] italic font-display border border-white/20">
                     <Save size={18} strokeWidth={3} /> {editingId ? 'UPDATE EVENT' : 'CREATE EVENT'}
                 </button>
             </div>

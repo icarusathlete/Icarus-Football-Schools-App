@@ -35,7 +35,7 @@ const SidebarItem: React.FC<NavItemComponentProps> = ({ item, activeTab, onTabCh
         : 'text-white/40 hover:bg-white/5 hover:text-white'
     }`}
   >
-    <item.icon className={`w-4 h-4 transition-all duration-300 ${activeTab === item.id ? 'text-white scale-110' : 'text-white/20 group-hover:text-white group-hover:scale-110'}`} strokeWidth={activeTab === item.id ? 2.5 : 2} />
+    <item.icon className={`w-4 h-4 transition-all duration-300 ${activeTab === item.id ? 'text-white scale-110' : 'text-white/60 group-hover:text-white group-hover:scale-110'}`} strokeWidth={activeTab === item.id ? 2.5 : 2} />
     <span className={`text-[9px] uppercase tracking-[0.2em] transition-all ${activeTab === item.id ? 'font-black text-white' : 'font-bold'}`}>{item.label}</span>
     {activeTab === item.id && (
       <div className="absolute right-4 w-1 h-1 rounded-full bg-brand-500 animate-pulse" />
@@ -66,14 +66,14 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({ section, activeTab, onT
     <div className="space-y-1 mb-2">
       <button 
         onClick={onToggle}
-        className="w-full flex items-center justify-between px-5 py-2 group cursor-pointer transition-colors"
+        className={`w-full flex items-center justify-between px-5 py-2 group cursor-pointer transition-all ${isExpanded ? 'border-b border-brand-accent/30 mb-2 pb-3' : 'mb-2'}`}
       >
-        <h3 className="text-[8px] font-black text-brand-500/40 group-hover:text-brand-500/70 uppercase tracking-[0.35em] transition-colors">
+        <h3 className={`text-[8px] font-black uppercase tracking-[0.35em] transition-colors ${isExpanded ? 'text-brand-accent' : 'text-brand-500/40 group-hover:text-brand-500/70'}`}>
           {section.title}
         </h3>
         <div className="p-1 rounded-md group-hover:bg-white/5 transition-colors">
             {isExpanded ? (
-              <ChevronDown size={10} className="text-brand-500/30 group-hover:text-brand-500/60" />
+              <ChevronDown size={10} className="text-brand-accent/50 group-hover:text-brand-accent" />
             ) : (
               <ChevronRight size={10} className="text-brand-500/30 group-hover:text-brand-500/60" />
             )}
@@ -182,8 +182,15 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange
     ];
 
     if (currentUser.role === 'player') {
-      sections.push({ id: 'core', title: 'ACADEMY CORE', items: [{ id: 'player-dashboard', label: 'Portal', icon: LayoutDashboard }, ...core] });
-      sections.push({ id: 'support', title: 'SUPPORT', items: [{ id: 'support', label: 'Support Hub', icon: LifeBuoy }] });
+      sections.push({ id: 'core', title: 'ACADEMY CORE', items: [
+        { id: 'player-dashboard', label: 'Portal', icon: LayoutDashboard }, 
+        { id: 'player-progress', label: 'My Progress', icon: BarChart3 },
+        ...core
+      ] });
+      sections.push({ id: 'support', title: 'SUPPORT', items: [
+        { id: 'message-coach', label: 'Message Coach', icon: FileText },
+        { id: 'support', label: 'Support Hub', icon: LifeBuoy }
+      ] });
       return sections;
     }
 
@@ -256,8 +263,8 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange
   const finalSegments = [...baseSegments, ...breadcrumbSegments];
 
   return (
-    <div className="min-h-screen bg-brand-bg flex flex-col md:flex-row relative overflow-x-hidden">
-      <aside className="hidden md:flex flex-col w-64 h-screen sticky top-0 z-20 bg-brand-secondary border-r border-white/5 shadow-2xl text-white">
+    <div className="min-h-screen bg-brand-bg flex flex-col lg:flex-row relative overflow-x-hidden">
+      <aside className="hidden lg:flex flex-col w-64 h-screen sticky top-0 z-20 bg-brand-secondary border-r border-white/5 shadow-2xl text-white">
         <div className="p-8 flex items-center gap-4 border-b border-white/5 relative overflow-hidden group">
           <div className="shrink-0 p-1.5 bg-brand-primary rounded-lg shadow-sm flex items-center justify-center w-10 h-10 ring-1 ring-white/10 overflow-hidden">
             {settings.logoUrl ? (
@@ -309,7 +316,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange
            </button>
         </div>
       </aside>
-      <header className="md:hidden bg-brand-secondary/80 backdrop-blur-xl border-b border-white/5 sticky top-0 z-30 px-6 py-4 flex items-center justify-between shadow-sm overflow-hidden">
+      <header className="lg:hidden bg-brand-secondary/80 backdrop-blur-xl border-b border-white/5 sticky top-0 z-30 px-6 py-4 flex items-center justify-between shadow-sm overflow-hidden">
          <div className="flex items-center gap-4 overflow-hidden flex-1">
             <div className="shrink-0 w-10 h-10 rounded-lg shadow-sm border border-white/10 flex items-center justify-center bg-brand-900 p-1 overflow-hidden ring-1 ring-white/10 active:scale-95 transition-transform">
                 {settings.logoUrl ? (
@@ -326,12 +333,12 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange
                 <span className="text-[8px] font-black text-white/40 uppercase tracking-[0.2em] mt-1 block truncate">Official Portal</span>
             </div>
          </div>
-         <button onClick={onLogout} className="shrink-0 p-3 bg-white/5 text-white/40 hover:text-red-500 rounded-xl transition-all border border-white/10 ml-4">
-            <LogOut size={20} />
+         <button onClick={onLogout} className="shrink-0 p-2 bg-white/5 text-white/40 hover:text-red-500 rounded-xl transition-all border border-white/10 ml-2">
+            <LogOut size={16} />
          </button>
       </header>
-      <main className="flex-1 min-h-[calc(100vh-64px)] md:h-screen md:overflow-y-auto pb-24 md:pb-8 relative custom-scrollbar scroll-smooth box-border transition-colors duration-500">
-        <div className="p-4 md:px-10 md:pt-6 md:pb-10 max-w-7xl mx-auto w-full">
+      <main className="flex-1 min-h-[calc(100vh-64px)] lg:h-screen lg:overflow-y-auto pb-24 lg:pb-8 relative custom-scrollbar scroll-smooth box-border transition-colors duration-500">
+        <div className="p-4 md:px-10 md:pt-6 md:pb-10 max-w-7xl mx-auto w-full lg:max-w-full xl:max-w-7xl">
           {/* Breadcrumb Bar - Refined Digital Stadium Style */}
           {finalSegments.length > 0 && (
             <div className="flex items-center gap-3 mb-6 animate-in fade-in slide-in-from-top-1 duration-500">
@@ -350,7 +357,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange
           {children}
         </div>
       </main>
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 pb-safe shadow-[0_-10px_40px_rgba(13,27,138,0.3)] bg-brand-secondary border-t border-white/10" >
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 pb-safe shadow-[0_-10px_40px_rgba(13,27,138,0.3)] bg-brand-secondary border-t border-white/10" >
         <div className="flex justify-around items-center h-20">
           {allNavItems.slice(0, 4).map(item => <BottomNavItem key={item.id} item={item} activeTab={activeTab} onTabChange={onTabChange} />)}
           {allNavItems.length > 4 && (
@@ -365,7 +372,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange
         </div>
       </nav>
       {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-50 backdrop-blur-3xl bg-brand-secondary/95 md:hidden flex flex-col p-8 overflow-y-auto animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-50 backdrop-blur-3xl bg-brand-secondary/95 lg:hidden flex flex-col p-8 overflow-y-auto animate-in fade-in duration-300">
            <div className="flex justify-between items-center mb-12">
                 <div>
                     <h2 className="text-3xl font-black italic tracking-tighter uppercase text-white leading-none">ADMIN <span className="text-brand-500">DASHBOARD</span></h2>

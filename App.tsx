@@ -79,6 +79,7 @@ const MessagingManager = lazyRetry(() => import('./components/MessagingManager')
 const SupportManager = lazyRetry(() => import('./components/SupportManager').then(m => ({ default: m.SupportManager })));
 const KitInventory = lazyRetry(() => import('./components/KitInventory').then(m => ({ default: m.KitInventory })));
 const GuestDashboard = lazyRetry(() => import('./components/GuestDashboard').then(m => ({ default: m.GuestDashboard })));
+const CoachMessageManager = lazyRetry(() => import('./components/CoachMessageManager').then(m => ({ default: m.CoachMessageManager })));
 
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -173,9 +174,9 @@ const App: React.FC = () => {
     if (!currentUser) return null;
 
     switch (activeTab) {
-      case 'schedule': return <Schedule role={currentUser.role} />;
+      case 'schedule': return <Schedule currentUser={currentUser} />;
       case 'notices': return <NoticeBoard role={currentUser.role} />;
-      case 'leaderboard': return <Leaderboard role={currentUser.role} />;
+      case 'leaderboard': return <Leaderboard role={currentUser.role} currentUser={currentUser} />;
       case 'team': return <Team currentUser={currentUser} />;
       case 'coach': return <CoachAttendance />;
       case 'matches': return <MatchManager />;
@@ -190,8 +191,10 @@ const App: React.FC = () => {
       case 'players': return <PlayerManager onBreadcrumbChange={setBreadcrumbSegments} />;
       case 'inventory': return <KitInventory />;
       case 'player-dashboard': return <PlayerPortal user={currentUser} />;
+      case 'player-progress': return <PlayerPortal user={currentUser} initialSection="progress" />;
       case 'broadcast': return <MessagingManager />;
       case 'support': return <SupportManager />;
+      case 'message-coach': return <CoachMessageManager currentUser={currentUser} />;
       case 'guest': return <GuestDashboard user={currentUser} onLogout={handleLogout} />;
       default: return <GuestDashboard user={currentUser} onLogout={handleLogout} />;
     }

@@ -1,4 +1,4 @@
-import { Player, AttendanceRecord, AttendanceStatus, User, Match, ScheduleEvent, Announcement, FeeRecord, AcademySettings, PlayerEvaluation, Venue, Batch, Drill, BroadcastMessage, SupportTicket, InventoryItem } from '../types';
+import { Player, AttendanceRecord, AttendanceStatus, User, Match, ScheduleEvent, Announcement, FeeRecord, AcademySettings, PlayerEvaluation, Venue, Batch, Drill, BroadcastMessage, SupportTicket, InventoryItem, Certificate, CoachMessage, WeeklyTip } from '../types';
 import { db, auth } from '../firebase';
 import { collection, doc, setDoc, deleteDoc, onSnapshot, getDoc, updateDoc, deleteField } from 'firebase/firestore';
 
@@ -72,6 +72,9 @@ const FINALIZED_ROLLCALLS_KEY = 'icarus_finalized_rollcalls';
 const MESSAGES_KEY = 'icarus_messages';
 const TICKETS_KEY = 'icarus_tickets';
 const INVENTORY_KEY = 'icarus_inventory';
+const CERTIFICATES_KEY = 'icarus_certificates';
+const COACH_MESSAGES_KEY = 'icarus_coach_messages';
+const WEEKLY_TIPS_KEY = 'icarus_weekly_tips';
 
 const generateId = () => Math.random().toString(36).substr(2, 9);
 
@@ -234,6 +237,9 @@ export const StorageService = {
     syncCollection('messages', MESSAGES_KEY);
     syncCollection('tickets', TICKETS_KEY);
     syncCollection('inventory', INVENTORY_KEY);
+    syncCollection('certificates', CERTIFICATES_KEY);
+    syncCollection('coach_messages', COACH_MESSAGES_KEY);
+    syncCollection('weekly_tips', WEEKLY_TIPS_KEY);
 
     if (user.role === 'admin' || user.role === 'coach') {
         syncCollection('users', USERS_KEY);
@@ -548,10 +554,24 @@ export const StorageService = {
     await StorageService._delete('users', id, USERS_KEY);
   },
 
-  updateUser: async (updatedUser: User) => {
-    await StorageService._write('users', updatedUser.id, updatedUser, USERS_KEY);
+  getCertificates: (): Certificate[] => StorageService._getFromCache<Certificate[]>(CERTIFICATES_KEY) || [],
+
+  sendCoachMessage: async (msg: Omit<CoachMessage, 'id' | 'timestamp' | 'read'>) => {
+    const id = generateId();
+    const newMsg: CoachMessage = {
+      ...msg,
+      id,
+      timestamp: Date.now(),
+      read: false
+    };
+    await StorageService._write('coach_messages', id, newMsg, COACH_MESSAGES_KEY);
+    return newMsg;
   },
-  
+
+  getCoachMessages: (): CoachMessage[] => StorageService._getFromCache<CoachMessage[]>(COACH_MESSAGES_KEY) || [],
+
+  getWeeklyTips: (): WeeklyTip[] => StorageService._getFromCache<WeeklyTip[]>(WEEKLY_TIPS_KEY) || [],
+
   getMatches: (): Match[] => StorageService._getFromCache<Match[]>(MATCHES_KEY) || [],
   
   addMatch: async (m: Omit<Match, 'id'>) => {
