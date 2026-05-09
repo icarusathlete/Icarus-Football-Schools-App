@@ -645,7 +645,13 @@ export const PlayerPortal: React.FC<PlayerPortalProps> = ({ user, initialSection
 
             {viewMode === 'scout' ? (
               <div className="animate-in slide-in-from-right-8 duration-500">
-                <EvaluationCard player={player} settings={settings} attendance={attendance} matches={matches} />
+                <EvaluationCard 
+                  player={player} 
+                  settings={settings} 
+                  attendance={attendance} 
+                  matches={matches} 
+                  onClose={() => setViewMode('overview')}
+                />
               </div>
             ) : (
                 <div className="space-y-10 animate-in slide-in-from-left-8 duration-500">

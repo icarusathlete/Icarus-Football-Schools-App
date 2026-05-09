@@ -296,6 +296,10 @@ export const EvaluationCard: React.FC<EvaluationCardProps> = ({ player, settings
             {/* LAYER 5: Grain */}
             <div className="absolute inset-0 v4-noise pointer-events-none z-[1]" />
 
+            {/* LAYER 6: HUD Scanning Line */}
+            <div className="scout-hud-line" style={{ top: '15%', animation: 'scanline-subtle 8s linear infinite' }} />
+            <div className="scout-hud-line" style={{ top: '85%', animation: 'scanline-subtle 12s linear infinite reverse' }} />
+
 
             {/* ═══ LEFT COLUMN — FIFA card + identity + stat circles (Z:8-9) ═══ */}
             {/* Thin vertical separator — blue tint */}
@@ -305,6 +309,12 @@ export const EvaluationCard: React.FC<EvaluationCardProps> = ({ player, settings
             <div className="absolute left-[1.5%] flex flex-col z-[8]" style={{ top: '450px', width: '340px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
                     <span style={{ padding: '4px 12px', background: '#C8FF00', color: '#050E25', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', borderRadius: '4px', fontFamily: 'Inter,sans-serif', letterSpacing: '0.08em' }}>{player.position || 'TBD'}</span>
+                    <div style={{ height: '18px', width: '1px', background: 'rgba(255,255,255,0.15)' }} />
+                    <span className="rank-badge" style={{ fontSize: '11px', fontWeight: 900, fontFamily: 'Oswald,sans-serif', letterSpacing: '0.1em' }}>
+                        {evalData.overallRating >= 90 ? 'LEGEND' : 
+                         evalData.overallRating >= 85 ? 'ELITE PROSPECT' : 
+                         evalData.overallRating >= 75 ? 'GOLD TALENT' : 'RISING STAR'}
+                    </span>
                     <div style={{ height: '18px', width: '1px', background: 'rgba(255,255,255,0.15)' }} />
                     <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)', fontFamily: 'Inter,sans-serif', letterSpacing: '0.08em', textTransform: 'uppercase' }}>#{player.memberId || '—'}</span>
                 </div>
