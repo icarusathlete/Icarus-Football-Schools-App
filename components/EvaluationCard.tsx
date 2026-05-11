@@ -641,10 +641,10 @@ export const EvaluationCard: React.FC<EvaluationCardProps> = ({ player, settings
                 <div className="absolute bottom-0 left-1/2 pointer-events-none" style={{ transform: 'translateX(-50%) scaleY(0.2) translateY(60%)', width: '500px', height: '500px', background: 'radial-gradient(circle, rgba(40,80,255,0.4) 0%, transparent 60%)', borderRadius: '50%' }} />
                 <div className="absolute bottom-0 left-1/2 pointer-events-none" style={{ transform: 'translateX(-50%) scaleY(0.15) translateY(65%)', width: '380px', height: '380px', background: 'radial-gradient(circle, rgba(200,255,0,0.25) 0%, transparent 65%)', borderRadius: '50%' }} />
                 
-                {player.actionPhotoUrl || player.scoutPhoto || evalData.actionPhotoUrl || evalData.actionImageUrl ? (
+                {player.actionPhotoUrl || evalData.actionPhotoUrl || player.scoutPhoto ? (
                     <div className="relative w-full h-full flex items-end justify-center">
                         <img
-                            src={player.actionPhotoUrl || player.scoutPhoto || evalData.actionPhotoUrl || evalData.actionImageUrl}
+                            src={player.actionPhotoUrl || evalData.actionPhotoUrl || player.scoutPhoto}
                             crossOrigin="anonymous"
                             className="h-[102%] w-auto object-contain object-bottom relative z-10"
                             style={{ filter: 'drop-shadow(0 0 50px rgba(0,0,0,0.9)) contrast(1.15) saturate(1.15) brightness(1.05)' }}

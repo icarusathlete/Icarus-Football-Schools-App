@@ -182,7 +182,8 @@ export const PlayerManager: React.FC = () => {
       setPreviewUrl(item.photoUrl || null);
       if (type === 'player') {
           const p = item as Player;
-          setScoutPreviewUrl(p.actionPhotoUrl || p.scoutPhoto || null);
+          // Always prefer actionPhotoUrl (Firebase URL) over legacy scoutPhoto
+          setScoutPreviewUrl(p.actionPhotoUrl || null);
           setEditingPlayer({ ...p });
       } else {
           setEditingCoach({ ...item as User });
@@ -246,28 +247,38 @@ export const PlayerManager: React.FC = () => {
 
   const handleScoutPhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
-      if (file) {
-          try {
-              const compressedDataUrl = await compressImage(file, 1000, 0.7); // Slightly higher quality for scout photo
-              setScoutPreviewUrl(compressedDataUrl);
-              
-              const blob = await fetch(compressedDataUrl).then(res => res.blob());
-              const fileObj = new File([blob], `scout_${Date.now()}.jpg`, { type: 'image/jpeg' });
-              const path = `players/${editingPlayer?.id || 'new'}/scout_${Date.now()}.jpg`;
-              
-              const downloadURL = await StorageService.uploadPhoto(fileObj, path);
+      if (!file || !editingPlayer) return;
+      try {
+          // Show a temporary local preview immediately so the UI feels instant
+          const tempBlob = URL.createObjectURL(file);
+          setScoutPreviewUrl(tempBlob);
 
-              if (editingPlayer) {
-                  setEditingPlayer({ 
-                      ...editingPlayer, 
-                      scoutPhoto: downloadURL,
-                      actionPhotoUrl: downloadURL // Keep in sync for EvaluationCard
-                  });
-              }
-          } catch (error) {
-              console.error("Error compressing/uploading image:", error);
-              alert("Failed to process image. Please try a different photo.");
-          }
+          const compressedDataUrl = await compressImage(file, 1000, 0.8);
+          const blob = await fetch(compressedDataUrl).then(res => res.blob());
+          // Use a fixed filename per player so each upload overwrites the previous file in Storage
+          const path = `players/${editingPlayer.id}/scout_action.jpg`;
+          const fileObj = new File([blob], 'scout_action.jpg', { type: 'image/jpeg' });
+
+          const downloadURL = await StorageService.uploadPhoto(fileObj, path);
+
+          // Update preview to the permanent Firebase URL
+          setScoutPreviewUrl(downloadURL);
+
+          // Build updated player — explicitly null out legacy scoutPhoto so it never bleeds through
+          const updatedPlayer: Player = {
+              ...editingPlayer,
+              actionPhotoUrl: downloadURL,
+              scoutPhoto: undefined, // clear legacy field
+          };
+          setEditingPlayer(updatedPlayer);
+
+          // Auto-persist immediately — don't wait for the Save button
+          await StorageService.updatePlayer(updatedPlayer);
+      } catch (error) {
+          console.error('Scout photo upload failed:', error);
+          // Revert preview on failure
+          setScoutPreviewUrl(editingPlayer.actionPhotoUrl || editingPlayer.scoutPhoto || null);
+          alert('Failed to upload photo. Please try again.');
       }
   };
 
@@ -654,9 +665,9 @@ export const PlayerManager: React.FC = () => {
                               <div className="relative group cursor-pointer mx-auto w-full h-40" onClick={() => scoutPhotoInputRef.current?.click()}>
                                   <div className="absolute -inset-2 bg-gradient-to-br from-brand-primary to-brand-accent rounded-[2rem] opacity-10 group-hover:opacity-20 transition-opacity blur-xl"></div>
                                   <div className="relative w-full h-full rounded-[1.5rem] overflow-hidden border-2 border-white/10 group-hover:border-brand-accent/40 z-10 bg-white/5 flex flex-col items-center justify-center transition-all duration-500">
-                                      {scoutPreviewUrl || editingPlayer.actionPhotoUrl || editingPlayer.scoutPhoto ? (
+                                      {scoutPreviewUrl || editingPlayer.actionPhotoUrl ? (
                                           <div className="relative w-full h-full p-4">
-                                            <img src={scoutPreviewUrl || editingPlayer.actionPhotoUrl || editingPlayer.scoutPhoto} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700" />
+                                            <img src={scoutPreviewUrl || editingPlayer.actionPhotoUrl} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700" />
                                             <div className="absolute inset-0 bg-brand-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                                 <Camera className="text-brand-accent" size={24} />
                                             </div>
