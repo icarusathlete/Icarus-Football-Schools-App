@@ -1270,7 +1270,7 @@ export const EvaluationManager: React.FC<EvaluationManagerProps> = ({ onBreadcru
         {/* SCOUT REPORT PREVIEW MODAL */}
         {previewPlayer && (
             <div className="fixed inset-0 z-[200] flex items-start justify-center p-4 md:p-12 bg-brand-950/90 backdrop-blur-3xl animate-in fade-in duration-500 overflow-y-auto">
-                <div className="w-full max-w-7xl animate-in zoom-in-95 duration-500 my-auto">
+                <div className="w-full max-w-7xl min-h-full flex flex-col justify-center animate-in zoom-in-95 duration-500">
                     <EvaluationCard 
                         player={previewPlayer} 
                         settings={StorageService.getSettings()} 

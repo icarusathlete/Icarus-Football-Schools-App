@@ -229,6 +229,30 @@ export const PlayerManager: React.FC = () => {
       }
   };
 
+  const handleDeleteCoachPhoto = async () => {
+      if (!editingCoach) return;
+      
+      const confirmMsg = "Are you sure you want to permanently delete the coach profile photo?";
+          
+      if (window.confirm(confirmMsg)) {
+          try {
+              const updatedCoach = {
+                  ...editingCoach,
+                  photoUrl: ''
+              };
+              setPreviewUrl(null);
+              if (fileInputRef.current) fileInputRef.current.value = '';
+              
+              setEditingCoach(updatedCoach);
+              await StorageService.updateUser(updatedCoach);
+              loadData();
+              alert("Photo deleted permanently. You can now upload a new one.");
+          } catch (error: any) {
+              alert(`Failed to delete photo: ${error.message}`);
+          }
+      }
+  };
+
   const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (file) {
@@ -831,6 +855,29 @@ export const PlayerManager: React.FC = () => {
 
                   <form onSubmit={saveCoachChanges} className="p-6 sm:p-8 md:p-12 space-y-8 md:space-y-12 overflow-y-auto custom-scrollbar text-left flex-1">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                          {/* Coach Profile Photo */}
+                          <div className="space-y-4 flex flex-col items-center md:col-span-2">
+                              <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.25em] italic text-center block w-full">Coach Profile Photo</label>
+                              <div className="relative group cursor-pointer mx-auto w-32 h-32" onClick={() => fileInputRef.current?.click()}>
+                                  <div className="absolute -inset-2 bg-gradient-to-br from-brand-accent to-brand-primary rounded-[2.5rem] opacity-20 group-hover:opacity-40 transition-opacity blur-xl"></div>
+                                  <div className="relative w-full h-full rounded-[2rem] overflow-hidden border-2 border-white/20 z-10">
+                                      <img src={previewUrl || editingCoach.photoUrl || '/default-avatar.png'} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                                      <div className="absolute inset-0 bg-brand-950/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                                          <Camera className="text-brand-accent" size={24} />
+                                      </div>
+                                  </div>
+                                  <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handlePhotoChange} />
+                              </div>
+                              {(previewUrl || editingCoach.photoUrl) && (
+                                  <button
+                                      type="button"
+                                      onClick={handleDeleteCoachPhoto}
+                                      className="mt-2 px-3 py-1.5 bg-red-500/10 border border-red-500/20 rounded-xl text-[9px] font-black text-red-400 uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all flex items-center gap-1.5 italic shadow-md"
+                                  >
+                                      <Trash2 size={10} /> Delete Photo
+                                  </button>
+                              )}
+                          </div>
                         <div className="space-y-3">
                            <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.25em] italic ml-1">LOGIN IDENTIFIER</label>
                            <input required className={getInputClass()} value={editingCoach.username} onChange={e => setEditingCoach({...editingCoach, username: e.target.value})} />

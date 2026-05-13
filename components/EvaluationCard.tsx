@@ -94,7 +94,10 @@ export const EvaluationCard: React.FC<EvaluationCardProps> = ({ player, settings
     const updateScale = () => {
       if (wrapperRef.current) {
         const containerWidth = wrapperRef.current.clientWidth;
-        const newScale = Math.min(1, containerWidth / 1600);
+        const isMobileDevice = window.innerWidth < 768;
+        // Set a minimum scale so the report remains readable on mobile
+        const minScale = isMobileDevice ? 0.45 : 0; 
+        const newScale = Math.max(minScale, Math.min(1, containerWidth / 1600));
         setScale(newScale);
       }
     };
@@ -195,8 +198,12 @@ export const EvaluationCard: React.FC<EvaluationCardProps> = ({ player, settings
         // Allow some time for fonts to settle and animations to finish
         await new Promise(r => setTimeout(r, 1200));
 
+        // Adjust scale based on screen size to prevent memory crashes on mobile
+        const isMobile = window.innerWidth < 768;
+        const canvasScale = isMobile ? 1.2 : 2;
+
         const canvas = await html2canvas(element, {
-            scale: 2,
+            scale: canvasScale,
             useCORS: true,
             allowTaint: false,
             backgroundColor: '#080C28',
@@ -223,7 +230,7 @@ export const EvaluationCard: React.FC<EvaluationCardProps> = ({ player, settings
             }
         });
 
-        const imgData = canvas.toDataURL('image/jpeg', 0.98);
+        const imgData = canvas.toDataURL('image/jpeg', 0.95);
         const pdf = new jsPDF({
             orientation: 'landscape',
             unit: 'px',
@@ -231,7 +238,26 @@ export const EvaluationCard: React.FC<EvaluationCardProps> = ({ player, settings
         });
 
         pdf.addImage(imgData, 'JPEG', 0, 0, 1600, 1000, undefined, 'FAST');
-        pdf.save(`${player?.fullName?.replace(/\s+/g, '_')}_SCOUT_REPORT.pdf`);
+        const fileName = `${player?.fullName?.replace(/\s+/g, '_') || 'Player'}_SCOUT_REPORT.pdf`;
+
+        // Use Blob approach for mobile compatibility (prevents base64 URL too large issues)
+        const blob = pdf.output('blob');
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        
+        // Trigger download
+        a.click();
+
+        // Cleanup
+        setTimeout(() => {
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }, 1000);
+
     } catch (error) {
         console.error("PDF Generation failed:", error);
         alert("Failed to generate PDF. Please ensure all assets are loaded and try again.");
@@ -822,8 +848,8 @@ export const EvaluationCard: React.FC<EvaluationCardProps> = ({ player, settings
         </div>
 
         {/* --- THE DOSSIER (1600x1000 LANDSCAPE AREA) --- */}
-        <div ref={wrapperRef} className="w-full flex justify-center overflow-hidden rounded-2xl border" style={{ height: `${1000 * scale}px`, background: '#080C28', borderColor: 'rgba(60,100,255,0.2)' }}>
-            <div style={{ width: `${1600 * scale}px`, height: `${1000 * scale}px`, position: 'relative' }}>
+        <div ref={wrapperRef} className="w-full flex md:justify-center justify-start overflow-x-auto overflow-y-hidden rounded-2xl border custom-scrollbar" style={{ height: `${1000 * scale}px`, background: '#080C28', borderColor: 'rgba(60,100,255,0.2)' }}>
+            <div style={{ width: `${1600 * scale}px`, height: `${1000 * scale}px`, position: 'relative', flexShrink: 0 }}>
                 {/* Securely positioned export container directly behind the visible one, sharing the exact same standard viewport context to prevent html2canvas black/blank generation */}
                 <div 
                     ref={pdfRef} 

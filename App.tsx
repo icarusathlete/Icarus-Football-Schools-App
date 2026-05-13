@@ -82,20 +82,10 @@ const GuestDashboard = lazyRetry(() => import('./components/GuestDashboard').the
 const CoachMessageManager = lazyRetry(() => import('./components/CoachMessageManager').then(m => ({ default: m.CoachMessageManager })));
 
 const App: React.FC = () => {
-  const isLocalhost = window.location.hostname === 'localhost';
-  const mockAdmin: User = {
-    id: 'mock-admin-id',
-    username: 'Mock Admin',
-    fullName: 'Mock Admin',
-    memberId: 'MOCK-ADMIN',
-    role: 'admin',
-    email: 'admin@example.com'
-  };
-
-  const [currentUser, setCurrentUser] = useState<User | null>(isLocalhost ? mockAdmin : null);
-  const [activeTab, setActiveTab] = useState<string>(isLocalhost ? 'players' : '');
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [activeTab, setActiveTab] = useState<string>('');
   const [breadcrumbSegments, setBreadcrumbSegments] = useState<string[]>([]);
-  const [isAuthReady, setIsAuthReady] = useState(isLocalhost);
+  const [isAuthReady, setIsAuthReady] = useState(false);
   const [isUserLoading, setIsUserLoading] = useState(false);
   const [settings, setSettings] = useState(StorageService.getSettings());
 
@@ -105,14 +95,6 @@ const App: React.FC = () => {
     // Immediate settings loading
     const handleSettingsChange = () => setSettings(StorageService.getSettings());
     window.addEventListener('settingsChanged', handleSettingsChange);
-
-    // AUTO-LOGIN BYPASS FOR LOCALHOST TESTING - FAST PATH
-    if (window.location.hostname === 'localhost') {
-      StorageService.startFirebaseSync(mockAdmin);
-      return () => {
-        window.removeEventListener('settingsChanged', handleSettingsChange);
-      };
-    }
 
     // Safety timeout: If Firebase doesn't signal readiness in 5s, proceed regardless
     const safetyTimeout = setTimeout(() => {
