@@ -751,6 +751,369 @@ export const EvaluationCard: React.FC<EvaluationCardProps> = ({ player, settings
 </>
 );
 
+  const renderMobileContent = () => {
+    return (
+      <div className="w-full flex flex-col gap-6 text-white pb-10">
+        <style>
+          {`
+            .mobile-scanline {
+              position: relative;
+              overflow: hidden;
+            }
+            .mobile-scanline::after {
+              content: "";
+              position: absolute;
+              top: 0; left: 0; right: 0; height: 100%;
+              background: linear-gradient(to bottom, transparent, rgba(0, 200, 255, 0.15), transparent);
+              animation: scanline-subtle 4s linear infinite;
+              pointer-events: none;
+            }
+          `}
+        </style>
+
+        {/* 1. HERO PROFILE CARD */}
+        <div className="relative rounded-2xl border border-white/10 bg-gradient-to-br from-[#0a1235]/95 to-[#050e25]/98 p-5 shadow-2xl overflow-hidden mobile-scanline">
+          {/* Tactical Corner Reticles */}
+          <div className="hud-reticle-corner corner-tl opacity-60" />
+          <div className="hud-reticle-corner corner-tr opacity-60" />
+          <div className="hud-reticle-corner corner-bl opacity-60" />
+          <div className="hud-reticle-corner corner-br opacity-60" />
+
+          <div className="flex flex-col gap-4">
+            {/* Top row: position badge + overall score */}
+            <div className="flex justify-between items-center z-10">
+              <div className="flex items-center gap-2">
+                <span className="px-3 py-1 bg-[#C3F629] text-[#050E25] text-[10px] font-black uppercase tracking-[0.1em] rounded font-mono">
+                  {player.position || 'TBD'}
+                </span>
+                <span className="text-[10px] text-white/40 tracking-wider font-mono">
+                  #{player.memberId || '—'}
+                </span>
+              </div>
+              
+              <div className="flex items-center gap-2 px-3 py-1 bg-[#00C8FF]/10 border border-[#00C8FF]/20 rounded-lg">
+                <span className="text-[10px] font-black text-[#00C8FF] uppercase tracking-wider font-mono">OVERALL</span>
+                <span className="text-2xl font-black text-[#C3F629] font-heading leading-none">
+                  {evalData.overallRating}
+                </span>
+              </div>
+            </div>
+
+            {/* Middle: Player Headshot + Name Grid */}
+            <div className="flex items-center gap-5 z-10">
+              {/* Headshot image */}
+              <div className="relative w-20 h-20 rounded-xl overflow-hidden border border-[#00C8FF]/30 shrink-0 bg-slate-950">
+                <img 
+                  src={player.headshotUrl || player.photoUrl || '/default-avatar.png'} 
+                  crossOrigin="anonymous"
+                  className="w-full h-full object-cover object-top filter contrast-125" 
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+              </div>
+
+              {/* Name and Rating Tier */}
+              <div className="flex flex-col">
+                <span className="text-xs text-white/40 uppercase tracking-widest font-mono">PLAYER DOSSIER</span>
+                <h3 className="text-xl font-black uppercase tracking-wide text-white leading-tight font-heading">
+                  {player.fullName}
+                </h3>
+                <span className="text-[9px] font-black text-[#C3F629] tracking-widest uppercase mt-1 italic">
+                  {evalData.overallRating >= 90 ? 'LEGENDARY PROSPECT' : 
+                   evalData.overallRating >= 85 ? 'ELITE PROSPECT' : 
+                   evalData.overallRating >= 75 ? 'GOLD TALENT' : 'RISING STAR'}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 2. CORE PERFORMANCE METRICS */}
+        <div className="relative rounded-2xl border border-white/10 bg-gradient-to-br from-[#0a1235]/95 to-[#050e25]/98 p-5 shadow-2xl overflow-hidden">
+          <div className="hud-reticle-corner corner-tl opacity-40" />
+          <div className="hud-reticle-corner corner-br opacity-40" />
+
+          {/* Technical Profile Section */}
+          <div className="flex flex-col mb-6">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-4 h-[2px] bg-[#C3F629]" />
+              <span className="text-[9px] font-black tracking-[0.15em] text-[#C3F629] uppercase font-mono">TECHNICAL PROFILE</span>
+            </div>
+            <div className="space-y-1">
+              <V4ProgressBar label="PASSING ACCURACY" value={evalData.metrics?.passing || 0} color="#C3F629" />
+              <V4ProgressBar label="SHOOTING POWER" value={evalData.metrics?.shooting || 0} color="#C3F629" />
+              <V4ProgressBar label="BALL CONTROL" value={evalData.metrics?.juggling || 0} color="#C3F629" />
+              <V4ProgressBar label="WEAK FOOT ABILITY" value={evalData.metrics?.weakFoot || 0} color="#C3F629" />
+              <V4ProgressBar label="FIRST TOUCH" value={Math.round(((evalData.metrics?.passing||0) + (evalData.metrics?.juggling||0))/2)} color="#C3F629" />
+            </div>
+          </div>
+
+          <div className="h-[1px] w-full bg-white/5 my-4" />
+
+          {/* Physical Profile Section */}
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-4 h-[2px] bg-[#00C8FF]" />
+              <span className="text-[9px] font-black tracking-[0.15em] text-[#00C8FF] uppercase font-mono">PHYSICAL METRICS</span>
+            </div>
+            <div className="space-y-1">
+              <V4ProgressBar label="SPRINT SPEED" value={evalData.timeTrials?.speed || 0} max={10} inverse unit="s" color="#00D4FF" />
+              <V4ProgressBar label="AGILITY TRIAL" value={evalData.timeTrials?.agility || 0} max={18} inverse unit="s" color="#00D4FF" />
+              <V4ProgressBar label="DRIBBLING SPEED" value={evalData.timeTrials?.dribbling || 0} max={22} inverse unit="s" color="#00D4FF" />
+              <V4ProgressBar label="CARDIO ENDURANCE" value={evalData.metrics?.beepTest || 0} max={20} unit="" color="#00D4FF" />
+            </div>
+          </div>
+        </div>
+
+        {/* 3. DYNAMIC RADAR CHART & SCOUT PHOTOS */}
+        <div className="grid grid-cols-1 gap-6">
+          
+          {/* Radar Chart Panel */}
+          <div className="relative rounded-2xl border border-white/10 bg-gradient-to-br from-[#0a1235]/95 to-[#050e25]/98 p-5 shadow-2xl flex flex-col items-center">
+            <div className="hud-reticle-corner corner-tr opacity-40" />
+            <div className="hud-reticle-corner corner-bl opacity-40" />
+
+            <div className="flex items-center gap-2 mb-4 self-start">
+              <div className="w-4 h-[2px] bg-[#00C8FF]" />
+              <span className="text-[9px] font-black tracking-[0.15em] text-white/60 uppercase font-mono">ABILITY RADAR</span>
+            </div>
+
+            {/* Responsive Radar Chart SVG */}
+            {(() => {
+              const cx = 110, cy = 110, r = 70;
+              const attrs = [
+                { label: 'PASSING',  value: Math.min(100, evalData.metrics?.passing  || 0) },
+                { label: 'SHOOTING', value: Math.min(100, evalData.metrics?.shooting || 0) },
+                { label: 'CONTROL',  value: Math.min(100, evalData.metrics?.juggling || 0) },
+                { label: 'WEAK FOOT',value: Math.min(100, evalData.metrics?.weakFoot || 0) },
+                { label: 'PHYSICAL', value: Math.min(100, evalData.metrics?.beepTest  || 0) },
+              ];
+              const n = attrs.length;
+              const angle = (i: number) => (Math.PI * 2 * i) / n - Math.PI / 2;
+              const pt = (i: number, radius: number) => ({
+                x: cx + radius * Math.cos(angle(i)),
+                y: cy + radius * Math.sin(angle(i)),
+              });
+              const rings = [0.25, 0.5, 0.75, 1.0];
+              const dataPath = attrs.map((a, i) => {
+                const p = pt(i, (a.value / 100) * r);
+                return `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`;
+              }).join(' ') + 'Z';
+              return (
+                <div className="w-full flex justify-center items-center py-2 scale-[1.05]">
+                  <svg width="220" height="220" viewBox="0 0 220 220" className="mx-auto overflow-visible">
+                    {/* Grid rings */}
+                    {rings.map((ring, ri) => {
+                      const pts = attrs.map((_, i) => pt(i, r * ring));
+                      const d = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ') + 'Z';
+                      return <path key={ri} d={d} fill="none" stroke={ri === 3 ? 'rgba(195,246,41,0.25)' : 'rgba(255,255,255,0.06)'} strokeWidth={ri === 3 ? 1.5 : 1} />;
+                    })}
+                    {/* Axis lines */}
+                    {attrs.map((_, i) => {
+                      const p = pt(i, r);
+                      return <line key={i} x1={cx} y1={cy} x2={p.x} y2={p.y} stroke="rgba(255,255,255,0.08)" strokeWidth="1" />;
+                    })}
+                    {/* Data fill */}
+                    <path d={dataPath} fill="rgba(195,246,41,0.12)" stroke="#C3F629" strokeWidth="1.5" strokeLinejoin="round" />
+                    {/* Data dots */}
+                    {attrs.map((a, i) => {
+                      const p = pt(i, (a.value / 100) * r);
+                      return <circle key={i} cx={p.x} cy={p.y} r="3" fill="#C3F629" stroke="#080C28" strokeWidth="1.2" />;
+                    })}
+                    {/* Axis labels with values */}
+                    {attrs.map((a, i) => {
+                      const lp = pt(i, r + 16);
+                      const isLeft = lp.x < cx;
+                      const textAnchor = Math.abs(lp.x - cx) < 10 ? 'middle' : isLeft ? 'end' : 'start';
+                      return (
+                        <g key={i}>
+                          <text x={lp.x} y={lp.y - 3} textAnchor={textAnchor}
+                            style={{ fontSize: '7.5px', fontWeight: 700, fill: 'rgba(255,255,255,0.7)', fontFamily: 'Inter,sans-serif', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                            {a.label}
+                          </text>
+                          <text x={lp.x} y={lp.y + 7} textAnchor={textAnchor}
+                            style={{ fontSize: '10.5px', fill: '#C3F629', fontFamily: 'Oswald,sans-serif', fontWeight: 800 }}>
+                            {a.value}
+                          </text>
+                        </g>
+                      );
+                    })}
+                    {/* Center label */}
+                    <text x={cx} y={cy - 4} textAnchor="middle" style={{ fontSize: '16px', fill: 'white', fontFamily: 'Oswald,sans-serif', fontWeight: 700 }}>{evalData.overallRating}</text>
+                    <text x={cx} y={cy + 8} textAnchor="middle" style={{ fontSize: '6.5px', fill: 'rgba(255,255,255,0.35)', fontFamily: 'Inter,sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>OVERALL</text>
+                  </svg>
+                </div>
+              );
+            })()}
+          </div>
+
+          {/* Player Photo Card */}
+          <div className="relative rounded-2xl border border-white/10 bg-gradient-to-br from-[#0a1235]/95 to-[#050e25]/98 p-5 shadow-2xl overflow-hidden flex flex-col items-center">
+            <div className="hud-reticle-corner corner-tl opacity-40" />
+            <div className="hud-reticle-corner corner-br opacity-40" />
+
+            <div className="flex items-center gap-2 mb-4 self-start">
+              <div className="w-4 h-[2px] bg-[#C3F629]" />
+              <span className="text-[9px] font-black tracking-[0.15em] text-white/60 uppercase font-mono">SCOUT FIELD PHOTO</span>
+            </div>
+
+            {/* Photo Container */}
+            <div className="relative w-full h-[320px] rounded-xl overflow-hidden border border-white/10 bg-slate-950 flex items-center justify-center shrink-0">
+              <div className="absolute top-4 left-4 w-6 h-6 border-t border-l border-[#00C8FF]/40" />
+              <div className="absolute top-4 right-4 w-6 h-6 border-t border-r border-[#00C8FF]/40" />
+              <div className="absolute bottom-4 left-4 w-6 h-6 border-b border-l border-[#00C8FF]/40" />
+              <div className="absolute bottom-4 right-4 w-6 h-6 border-b border-r border-[#00C8FF]/40" />
+
+              {player.actionPhotoUrl || evalData.actionPhotoUrl || player.scoutPhoto ? (
+                <div className="relative w-full h-full flex items-end justify-center">
+                  <img
+                    src={player.actionPhotoUrl || evalData.actionPhotoUrl || player.scoutPhoto}
+                    crossOrigin="anonymous"
+                    className="h-full w-auto object-contain object-bottom relative z-10"
+                    style={{ filter: 'drop-shadow(0 0 30px rgba(0,0,0,0.85))' }}
+                  />
+                  <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black/80 to-transparent z-[11]" />
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center text-white/20 gap-3">
+                  <Camera size={48} />
+                  <span className="text-[8px] font-black tracking-widest uppercase">PHOTO NOT CONFIGURED</span>
+                </div>
+              )}
+
+              {/* Identity Lock Overlay */}
+              <div className="absolute bottom-4 left-4 z-20 flex flex-col gap-0.5">
+                <span className="text-[8px] text-[#00C8FF] font-black font-mono tracking-wider">REF ID: {player.memberId || 'UNKNOWN'}</span>
+                <span className="text-[6.5px] text-white/40 font-mono">COORD SYS: ACTIVE</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 4. COACH DEBRIEF ASSESSMENT */}
+        <div className={`relative rounded-2xl border transition-all duration-300 p-5 shadow-2xl overflow-hidden ${
+          isEditingRemarks 
+            ? 'border-[#00D4FF]/40 ring-1 ring-[#00D4FF]/20 bg-gradient-to-br from-[#0c1b48]/95 to-[#04091a]/98' 
+            : 'border-white/10 bg-gradient-to-br from-[#0a1235]/95 to-[#050e25]/98'
+        }`}>
+          <div className="hud-reticle-corner corner-tl opacity-40" />
+          <div className="hud-reticle-corner corner-br opacity-40" />
+
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className={`w-4 h-[2px] ${isEditingRemarks ? 'bg-[#00D4FF]' : 'bg-[#00D4FF]/60'}`} />
+              <span className={`text-[9px] font-black tracking-[0.15em] uppercase font-mono ${isEditingRemarks ? 'text-[#00D4FF]' : 'text-[#00D4FF]/80'}`}>
+                COACH ASSESSMENT
+              </span>
+            </div>
+            {isEditingRemarks && (
+              <span className="text-[7.5px] text-[#C3F629] font-black uppercase tracking-wider animate-pulse">ACTIVE EDIT</span>
+            )}
+          </div>
+
+          <div className="text-sm font-medium leading-relaxed font-sans text-white/90">
+            {isEditingRemarks ? (
+              <div className="flex flex-col gap-3">
+                <textarea
+                  className="w-full h-44 bg-black/60 border border-white/10 rounded-xl p-4 text-xs text-white/95 focus:border-[#00D4FF]/60 focus:ring-1 focus:ring-[#00D4FF]/30 outline-none resize-none font-medium leading-relaxed placeholder:text-white/10"
+                  value={editedRemarks}
+                  onChange={(e) => setEditedRemarks(e.target.value)}
+                  placeholder="Analyze player performance, tactical discipline, and growth trajectory..."
+                  spellCheck={false}
+                />
+                <button
+                  onClick={handleSaveRemarks}
+                  disabled={isSavingRemarks || saveSuccess}
+                  className={`w-full py-3.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 ${
+                    saveSuccess 
+                      ? 'bg-[#C3F629] text-[#050E25]' 
+                      : 'bg-[#00D4FF] text-white hover:bg-white hover:text-[#050E25]'
+                  }`}
+                >
+                  {isSavingRemarks ? (
+                    <Loader2 className="animate-spin" size={14} />
+                  ) : saveSuccess ? (
+                    <Zap size={14} fill="currentColor" />
+                  ) : (
+                    <Shield size={14} />
+                  )}
+                  {isSavingRemarks ? 'SAVING DATA...' : saveSuccess ? 'REPORT SAVED' : 'SAVE ASSESSMENT'}
+                </button>
+              </div>
+            ) : (evalData.coachRemarks || editedRemarks) ? (
+              <div className="p-3 rounded-xl bg-black/30 border border-white/5 font-sans italic text-white/80 leading-relaxed text-xs">
+                <span className="text-[#00D4FF] font-black font-mono not-italic mr-2">/</span>
+                {evalData.coachRemarks || editedRemarks}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-6 opacity-30 gap-2">
+                <Activity size={24} />
+                <span className="text-[8px] font-black tracking-widest uppercase font-mono">AWAITING TACTICAL DEBRIEF...</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 5. DEVELOPMENT AREAS LIST */}
+        <div className="relative rounded-2xl border border-white/10 bg-gradient-to-br from-[#0a1235]/95 to-[#050e25]/98 p-5 shadow-2xl overflow-hidden">
+          <div className="hud-reticle-corner corner-tr opacity-40" />
+          <div className="hud-reticle-corner corner-bl opacity-40" />
+
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-4 h-[2px] bg-[#C3F629]" />
+            <span className="text-[9px] font-black tracking-[0.15em] text-[#C3F629] uppercase font-mono">DEVELOPMENT AREAS</span>
+          </div>
+
+          <ul className="flex flex-col gap-3">
+            {(evalData.developmentAreas?.length ? evalData.developmentAreas : ['Requires tactical maturation', 'Positional discipline']).slice(0, 3).map((area, i) => (
+              <li key={i} className="flex items-start gap-2.5 p-2.5 bg-white/5 rounded-lg border border-white/5">
+                <span className="text-[#C3F629] text-xs leading-none">▸</span>
+                <span className="text-xs text-white/90 leading-relaxed font-sans">{area}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* 6. SYSTEM METADATA BIO STRIP */}
+        <div className="relative rounded-2xl border border-white/10 bg-black/40 p-5 shadow-xl flex flex-col gap-4 font-mono text-[9px] text-white/60">
+          <div className="hud-reticle-corner corner-tl opacity-20" />
+          <div className="hud-reticle-corner corner-br opacity-20" />
+
+          <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+            <div className="flex justify-between border-b border-white/5 pb-1">
+              <span className="text-white/30 uppercase">HEIGHT:</span>
+              <span className="text-white font-bold">{evalData.height || '--'} CM</span>
+            </div>
+            <div className="flex justify-between border-b border-white/5 pb-1">
+              <span className="text-white/30 uppercase">WEIGHT:</span>
+              <span className="text-white font-bold">{evalData.weight || '--'} KG</span>
+            </div>
+            <div className="flex justify-between border-b border-white/5 pb-1">
+              <span className="text-white/30 uppercase">BIRTH DATE:</span>
+              <span className="text-white font-bold">{formatDate(player.dateOfBirth)}</span>
+            </div>
+            <div className="flex justify-between border-b border-white/5 pb-1">
+              <span className="text-white/30 uppercase">ACADEMY:</span>
+              <span className="text-white font-bold truncate max-w-[100px]">{settings.name || 'STAFF'}</span>
+            </div>
+            <div className="flex justify-between border-b border-white/5 pb-1">
+              <span className="text-white/30 uppercase">BATCH:</span>
+              <span className="text-white font-bold">{player.dateOfBirth ? `U-${new Date().getFullYear() - new Date(player.dateOfBirth).getFullYear()}` : 'U-12'}</span>
+            </div>
+            <div className="flex justify-between border-b border-white/5 pb-1">
+              <span className="text-white/30 uppercase">LOCATION:</span>
+              <span className="text-white font-bold">NOIDA, IN</span>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1 border-t border-white/5 pt-2 text-center text-[8px]">
+            <span className="text-white/30 uppercase">ASSESSING COACH</span>
+            <span className="text-[#C3F629] font-bold uppercase tracking-wider">{evalData.coachName || 'STAFF'}</span>
+            <span className="text-white/20 mt-0.5">{formatDate(evalData.evaluationDate || new Date())}</span>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -856,23 +1219,63 @@ export const EvaluationCard: React.FC<EvaluationCardProps> = ({ player, settings
             )}
         </div>
 
-        {/* --- THE DOSSIER (1600x1000 LANDSCAPE AREA) --- */}
-        <div ref={wrapperRef} className="w-full flex md:justify-center justify-start overflow-x-auto overflow-y-hidden rounded-2xl border custom-scrollbar" style={{ height: `${1000 * scale}px`, background: '#080C28', borderColor: 'rgba(60,100,255,0.2)' }}>
-            <div style={{ width: `${1600 * scale}px`, height: `${1000 * scale}px`, position: 'relative', flexShrink: 0 }}>
-                {/* Securely positioned export container directly behind the visible one, sharing the exact same standard viewport context to prevent html2canvas black/blank generation */}
+        {/* --- THE DOSSIER VIEW (DYNAMIC BY SCREEN SIZE) --- */}
+        {!isMobile ? (
+            /* Desktop scaled 1600x1000 viewport view */
+            <div ref={wrapperRef} className="w-full flex justify-center overflow-x-auto overflow-y-hidden rounded-2xl border custom-scrollbar" style={{ height: `${1000 * scale}px`, background: '#080C28', borderColor: 'rgba(60,100,255,0.2)' }}>
+                <div style={{ width: `${1600 * scale}px`, height: `${1000 * scale}px`, position: 'relative', flexShrink: 0 }}>
+                    {/* Securely positioned export container directly behind the visible one, sharing the exact same standard viewport context to prevent html2canvas black/blank generation */}
+                    <div 
+                        ref={pdfRef} 
+                        id="premium-dossier-capture"
+                        style={{ 
+                            transform: `scale(${scale})`,
+                            transformOrigin: 'top left',
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '1600px', 
+                            height: '1000px', 
+                            background: '#080C28',
+                            zIndex: 0,
+                            opacity: 0.001,
+                            pointerEvents: 'none'
+                        }}
+                    >
+                        {renderDossierContent(true)}
+                    </div>
+
+                    <div 
+                        ref={cardRef} 
+                        data-report-container="true"
+                        style={{ 
+                            transform: `scale(${scale})`,
+                            transformOrigin: 'top left',
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            zIndex: 1
+                        }}
+                    >
+                        {renderDossierContent(false)}
+                    </div>
+                </div>
+            </div>
+        ) : (
+            /* Fully responsive Mobile Portrait View Flow */
+            <div className="w-full">
+                {/* Offscreen Landscape dossier rendered exclusively for html2canvas generation to maintain PDF quality on mobile */}
                 <div 
                     ref={pdfRef} 
                     id="premium-dossier-capture"
                     style={{ 
-                        transform: `scale(${scale})`,
-                        transformOrigin: 'top left',
                         position: 'absolute',
+                        left: '-9999px',
                         top: 0,
-                        left: 0,
                         width: '1600px', 
                         height: '1000px', 
                         background: '#080C28',
-                        zIndex: 0,
+                        zIndex: -100,
                         opacity: 0.001,
                         pointerEvents: 'none'
                     }}
@@ -880,22 +1283,9 @@ export const EvaluationCard: React.FC<EvaluationCardProps> = ({ player, settings
                     {renderDossierContent(true)}
                 </div>
 
-                <div 
-                    ref={cardRef} 
-                    data-report-container="true"
-                    style={{ 
-                        transform: `scale(${scale})`,
-                        transformOrigin: 'top left',
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        zIndex: 1
-                    }}
-                >
-                    {renderDossierContent(false)}
-                </div>
+                {renderMobileContent()}
             </div>
-        </div>
+        )}
     </div>
   );
 };
