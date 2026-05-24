@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Manrope:wght@300;400;500;600;700;800&family=Orbitron:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Manrope:wght@300;400;500;600;700;800&family=Orbitron:wght@400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -34,6 +34,7 @@
   --animate-pop: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   --animate-glow-pulse: glow-pulse 3s ease-in-out infinite;
   --animate-scan-line-fast: scan-line 2s linear infinite;
+  --animate-rotate-prompt: rotate-prompt 3s infinite ease-in-out;
 
   @keyframes progress-flow {
     0% { transform: translateX(-100%); }
@@ -83,6 +84,11 @@
     0% { filter: hue-rotate(0deg) brightness(1) drop-shadow(0 0 20px rgba(255, 0, 255, 0.5)); }
     50% { filter: hue-rotate(45deg) brightness(1.3) drop-shadow(0 0 40px rgba(255, 0, 255, 0.8)); }
     100% { filter: hue-rotate(0deg) brightness(1) drop-shadow(0 0 20px rgba(255, 0, 255, 0.5)); }
+  }
+
+  @keyframes rotate-prompt {
+    0%, 100% { transform: rotate(90deg); }
+    40%, 60% { transform: rotate(0deg); }
   }
 }
 
@@ -547,3 +553,73 @@ select option {
   transform: rotate(-90deg);
   transform-origin: 50% 50%;
 }
+
+/* ── Premium Typography Override System ── */
+.style-clean-typography {
+  font-family: var(--font-sans);
+}
+
+.style-clean-typography h1,
+.style-clean-typography h2,
+.style-clean-typography h3,
+.style-clean-typography h4,
+.style-clean-typography h5,
+.style-clean-typography h6 {
+  font-family: var(--font-heading);
+  font-style: normal !important;
+}
+
+/* Override utility italic classes across the entire app for clean presentation */
+.style-clean-typography .italic,
+.style-clean-typography [class*="italic"] {
+  font-style: normal !important;
+}
+
+/* Allow explicit preservation of italics when needed (e.g. coach remarks) */
+.style-clean-typography .keep-italic,
+.style-clean-typography .keep-italic * {
+  font-style: italic !important;
+}
+
+/* Adjust stats badges and typography weights for maximum legibility */
+.style-clean-typography .stats-badge,
+.style-clean-typography .stats-badge-goal,
+.style-clean-typography .stats-badge-assist {
+  font-style: normal !important;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+/* Make table headers stand out professionally rather than tilted esports style */
+.style-clean-typography th {
+  font-style: normal !important;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* Add custom aesthetic premium logo animations and shadows */
+.logo-container-premium {
+  position: relative;
+  transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.logo-container-premium::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, var(--brand-primary) 0%, transparent 100%);
+  opacity: 0.4;
+  z-index: 0;
+  transition: opacity 0.5s ease;
+}
+
+.logo-container-premium:hover::before {
+  opacity: 1;
+}
+
+.logo-glow-effect {
+  filter: drop-shadow(0 0 15px var(--brand-primary));
+}
+

@@ -93,24 +93,25 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
             {/* Premium Center-Focus Branding */}
             <div className="mb-14 text-center relative z-10 animate-fade-in">
-                <div className="w-28 h-28 bg-white rounded-[2rem] inline-flex items-center justify-center border-4 border-white/10 mb-8 shadow-2xl relative group overflow-hidden transition-transform duration-700 hover:rotate-[10deg] p-6">
-                    <div className="absolute inset-0 bg-brand-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="w-36 h-36 bg-white/5 rounded-[2.5rem] inline-flex items-center justify-center border border-white/10 mb-8 shadow-[0_20px_50px_rgba(0,0,0,0.4)] relative group overflow-hidden transition-all duration-700 hover:scale-105 backdrop-blur-xl p-8">
+                    {/* Glowing background inside badge */}
+                    <div className="absolute inset-0 bg-gradient-to-tr from-brand-primary/10 to-transparent opacity-50" />
+                    <div className="absolute inset-0 border border-brand-primary/20 rounded-[2.5rem] scale-95 group-hover:scale-100 transition-all duration-500" />
                     {settings.logoUrl ? (
-                        <img src={settings.logoUrl} className="w-full h-full object-contain relative z-10" alt="Icarus Football" />
+                        <img src={settings.logoUrl} className="w-full h-full object-contain relative z-10 logo-glow-effect animate-float" alt="Logo" />
                     ) : (
-                        <Trophy className="w-14 h-14 text-brand-500 relative z-10" />
+                        <Trophy className="w-16 h-16 text-brand-primary relative z-10 animate-pulse" />
                     )}
                 </div>
                 
-                <div className="space-y-3">
-                    <h1 className="text-5xl md:text-8xl font-black tracking-tighter italic uppercase text-white leading-none flex flex-col md:flex-row items-center justify-center md:gap-4" 
-                        style={{ fontFamily: 'Space Grotesk' }}>
-                        <span>{settings.name.split(' ')[0]}</span> 
-                        <span className="text-brand-500">{settings.name.split(' ').slice(1).join(' ')}</span>
+                <div className="space-y-4">
+                    <h1 className="text-4xl md:text-7xl font-black tracking-widest uppercase text-white leading-none flex flex-col md:flex-row items-center justify-center md:gap-4 font-sans" 
+                        style={{ fontFamily: settings.fontFamily || 'Space Grotesk', letterSpacing: '0.12em' }}>
+                        <span>{settings.name}</span>
                     </h1>
-                    <div className="inline-flex items-center gap-4 bg-white/5 backdrop-blur-md px-6 py-3 rounded-full border border-white/10 shadow-xl overflow-hidden group">
-                        <div className="w-2 h-2 rounded-full bg-brand-500 animate-pulse shadow-[0_0_12px_#00C8FF]" />
-                        <p className="text-white uppercase tracking-[0.5em] text-[10px] font-black italic">Academy Management Interface • v2.0</p>
+                    <div className="inline-flex items-center gap-4 bg-white/5 backdrop-blur-md px-6 py-2.5 rounded-full border border-white/5 shadow-xl overflow-hidden group">
+                        <div className="w-2 h-2 rounded-full bg-brand-primary animate-pulse shadow-[0_0_12px_var(--brand-primary)]" />
+                        <p className="text-white uppercase tracking-[0.4em] text-[9px] font-black">Official Academy Portal</p>
                     </div>
                 </div>
             </div>

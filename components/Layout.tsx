@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Trophy, ClipboardCheck, Users, BarChart3, LogOut, Shield, LayoutDashboard, Calendar, FileText, Megaphone, DollarSign, Menu, X, MoreHorizontal, Medal, Gauge, Database, Download, CheckCircle2, UserCog, Shirt, Dumbbell, Swords, LifeBuoy, ChevronDown, ChevronRight, Package } from 'lucide-react';
+import { Trophy, ClipboardCheck, Users, BarChart3, LogOut, Shield, LayoutDashboard, Calendar, FileText, Megaphone, DollarSign, Menu, X, MoreHorizontal, Medal, Gauge, Database, Download, CheckCircle2, UserCog, Shirt, Dumbbell, Swords, LifeBuoy, ChevronDown, ChevronRight, Package, Palette } from 'lucide-react';
 import { User, Role, AcademySettings } from '../types';
 import { StorageService } from '../services/storageService';
 
@@ -179,6 +179,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange
       { id: 'inventory', label: 'Kit & Equipment', icon: Package },
       { id: 'finance', label: 'Finance Hub', icon: DollarSign },
       { id: 'users', label: 'Access Control', icon: Shield },
+      { id: 'branding', label: 'School Branding', icon: Palette },
     ];
 
     if (currentUser.role === 'player') {
@@ -265,22 +266,29 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange
   return (
     <div className="min-h-screen bg-brand-bg flex flex-col lg:flex-row relative overflow-x-hidden">
       <aside className="hidden lg:flex flex-col w-64 h-screen sticky top-0 z-20 bg-brand-secondary border-r border-white/5 shadow-2xl text-white">
-        <div className="p-8 flex items-center gap-4 border-b border-white/5 relative overflow-hidden group">
-          <div className="shrink-0 p-1.5 bg-brand-primary rounded-lg shadow-sm flex items-center justify-center w-10 h-10 ring-1 ring-white/10 overflow-hidden">
+        <div className="p-8 flex flex-col items-center text-center border-b border-white/5 relative overflow-hidden group">
+          {/* Subtle glowing brand spotlight background */}
+          <div className="absolute top-0 inset-x-0 h-20 bg-brand-primary/5 rounded-full blur-2xl group-hover:bg-brand-primary/10 transition-all duration-700 pointer-events-none" />
+          
+          {/* Enlarge and beautify the logo container */}
+          <div className="shrink-0 p-2.5 bg-white/5 rounded-[2rem] shadow-xl flex items-center justify-center w-20 h-20 ring-1 ring-white/10 overflow-hidden mb-4 logo-container-premium transition-transform duration-500 hover:scale-105 backdrop-blur-md">
             {settings.logoUrl ? (
-              <img src={settings.logoUrl} className="w-8 h-8 object-contain rounded-md" alt="Logo" />
+              <img src={settings.logoUrl} className="w-full h-full object-contain rounded-2xl logo-glow-effect" alt="Logo" />
             ) : (
-              <Trophy className="w-6 h-6 text-brand-500" />
+              <Trophy className="w-10 h-10 text-brand-primary animate-pulse" />
             )}
           </div>
-          <div className="overflow-hidden">
-            <h1 className="text-xs font-black tracking-tighter leading-tight uppercase text-white" 
-                style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+          <div className="w-full">
+            <h1 className="text-[10px] font-black tracking-widest leading-tight uppercase text-white drop-shadow-sm" 
+                style={{ letterSpacing: '0.15em' }}>
               {settings.name}
             </h1>
-          <p className="text-[8px] text-white/30 uppercase tracking-[0.25em] font-bold mt-1 leading-none">
-              {(['pending', 'rejected'].includes(currentUser.role) ? 'guest' : currentUser.role).toUpperCase()} PORTAL
-            </p>
+            <div className="mt-2.5 inline-flex items-center gap-1.5 bg-white/5 px-3 py-1 rounded-full border border-white/5 shadow-inner">
+              <span className="w-1.5 h-1.5 rounded-full bg-brand-primary animate-pulse shadow-[0_0_8px_var(--brand-primary)]" />
+              <span className="text-[7px] text-white/40 uppercase tracking-[0.2em] font-black leading-none">
+                {(['pending', 'rejected'].includes(currentUser.role) ? 'guest' : currentUser.role).toUpperCase()} PORTAL
+              </span>
+            </div>
           </div>
         </div>
         <div className="flex-1 overflow-y-auto py-6 px-3 space-y-2 custom-scrollbar">
@@ -318,19 +326,19 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange
       </aside>
       <header className="lg:hidden bg-brand-secondary/80 backdrop-blur-xl border-b border-white/5 sticky top-0 z-30 px-6 py-4 flex items-center justify-between shadow-sm overflow-hidden">
          <div className="flex items-center gap-4 overflow-hidden flex-1">
-            <div className="shrink-0 w-10 h-10 rounded-lg shadow-sm border border-white/10 flex items-center justify-center bg-brand-900 p-1 overflow-hidden ring-1 ring-white/10 active:scale-95 transition-transform">
+            <div className="shrink-0 w-12 h-12 rounded-xl shadow-lg border border-white/10 flex items-center justify-center bg-white/5 p-1.5 overflow-hidden ring-1 ring-white/5 active:scale-95 transition-transform backdrop-blur-md">
                 {settings.logoUrl ? (
-                    <img src={settings.logoUrl} className="w-8 h-8 object-contain rounded-md" />
+                    <img src={settings.logoUrl} className="w-full h-full object-contain rounded-md" />
                 ) : (
-                    <div className="p-2 rounded-lg" style={{ background: settings.primaryColor }}><Trophy className="w-6 h-6 text-white" /></div>
+                    <div className="p-2 rounded-lg" style={{ background: settings.primaryColor }}><Trophy className="w-5 h-5 text-white" /></div>
                 )}
             </div>
             <div className="overflow-hidden flex-1">
-                <span className="font-black text-white tracking-tighter uppercase text-sm block leading-none truncate" 
-                      style={{ fontFamily: settings.fontFamily }}>
+                <span className="font-black text-white tracking-widest uppercase text-xs block leading-none truncate" 
+                      style={{ letterSpacing: '0.1em' }}>
                     {settings.name}
                 </span>
-                <span className="text-[8px] font-black text-white/40 uppercase tracking-[0.2em] mt-1 block truncate">Official Portal</span>
+                <span className="text-[8px] font-black text-white/40 uppercase tracking-[0.2em] mt-1.5 block truncate">Official Portal</span>
             </div>
          </div>
          <button onClick={onLogout} className="shrink-0 p-2 bg-white/5 text-white/40 hover:text-red-500 rounded-xl transition-all border border-white/10 ml-2">

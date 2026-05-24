@@ -579,7 +579,7 @@ export const PlayerManager: React.FC = () => {
 
       {/* ── Coaching Staff ────────────────────────────────────────────────── */}
       {activeTab === 'coaches' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6 md:gap-8">
           {filteredCoaches.length > 0 ? filteredCoaches.map((coach) => (
             <div key={coach.id} className="glass-card rounded-[1.5rem] sm:rounded-[2.5rem] border border-white/10 overflow-hidden group hover:scale-[1.02] hover:-translate-y-2 transition-all duration-700 shadow-2xl relative flex flex-col h-full">
               <div className="green-light-bar" />

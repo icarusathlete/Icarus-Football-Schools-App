@@ -676,7 +676,8 @@ export const StorageService = {
       logoUrl: '',
       primaryColor: '#0066FF', // Tactical Blue
       secondaryColor: '#0D1B8A', // Deep Midnight
-      fontFamily: 'Orbitron' 
+      fontFamily: 'Outfit', // Set Outfit as the default brand font for great typography
+      typographyMode: 'clean'
     };
   },
   

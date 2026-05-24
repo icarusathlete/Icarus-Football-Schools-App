@@ -672,7 +672,7 @@ export const AdminDashboard: React.FC = () => {
       />
 
       {/* KPI grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-7 gap-4">
         {[
           { label: 'Total Enrolled', value: globalStats.players, sub: 'active players', icon: <Users size={16} />, color: '#CCFF00', accent: 'glass-card border-white/10 shadow-[0_15px_30px_rgba(13,27,138,0.2)]', showBar: true },
           { label: 'New This Month', value: globalStats.newThisMonth, sub: new Date().toLocaleString('en-IN', { month: 'long' }), icon: <CalendarPlus size={16} />, color: '#CCFF00', accent: 'glass-card border-white/10', showBar: false },

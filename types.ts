@@ -160,6 +160,7 @@ export interface AcademySettings {
   primaryColor: string;
   secondaryColor: string;
   fontFamily: string;
+  typographyMode?: 'clean' | 'esports';
 }
 
 export type EventType = 'training' | 'match' | 'social';

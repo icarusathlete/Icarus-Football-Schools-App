@@ -575,46 +575,46 @@ export const EvaluationManager: React.FC<EvaluationManagerProps> = ({ onBreadcru
           </div>
 
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6 md:gap-8">
                 {filteredPlayers.map(p => {
                     const hasDraft = StorageService.getDraft(p.id);
                     return (
                         <div 
                             key={p.id} 
                             onClick={() => handleSelectPlayer(p)}
-                            className="glass-card p-10 rounded-[3rem] border border-white/20 hover:border-brand-accent/40 cursor-pointer transition-all duration-500 shadow-xl hover:-translate-y-2 hover:scale-[1.02] flex flex-col gap-8 group relative overflow-hidden"
+                            className="glass-card p-6 sm:p-8 md:p-10 rounded-[2.5rem] border border-white/20 hover:border-brand-accent/40 cursor-pointer transition-all duration-500 shadow-xl hover:-translate-y-2 hover:scale-[1.02] flex flex-col gap-6 md:gap-8 group relative overflow-hidden"
                         >
                             <div className="absolute top-0 right-0 w-24 h-24 opacity-[0.05] group-hover:opacity-[0.1] transition-opacity -mr-8 -mt-8 rotate-12">
                                 <Zap size={120} className="text-white" />
                             </div>
 
-                            <div className="flex items-center gap-6">
-                                <div className="relative">
+                            <div className="flex items-center gap-4 md:gap-6">
+                                <div className="relative shrink-0">
                                     <div className="absolute inset-x-0 -bottom-2 h-4 bg-brand-accent/30 blur-lg opacity-0 group-hover:opacity-100 transition-opacity" />
-                                    <div className="w-20 h-20 rounded-[2rem] bg-brand-950 border-2 border-white/20 overflow-hidden relative z-10 transition-transform duration-500 group-hover:scale-105">
+                                    <div className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-[1.5rem] md:rounded-[2rem] bg-brand-950 border-2 border-white/20 overflow-hidden relative z-10 transition-transform duration-500 group-hover:scale-105">
                                         <img 
                                             src={p.photoUrl || FALLBACK_IMAGE} 
                                             onError={(e) => {e.currentTarget.src = FALLBACK_IMAGE}}
                                             className="w-full h-full object-cover" 
                                         />
                                     </div>
-                                    {hasDraft && <div className="absolute -top-2 -right-2 w-7 h-7 bg-brand-accent rounded-full border-4 border-brand-900 flex items-center justify-center z-20 shadow-lg"><Save size={12} className="text-brand-950" /></div>}
+                                    {hasDraft && <div className="absolute -top-2 -right-2 w-6 h-6 bg-brand-accent rounded-full border-2 border-brand-900 flex items-center justify-center z-20 shadow-lg"><Save size={10} className="text-brand-950" /></div>}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <h3 className="text-2xl font-black text-white truncate group-hover:text-brand-accent transition-colors uppercase italic tracking-tighter leading-none mb-2">{p.fullName}</h3>
-                                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-white/10 border border-white/10">
-                                        <Shield size={10} className="text-white/40" />
-                                        <span className="text-[9px] font-black text-white/50 uppercase tracking-[0.2em] italic">#{p.memberId}</span>
+                                    <h3 className="text-lg sm:text-xl md:text-2xl font-black text-white truncate group-hover:text-brand-accent transition-colors uppercase italic tracking-tighter leading-none mb-1.5 md:mb-2">{p.fullName}</h3>
+                                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 md:px-3 md:py-1 rounded-lg bg-white/10 border border-white/10">
+                                        <Shield size={9} className="text-white/40" />
+                                        <span className="text-[8px] md:text-[9px] font-black text-white/50 uppercase tracking-[0.2em] italic">#{p.memberId}</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="pt-8 border-t border-white/10 flex flex-col gap-6">
+                            <div className="pt-6 md:pt-8 border-t border-white/10 flex flex-col gap-4 md:gap-6">
                                 {p.evaluation ? (
                                     <div className="flex items-center justify-between">
                                         <div className="flex flex-col">
-                                            <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] italic mb-1">DATA_INDEX</span>
-                                            <span className="text-4xl font-black text-brand-accent italic tracking-tighter font-mono" style={{ fontFamily: 'Orbitron' }}>{p.evaluation.overallRating}<span className="text-xs ml-1 opacity-40 font-bold">/100</span></span>
+                                            <span className="text-[8px] md:text-[10px] font-black text-white/40 uppercase tracking-[0.3em] italic mb-1">DATA_INDEX</span>
+                                            <span className="text-3xl md:text-4xl font-black text-brand-accent italic tracking-tighter font-mono" style={{ fontFamily: 'Orbitron' }}>{p.evaluation.overallRating}<span className="text-[10px] md:text-xs ml-1 opacity-40 font-bold">/100</span></span>
                                         </div>
                                         <div className="flex gap-2">
                                             <button 
@@ -622,28 +622,28 @@ export const EvaluationManager: React.FC<EvaluationManagerProps> = ({ onBreadcru
                                                     e.stopPropagation();
                                                     setPreviewPlayer(p);
                                                 }}
-                                                className="w-12 h-12 bg-brand-accent/10 text-brand-accent/60 hover:text-brand-950 hover:bg-brand-accent rounded-2xl transition-all border border-brand-accent/20 flex items-center justify-center shadow-lg"
+                                                className="w-10 h-10 md:w-12 md:h-12 bg-brand-accent/10 text-brand-accent/60 hover:text-brand-950 hover:bg-brand-accent rounded-xl md:rounded-2xl transition-all border border-brand-accent/20 flex items-center justify-center shadow-lg"
                                             >
-                                                <Eye size={18} />
+                                                <Eye size={16} />
                                             </button>
                                             <button 
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     setShowDeleteConfirm(p.id);
                                                 }}
-                                                className="w-12 h-12 bg-red-500/10 text-red-500/60 hover:text-white hover:bg-red-500 rounded-2xl transition-all border border-red-500/20 flex items-center justify-center shadow-lg"
+                                                className="w-10 h-10 md:w-12 md:h-12 bg-red-500/10 text-red-500/60 hover:text-white hover:bg-red-500 rounded-xl md:rounded-2xl transition-all border border-red-500/20 flex items-center justify-center shadow-lg"
                                             >
-                                                <Trash2 size={18} />
+                                                <Trash2 size={16} />
                                             </button>
                                         </div>
                                     </div>
                                 ) : (
                                     <div className="flex items-center justify-between">
                                         <div className="flex flex-col">
-                                            <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] italic mb-1">DATA_INDEX</span>
-                                            <span className="text-4xl font-black text-white/20 italic tracking-tighter font-mono" style={{ fontFamily: 'Orbitron' }}>--<span className="text-xs ml-1 opacity-40 font-bold">/100</span></span>
+                                            <span className="text-[8px] md:text-[10px] font-black text-white/40 uppercase tracking-[0.3em] italic mb-1">DATA_INDEX</span>
+                                            <span className="text-3xl md:text-4xl font-black text-white/20 italic tracking-tighter font-mono" style={{ fontFamily: 'Orbitron' }}>--<span className="text-[10px] md:text-xs ml-1 opacity-40 font-bold">/100</span></span>
                                         </div>
-                                        <div className="bg-white/10 text-white/40 px-5 py-3 rounded-2xl text-[9px] font-black uppercase tracking-[0.3em] border border-white/10 italic">AWAITING</div>
+                                        <div className="bg-white/10 text-white/40 px-4 py-2.5 md:px-5 md:py-3 rounded-xl md:rounded-2xl text-[8px] md:text-[9px] font-black uppercase tracking-[0.3em] border border-white/10 italic">AWAITING</div>
                                     </div>
                                 )}
                             </div>

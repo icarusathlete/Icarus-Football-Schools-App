@@ -8,6 +8,7 @@ import { auth, db } from './firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { LoadingList } from './components/ui/LoadingSkeleton';
+import { OrientationGuard } from './components/ui/OrientationGuard';
 
 // Helper to retry lazy loading on failure (usually due to deployment/version mismatch)
 const lazyRetry = (importFn: () => Promise<any>) => 
@@ -80,6 +81,7 @@ const SupportManager = lazyRetry(() => import('./components/SupportManager').the
 const KitInventory = lazyRetry(() => import('./components/KitInventory').then(m => ({ default: m.KitInventory })));
 const GuestDashboard = lazyRetry(() => import('./components/GuestDashboard').then(m => ({ default: m.GuestDashboard })));
 const CoachMessageManager = lazyRetry(() => import('./components/CoachMessageManager').then(m => ({ default: m.CoachMessageManager })));
+const BrandingSettings = lazyRetry(() => import('./components/BrandingSettings').then(m => ({ default: m.BrandingSettings })));
 
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -155,9 +157,29 @@ const App: React.FC = () => {
       if (settingsData.primaryColor) root.style.setProperty('--brand-primary', settingsData.primaryColor);
       if (settingsData.secondaryColor) root.style.setProperty('--brand-secondary', settingsData.secondaryColor);
       
-      // Update font if needed (index.css currently uses Inter/Orbitron by default)
+      // Dynamic Google Font Injection & Tailwind variable assignment
       if (settingsData.fontFamily) {
-         root.style.fontFamily = `'${settingsData.fontFamily}', ${root.style.fontFamily}`;
+         root.style.setProperty('--font-sans', `"${settingsData.fontFamily}", ui-sans-serif, system-ui, sans-serif`);
+         root.style.setProperty('--font-heading', `"${settingsData.fontFamily}", sans-serif`);
+         root.style.setProperty('--font-display', `"${settingsData.fontFamily}", sans-serif`);
+         root.style.fontFamily = `"${settingsData.fontFamily}", ui-sans-serif, system-ui, sans-serif`;
+
+         // Dynamically append the Google Font link if it does not already exist
+         const fontId = `google-font-${settingsData.fontFamily.toLowerCase().replace(/\s+/g, '-')}`;
+         if (!document.getElementById(fontId)) {
+            const link = document.createElement('link');
+            link.id = fontId;
+            link.rel = 'stylesheet';
+            link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(settingsData.fontFamily)}:wght@300;400;500;600;700;800;900&display=swap`;
+            document.head.appendChild(link);
+         }
+      }
+
+      // Handle taming excessive italic typography
+      if (settingsData.typographyMode === 'clean') {
+         root.classList.add('style-clean-typography');
+      } else {
+         root.classList.remove('style-clean-typography');
       }
     };
 
@@ -194,6 +216,7 @@ const App: React.FC = () => {
       case 'evaluations': return <EvaluationManager onBreadcrumbChange={setBreadcrumbSegments} />;
       case 'training': return <TrainingManager />;
       case 'admin': return <AdminDashboard />;
+      case 'branding': return <BrandingSettings />;
       case 'users': return <UserManagement />;
       case 'register': return <PlayerRegistration />;
       case 'finance': return <FinanceManager />;
@@ -211,36 +234,44 @@ const App: React.FC = () => {
 
   if (!isAuthReady || isUserLoading) {
     return (
-      <div className="min-h-screen bg-brand-950 flex flex-col items-center justify-center p-12 overflow-hidden relative">
-        <div className="absolute inset-0 opacity-[0.03]" 
-             style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
-        
-        <div className="relative z-10 flex flex-col items-center max-w-sm w-full">
-          <div className="w-24 h-24 mb-12 relative">
-            <div className="absolute inset-0 border-4 border-white/5 rounded-[2rem] scale-110" />
-            <div className="absolute inset-0 border-t-4 border-brand-500 rounded-[2rem] animate-spin-slow shadow-[0_0_20px_rgba(0,200,255,0.3)]" />
-            <div className="absolute inset-4 bg-white/5 backdrop-blur-xl rounded-2xl flex items-center justify-center border border-white/10">
-              <div className="w-2 h-2 rounded-full bg-brand-500 animate-pulse" />
-            </div>
-          </div>
+      <>
+        <OrientationGuard />
+        <div className="min-h-screen bg-brand-950 flex flex-col items-center justify-center p-12 overflow-hidden relative">
+          <div className="absolute inset-0 opacity-[0.03]" 
+               style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
           
-          <div className="space-y-4 text-center w-full">
-            <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40 italic">System Initialization</h2>
-            <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
-              <div className="h-full bg-gradient-to-r from-brand-500 to-[#CCFF00] animate-progress-flow rounded-full w-2/3" />
+          <div className="relative z-10 flex flex-col items-center max-w-sm w-full">
+            <div className="w-24 h-24 mb-12 relative">
+              <div className="absolute inset-0 border-4 border-white/5 rounded-[2rem] scale-110" />
+              <div className="absolute inset-0 border-t-4 border-brand-500 rounded-[2rem] animate-spin-slow shadow-[0_0_20px_rgba(0,200,255,0.3)]" />
+              <div className="absolute inset-4 bg-white/5 backdrop-blur-xl rounded-2xl flex items-center justify-center border border-white/10">
+                <div className="w-2 h-2 rounded-full bg-brand-500 animate-pulse" />
+              </div>
             </div>
-            <div className="flex justify-between items-center px-1">
-              <p className="text-[8px] font-black text-white/20 uppercase tracking-widest italic">Node Status: Online</p>
-              <p className="text-[8px] font-black text-brand-500 uppercase tracking-widest italic animate-pulse">Syncing Identity...</p>
+            
+            <div className="space-y-4 text-center w-full">
+              <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40 italic">System Initialization</h2>
+              <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
+                <div className="h-full bg-gradient-to-r from-brand-500 to-[#CCFF00] animate-progress-flow rounded-full w-2/3" />
+              </div>
+              <div className="flex justify-between items-center px-1">
+                <p className="text-[8px] font-black text-white/20 uppercase tracking-widest italic">Node Status: Online</p>
+                <p className="text-[8px] font-black text-brand-500 uppercase tracking-widest italic animate-pulse">Syncing Identity...</p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </>
     );
   }
 
   if (!currentUser) {
-    return <Login onLogin={handleLoginSuccess} />;
+    return (
+      <>
+        <OrientationGuard />
+        <Login onLogin={handleLoginSuccess} />
+      </>
+    );
   }
 
   // Pending/rejected users go straight to the Layout with the guest tab — skip Onboarding
@@ -248,28 +279,36 @@ const App: React.FC = () => {
 
   // Intercept if profile is incomplete (admin/coach/player only)
   if (!isGuest && window.location.hostname !== 'localhost' && (!currentUser.fullName || !currentUser.memberId)) {
-    return <Onboarding user={currentUser} onComplete={(updated: any) => setCurrentUser(updated)} />;
+    return (
+      <>
+        <OrientationGuard />
+        <Onboarding user={currentUser} onComplete={(updated: any) => setCurrentUser(updated)} />
+      </>
+    );
   }
 
   return (
-    <Layout currentUser={currentUser} activeTab={activeTab} onTabChange={(tab) => { setActiveTab(tab); setBreadcrumbSegments([]); }} onLogout={handleLogout} breadcrumbSegments={breadcrumbSegments}>
-      <Suspense fallback={
-        <div className="p-8 animate-in fade-in duration-500">
-           <div className="flex items-center gap-4 mb-8">
-              <div className="w-12 h-12 bg-brand-800 rounded-xl animate-pulse" />
-              <div className="space-y-2">
-                 <div className="h-4 w-32 bg-brand-800 rounded animate-pulse" />
-                 <div className="h-3 w-48 bg-brand-800/50 rounded animate-pulse" />
-              </div>
-           </div>
-           <LoadingList count={3} />
-        </div>
-      }>
-        <ErrorBoundary>
-          {renderContent()}
-        </ErrorBoundary>
-      </Suspense>
-    </Layout>
+    <>
+      <OrientationGuard />
+      <Layout currentUser={currentUser} activeTab={activeTab} onTabChange={(tab) => { setActiveTab(tab); setBreadcrumbSegments([]); }} onLogout={handleLogout} breadcrumbSegments={breadcrumbSegments}>
+        <Suspense fallback={
+          <div className="p-8 animate-in fade-in duration-500">
+             <div className="flex items-center gap-4 mb-8">
+                <div className="w-12 h-12 bg-brand-800 rounded-xl animate-pulse" />
+                <div className="space-y-2">
+                   <div className="h-4 w-32 bg-brand-800 rounded animate-pulse" />
+                   <div className="h-3 w-48 bg-brand-800/50 rounded animate-pulse" />
+                </div>
+             </div>
+             <LoadingList count={3} />
+          </div>
+        }>
+          <ErrorBoundary>
+            {renderContent()}
+          </ErrorBoundary>
+        </Suspense>
+      </Layout>
+    </>
   );
 };
 
