@@ -623,3 +623,111 @@ select option {
   filter: drop-shadow(0 0 15px var(--brand-primary));
 }
 
+/* ==========================================================================
+   STADIUM ELITE: SLEEK & MODERN COMPACT ORGANIZATIONAL OVERRIDES
+   Reduces oversized margins, paddings, gaps, and border radiuses for a premium,
+   organized high-tech appearance.
+   ========================================================================== */
+
+/* Global container and card border radiuses compressed for sleek profile */
+.glass-card, .glass-card-alt, .surface-card {
+  border-radius: 1rem !important; /* Sleek 16px instead of bulky 24px */
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.03) !important;
+}
+
+/* Override large custom border radiuses in markup */
+[class*="rounded-[2.5rem]"] {
+  border-radius: 1.25rem !important; /* Compresses 40px to sleek 20px */
+}
+[class*="rounded-[2.5rem]"] img {
+  border-radius: 0.85rem !important;
+}
+[class*="rounded-[2rem]"] {
+  border-radius: 1rem !important; /* Compresses 32px to sleek 16px */
+}
+[class*="rounded-[2rem]"] img {
+  border-radius: 0.75rem !important;
+}
+[class*="rounded-3xl"] {
+  border-radius: 1rem !important;
+}
+[class*="rounded-2xl"] {
+  border-radius: 0.75rem !important;
+}
+[class*="rounded-xl"] {
+  border-radius: 0.5rem !important;
+}
+
+/* Compress massive paddings in the layout */
+.p-12, .p-10, .p-8 {
+  padding: 1.5rem !important; /* Tighter uniform padding (24px) */
+}
+.p-14, .lg\:p-14 {
+  padding: 1.75rem !important;
+}
+.md\:p-12, .md\:p-10, .md\:p-8, .sm\:p-8 {
+  padding: 1.5rem !important;
+}
+.px-10, .px-8, .px-12, .px-14 {
+  padding-left: 1.5rem !important;
+  padding-right: 1.5rem !important;
+}
+.py-10, .py-8, .py-12, .py-14 {
+  padding-top: 1.5rem !important;
+  padding-bottom: 1.5rem !important;
+}
+
+/* Compact global gap sizing */
+.gap-16, .lg\:gap-16, .xl\:gap-16 {
+  gap: 1.5rem !important; /* Shrinks 64px gaps to sleek 24px */
+}
+.gap-10, .lg\:gap-10, .xl\:gap-10 {
+  gap: 1.25rem !important; /* Shrinks 40px gaps to sleek 20px */
+}
+.gap-6, .gap-5 {
+  gap: 1rem !important;
+}
+
+/* Refined typography scales */
+h1 {
+  font-size: 2.25rem !important; /* 36px instead of oversized 60px */
+  letter-spacing: -0.03em !important;
+}
+h2 {
+  font-size: 1.5rem !important; /* 24px */
+  letter-spacing: -0.02em !important;
+}
+.text-4xl, .md\:text-5xl, .xl\:text-6xl {
+  font-size: 2.5rem !important;
+  line-height: 1.1 !important;
+}
+.text-5xl, .lg\:text-9xl {
+  font-size: 4rem !important; /* Sleeker score numbers */
+}
+
+/* Compresses excessive layout padding and margins */
+.space-y-10 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: 1.5rem !important; /* Less vertical whitespace */
+}
+.space-y-6 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 1rem !important;
+}
+.pb-32 {
+  padding-bottom: 5rem !important; /* Less excessive bottom space */
+}
+
+/* Sleeker table layout spacing */
+th, td {
+  padding: 0.75rem 1rem !important; /* Tighter cell padding */
+}
+tr {
+  transition: background-color 0.2s ease !important;
+}
+
+/* Re-balanced navigation heights and sizing */
+.h-20 {
+  height: 4.5rem !important; /* Compresses 80px bar to 72px */
+}
+

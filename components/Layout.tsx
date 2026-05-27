@@ -265,27 +265,27 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange
 
   return (
     <div className="min-h-screen bg-brand-bg flex flex-col lg:flex-row relative overflow-x-hidden">
-      <aside className="hidden lg:flex flex-col w-64 h-screen sticky top-0 z-20 bg-brand-secondary border-r border-white/5 shadow-2xl text-white">
-        <div className="p-8 flex flex-col items-center text-center border-b border-white/5 relative overflow-hidden group">
+      <aside className="hidden lg:flex flex-col w-60 h-screen sticky top-0 z-20 bg-brand-secondary border-r border-white/5 shadow-2xl text-white">
+        <div className="p-5 flex flex-col items-center text-center border-b border-white/5 relative overflow-hidden group">
           {/* Subtle glowing brand spotlight background */}
-          <div className="absolute top-0 inset-x-0 h-20 bg-brand-primary/5 rounded-full blur-2xl group-hover:bg-brand-primary/10 transition-all duration-700 pointer-events-none" />
+          <div className="absolute top-0 inset-x-0 h-16 bg-brand-primary/5 rounded-full blur-2xl group-hover:bg-brand-primary/10 transition-all duration-700 pointer-events-none" />
           
           {/* Enlarge and beautify the logo container */}
-          <div className="shrink-0 p-2.5 bg-white/5 rounded-[2rem] shadow-xl flex items-center justify-center w-20 h-20 ring-1 ring-white/10 overflow-hidden mb-4 logo-container-premium transition-transform duration-500 hover:scale-105 backdrop-blur-md">
+          <div className="shrink-0 p-2 bg-white/5 rounded-2xl shadow-xl flex items-center justify-center w-14 h-14 ring-1 ring-white/10 overflow-hidden mb-3 logo-container-premium transition-transform duration-500 hover:scale-105 backdrop-blur-md">
             {settings.logoUrl ? (
-              <img src={settings.logoUrl} className="w-full h-full object-contain rounded-2xl logo-glow-effect" alt="Logo" />
+              <img src={settings.logoUrl} className="w-full h-full object-contain rounded-xl logo-glow-effect" alt="Logo" />
             ) : (
-              <Trophy className="w-10 h-10 text-brand-primary animate-pulse" />
+              <Trophy className="w-8 h-8 text-brand-primary animate-pulse" />
             )}
           </div>
           <div className="w-full">
-            <h1 className="text-[10px] font-black tracking-widest leading-tight uppercase text-white drop-shadow-sm" 
-                style={{ letterSpacing: '0.15em' }}>
+            <h1 className="text-[9px] font-black tracking-widest leading-tight uppercase text-white drop-shadow-sm" 
+                style={{ letterSpacing: '0.12em' }}>
               {settings.name}
             </h1>
-            <div className="mt-2.5 inline-flex items-center gap-1.5 bg-white/5 px-3 py-1 rounded-full border border-white/5 shadow-inner">
-              <span className="w-1.5 h-1.5 rounded-full bg-brand-primary animate-pulse shadow-[0_0_8px_var(--brand-primary)]" />
-              <span className="text-[7px] text-white/40 uppercase tracking-[0.2em] font-black leading-none">
+            <div className="mt-2 inline-flex items-center gap-1.5 bg-white/5 px-2.5 py-0.5 rounded-full border border-white/5 shadow-inner">
+              <span className="w-1 h-1 rounded-full bg-brand-primary animate-pulse shadow-[0_0_8px_var(--brand-primary)]" />
+              <span className="text-[6.5px] text-white/40 uppercase tracking-[0.18em] font-black leading-none">
                 {(['pending', 'rejected'].includes(currentUser.role) ? 'guest' : currentUser.role).toUpperCase()} PORTAL
               </span>
             </div>
@@ -306,20 +306,20 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange
 
         {/* Data Persistence Area - Only for Admins */}
 
-        <div className="p-6 border-t border-white/5 bg-white/5">
-            <div className="flex items-center gap-3 mb-5 px-1">
-               <div className="w-8 h-8 rounded-lg bg-brand-primary flex items-center justify-center text-brand-secondary shadow-sm transition-transform hover:scale-110">
-                 <span className="text-[10px] font-black">{currentUser?.username?.[0]?.toUpperCase() || 'U'}</span>
+        <div className="p-4 border-t border-white/5 bg-white/5">
+            <div className="flex items-center gap-2.5 mb-4 px-1">
+               <div className="w-7 h-7 rounded-lg bg-brand-primary flex items-center justify-center text-brand-secondary shadow-sm transition-transform hover:scale-110">
+                 <span className="text-[9px] font-black">{currentUser?.username?.[0]?.toUpperCase() || 'U'}</span>
                </div>
                <div className="overflow-hidden">
-                 <p className="text-[9px] font-black text-white truncate uppercase tracking-wider">{currentUser?.username || 'User'}</p>
-                <p className="text-[7px] font-bold text-white/30 uppercase tracking-[0.2em] mt-0.5">
+                 <p className="text-[8px] font-black text-white truncate uppercase tracking-wider">{currentUser?.username || 'User'}</p>
+                <p className="text-[6.5px] font-bold text-white/30 uppercase tracking-[0.2em] mt-0.5">
                     {(['pending', 'rejected'].includes(currentUser.role) ? 'guest' : currentUser.role).toUpperCase()} PORTAL
                   </p>
               </div>
            </div>
-           <button onClick={onLogout} className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-white/5 hover:bg-red-500/5 hover:text-red-500 hover:border-red-500/10 transition-all text-[8px] font-black uppercase tracking-[0.25em] text-white/20">
-             <LogOut size={12} />
+           <button onClick={onLogout} className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-white/5 hover:bg-red-500/5 hover:text-red-500 hover:border-red-500/10 transition-all text-[7.5px] font-black uppercase tracking-[0.25em] text-white/20">
+             <LogOut size={10} />
              <span>Sign Out</span>
            </button>
         </div>
