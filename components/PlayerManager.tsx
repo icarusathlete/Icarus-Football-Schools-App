@@ -7,7 +7,8 @@ import {
     Phone, MapPin, Layers, Map, Filter, Camera, 
     Shield, Check, Key, Activity, Users, History, 
     Zap, ChevronRight, MoreVertical, Target,
-    Database, CheckCircle2, Download, ChevronDown
+    Database, CheckCircle2, Download, ChevronDown,
+    Settings, Plus
 } from 'lucide-react';
 import { ConfirmModal } from './ConfirmModal';
 import { PlayerPerformanceModal } from './PlayerPerformanceModal';
@@ -75,6 +76,54 @@ export const PlayerManager: React.FC = () => {
     activeCoaches: 0,
     venuesCount: 0
   });
+
+  // Academy Config State
+  const [showConfigModal, setShowConfigModal] = useState(false);
+  const [configTab, setConfigTab] = useState<'venues' | 'batches'>('venues');
+  const [newItemName, setNewItemName] = useState('');
+  const [editingItem, setEditingItem] = useState<{ id: string; name: string } | null>(null);
+  const [configDeleteModalOpen, setConfigDeleteModalOpen] = useState(false);
+  const [configItemToDelete, setConfigItemToDelete] = useState<{
+    type: 'venue' | 'batch'; id: string; name: string
+  } | null>(null);
+
+  const handleAddConfigItem = () => {
+    if (!newItemName.trim()) return;
+    if (configTab === 'venues') StorageService.addVenue(newItemName.trim());
+    else StorageService.addBatch(newItemName.trim());
+    setNewItemName('');
+    loadData();
+    window.dispatchEvent(new CustomEvent('academy_data_update'));
+  };
+
+  const handleUpdateConfigItem = () => {
+    if (!editingItem || !newItemName.trim()) return;
+    if (configTab === 'venues') StorageService.updateVenue(editingItem.id, newItemName.trim());
+    else StorageService.updateBatch(editingItem.id, newItemName.trim());
+    setEditingItem(null);
+    setNewItemName('');
+    loadData();
+    window.dispatchEvent(new CustomEvent('academy_data_update'));
+  };
+
+  const handleSecureConfigDelete = (type: 'venue' | 'batch', id: string, name: string) => {
+    setConfigItemToDelete({ type, id, name });
+    setConfigDeleteModalOpen(true);
+  };
+
+  const confirmConfigDelete = async () => {
+    if (!configItemToDelete) return;
+    try {
+      if (configItemToDelete.type === 'venue') await StorageService.deleteVenue(configItemToDelete.id);
+      else await StorageService.deleteBatch(configItemToDelete.id);
+      loadData();
+      setConfigDeleteModalOpen(false);
+      setConfigItemToDelete(null);
+      window.dispatchEvent(new CustomEvent('academy_data_update'));
+    } catch {
+      alert('An error occurred.');
+    }
+  };
 
   useEffect(() => {
     loadData();
@@ -407,6 +456,12 @@ export const PlayerManager: React.FC = () => {
                 className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 italic flex items-center gap-2 ${activeTab === 'coaches' ? 'bg-white/10 text-white' : 'text-white/40 hover:text-white/80 hover:bg-white/5'}`}
             >
                 <Shield size={12} /> COACHING STAFF
+            </button>
+            <button onClick={() => setShowConfigModal(true)}
+                className="p-3 sm:p-3.5 rounded-xl bg-white/5 hover:bg-brand-accent hover:text-brand-950 text-white/40 border border-white/10 transition-all duration-300 group shadow-2xl"
+                title="Manage Venues & Batches"
+            >
+                <Settings size={16} className="group-hover:rotate-90 transition-transform duration-500" />
             </button>
           </>
         }
@@ -935,6 +990,112 @@ export const PlayerManager: React.FC = () => {
       {viewingPerformance && <PlayerPerformanceModal player={viewingPerformance} onClose={() => setViewingPerformance(null)} onUpdate={() => loadData()} />}
       
       <ConfirmModal isOpen={deleteModalOpen} title={`DELETE PLAYER`} message={`Are you sure you want to permanently delete this player? This action cannot be undone.`} onConfirm={confirmDelete} onCancel={() => {setDeleteModalOpen(false); setItemToDelete(null);}} requireTypeToConfirm="delete" />
+
+      {/* ─── Config Modal ───────────────────────────────────────────────────── */}
+      {showConfigModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="w-full max-w-xl glass-card rounded-3xl sm:rounded-[2.5rem] border border-white/10 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500 ring-1 ring-white/5 max-h-[90vh] flex flex-col">
+            <div className="absolute top-0 left-0 w-full h-1 sm:h-1.5 bg-[#C3F629] opacity-40" />
+            
+            <div className="flex justify-between items-center p-5 sm:p-8 border-b border-white/10 bg-white/5">
+              <div className="flex items-center gap-3 sm:gap-4 font-display">
+                <div className="p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl bg-[#C3F629]/10 border border-[#C3F629]/20 text-[#C3F629]">
+                  <Settings size={20} className="sm:w-[22px] sm:h-[22px]" />
+                </div>
+                <div className="text-left">
+                  <h3 className="text-base sm:text-lg font-black text-white uppercase tracking-tight italic font-display leading-none">Academy <span className="text-[#C3F629]">Config</span></h3>
+                  <p className="text-[8px] sm:text-[10px] font-bold text-white/40 uppercase tracking-widest mt-1">Venues & Batch Management</p>
+                </div>
+              </div>
+              <button onClick={() => { setShowConfigModal(false); setEditingItem(null); setNewItemName(''); }}
+                className="p-2.5 sm:p-3 rounded-lg sm:rounded-xl text-white/40 hover:text-white hover:bg-white/5 transition-all border border-transparent hover:border-white/10">
+                <X size={18} className="sm:w-5 sm:h-5" />
+              </button>
+            </div>
+
+            <div className="px-8 pt-6">
+              <div className="flex gap-1.5 p-1.5 bg-white/5 rounded-2xl border border-white/10 shadow-inner">
+                {(['venues', 'batches'] as const).map(t => (
+                  <button key={t} onClick={() => { setConfigTab(t); setEditingItem(null); setNewItemName(''); }}
+                    className={`flex-1 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all duration-500 italic
+                      ${configTab === t ? 'bg-[#C3F629] text-brand-950 shadow-lg shadow-[#C3F629]/20' : 'text-white/40 hover:text-white'}`}>
+                    {t === 'venues' ? 'Venues' : 'Batches'}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="px-6 sm:px-8 pt-6 flex flex-col sm:flex-row gap-3">
+              <input type="text" className="w-full bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl px-4 sm:px-6 py-3.5 sm:py-4 text-xs sm:text-sm font-bold text-white placeholder:text-white/20 focus:border-[#C3F629] outline-none transition-all shadow-inner"
+                value={newItemName} onChange={e => setNewItemName(e.target.value)}
+                placeholder={editingItem ? 'Update name…' : `Add new ${configTab === 'venues' ? 'venue' : 'batch'}…`}
+                onKeyDown={e => e.key === 'Enter' && (editingItem ? handleUpdateConfigItem() : handleAddConfigItem())} />
+              <div className="flex gap-2 shrink-0">
+                <button onClick={editingItem ? handleUpdateConfigItem : handleAddConfigItem}
+                  className="flex-1 sm:flex-none px-6 sm:px-7 py-3.5 sm:py-4 rounded-xl sm:rounded-2xl bg-[#C3F629] text-brand-950 font-black text-[10px] sm:text-[11px] uppercase tracking-widest hover:scale-[1.05] shadow-lg shadow-[#C3F629]/20 transition-all flex items-center justify-center gap-2 italic">
+                  {editingItem ? <Check size={14} className="sm:w-4 sm:h-4" /> : <Plus size={14} className="sm:w-4 sm:h-4" />}
+                  {editingItem ? 'Save' : 'Add'}
+                </button>
+                {editingItem && (
+                  <button onClick={() => { setEditingItem(null); setNewItemName(''); }}
+                    className="px-4 py-3.5 sm:py-4 rounded-xl sm:rounded-2xl bg-white/5 border border-white/10 text-white/40 hover:text-white transition-all flex items-center justify-center">
+                    <X size={14} className="sm:w-4 sm:h-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* List */}
+            <div className="px-6 sm:px-8 py-6 max-h-[320px] overflow-y-auto space-y-3">
+              {(configTab === 'venues' ? venues : batches).map(item => (
+                <div key={item.id}
+                  className="flex justify-between items-center px-4 sm:px-6 py-3 sm:py-4 rounded-xl sm:rounded-2xl border border-white/10 bg-white/5 group/item hover:border-[#C3F629]/30 hover:bg-white/10 transition-all duration-300 shadow-sm hover:shadow-md ring-1 ring-white/5">
+                  <div className="flex items-center gap-3 sm:gap-4 font-display">
+                    <div className="w-2 h-2 rounded-full bg-[#C3F629]/40 group-hover/item:bg-[#C3F629] transition-colors" />
+                    <span className="text-[11px] sm:text-sm font-bold text-white group-hover/item:text-[#C3F629] transition-colors italic font-display truncate max-w-[150px] sm:max-w-none">{item.name}</span>
+                  </div>
+                  <div className="flex items-center gap-1 sm:gap-2 opacity-100 sm:opacity-0 group-hover/item:opacity-100 transition-opacity duration-300">
+                    <button onClick={() => { setEditingItem(item); setNewItemName(item.name); }}
+                      className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl text-white/40 hover:text-[#C3F629] hover:bg-white/5 transition-all">
+                      <Edit2 size={14} className="sm:w-[15px] sm:h-[15px]" />
+                    </button>
+                    <button onClick={() => handleSecureConfigDelete(configTab === 'venues' ? 'venue' : 'batch', item.id, item.name)}
+                      className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-all">
+                      <Trash2 size={14} className="sm:w-[15px] sm:h-[15px]" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {(configTab === 'venues' ? venues : batches).length === 0 && (
+                <div className="py-20 flex flex-col items-center gap-4 text-white/10">
+                  <Layers size={40} strokeWidth={1.5} />
+                  <p className="text-[11px] font-black uppercase tracking-widest italic opacity-50">
+                    No {configTab === 'venues' ? 'venues' : 'batches'} added
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-8 py-6 bg-white/5 border-t border-white/10 flex justify-end">
+              <button onClick={() => { setShowConfigModal(false); setEditingItem(null); setNewItemName(''); }}
+                className="px-8 py-3 rounded-xl bg-white/5 border border-white/10 text-[11px] font-black text-white/40 uppercase tracking-widest hover:text-white hover:bg-white/10 shadow-sm transition-all italic tracking-[0.2em]">
+                Close Protocol
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Confirm Config Modal ───────────────────────────────────────────── */}
+      <ConfirmModal
+        isOpen={configDeleteModalOpen}
+        title={`Delete ${configItemToDelete?.type}`}
+        message={`Are you sure you want to permanently delete "${configItemToDelete?.name}"? This action cannot be undone.`}
+        onConfirm={confirmConfigDelete}
+        onCancel={() => { setConfigDeleteModalOpen(false); setConfigItemToDelete(null); }}
+        requireTypeToConfirm="delete"
+      />
     </div>
   );
 };
