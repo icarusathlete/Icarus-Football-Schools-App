@@ -676,7 +676,6 @@ export const AdminDashboard: React.FC = () => {
 
       <PageHeader 
         title="ACADEMY HUB" 
-        subtitle="System Node: Dashboard // Operations · Intelligence · Management"
         extra={
           <div className="flex flex-col sm:flex-row w-full md:w-auto items-center gap-3">
             <div className="flex flex-col sm:flex-row w-full md:w-auto glass-card p-2 rounded-2xl border border-white/10 gap-2 shadow-lg backdrop-blur-xl">
