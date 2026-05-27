@@ -20,14 +20,6 @@ export const PageHeader: React.FC<PageHeaderProps> = ({ title, subtitle, extra }
             </React.Fragment>
           ))}
         </h1>
-        {subtitle && (
-          <div className="flex items-center gap-3">
-            <span className="w-8 h-[1px] bg-brand-500/30"></span>
-            <p className="text-[9px] font-black text-white/40 uppercase tracking-[0.4em] italic">
-              {subtitle}
-            </p>
-          </div>
-        )}
       </div>
       {extra && (
         <div className="flex items-center gap-2 bg-black/20 p-1.5 rounded-2xl border border-white/5 backdrop-blur-xl">
