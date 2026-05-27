@@ -362,15 +362,15 @@ export const MatchManager: React.FC = () => {
     };
 
     const handleAddAttendance = async (playerId: string, status: AttendanceStatus) => {
-        if (!liveMatch) return;
+        if (!activeMatch) return;
         
-        const date = new Date(liveMatch.date).toISOString().split('T')[0];
+        const date = new Date(activeMatch.date).toISOString().split('T')[0];
         const record: AttendanceRecord = {
             id: `${date}_${playerId}`,
             playerId,
             date,
             status,
-            notes: `Recorded during match vs ${liveMatch.opponent}`
+            notes: `Recorded during match vs ${activeMatch.opponent}`
         };
 
         try {
@@ -1340,7 +1340,7 @@ export const MatchManager: React.FC = () => {
             )}
 
             {/* Attendance Modal */}
-            {showAttendanceModal && liveMatch && (
+            {showAttendanceModal && activeMatch && (
                 <div className="fixed inset-0 z-[400] flex items-center justify-center p-6 bg-brand-950/90 backdrop-blur-3xl animate-in fade-in duration-500">
                     <div className="w-full max-w-2xl bg-brand-900/60 rounded-[3rem] border border-white/10 shadow-3xl overflow-hidden relative">
                         <div className="px-10 py-8 border-b border-white/5 bg-white/5 flex justify-between items-center">
@@ -1353,7 +1353,7 @@ export const MatchManager: React.FC = () => {
 
                         <div className="p-10 max-h-[60vh] overflow-y-auto custom-scrollbar space-y-4">
                             {players.map(player => {
-                                const date = new Date(liveMatch.date).toISOString().split('T')[0];
+                                const date = new Date(activeMatch.date).toISOString().split('T')[0];
                                 const record = attendance.find(a => a.playerId === player.id && a.date === date);
                                 const isAbsent = record?.status === 'ABSENT';
 

@@ -432,7 +432,7 @@ export const PlayerPortal: React.FC<PlayerPortalProps> = ({ user, initialSection
         return allSchedule
             .filter(e => {
                 const venueMatch = !e.location || !player.venue || e.location === player.venue;
-                const batchMatch = !e.batch || !player.batch || e.batch === player.batch;
+                const batchMatch = !(e as any).batch || !player.batch || (e as any).batch === player.batch;
                 return venueMatch && batchMatch;
             })
             .filter(e => new Date(`${e.date}T${e.time}`) > now)
@@ -834,7 +834,7 @@ export const PlayerPortal: React.FC<PlayerPortalProps> = ({ user, initialSection
 
                                     {(() => {
                                         const MasteryIcon = mastery.icon;
-                                        const isOnFire = attendanceRate >= 95 || (myMatchStats.length >= 3 && myMatchStats.slice(0,3).every(m => (m.rating || 0) >= 8.5));
+                                        const isOnFire = attendanceRate >= 95 || (myMatchStats.length >= 3 && myMatchStats.slice(0,3).every(m => (m.myStats?.rating || 0) >= 8.5));
                                         return (
                                             <div className="flex items-center gap-3 mb-4 justify-center md:justify-start flex-wrap">
                                                 <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl ${mastery.bg} border ${mastery.border} backdrop-blur-xl transition-all duration-500`}>
@@ -953,7 +953,6 @@ export const PlayerPortal: React.FC<PlayerPortalProps> = ({ user, initialSection
                                 ];
 
                                 return badgeConfigs.map((config, index) => {
-                                    // Safety fallback to prevent crashes if data is missing
                                     const tierData = config.data || { 
                                         level: 0, 
                                         tierName: 'Locked', 
@@ -972,7 +971,6 @@ export const PlayerPortal: React.FC<PlayerPortalProps> = ({ user, initialSection
                                             style={{ animationDelay: `${index * 100}ms` }}
                                             onClick={() => setSelectedBadge({ config, tierData })}
                                         >
-                                            {/* Badge Aura (Elite only) */}
                                             {tierData.level === 4 && (
                                                 <div className="absolute -inset-4 bg-brand-primary/20 rounded-full blur-2xl animate-pulse" />
                                             )}
@@ -982,7 +980,6 @@ export const PlayerPortal: React.FC<PlayerPortalProps> = ({ user, initialSection
                                                 ${tierData.tierClass}
                                                 backdrop-blur-md group-hover:border-white/20`}
                                             >
-                                                {/* Background Radar Effect */}
                                                 {!isLocked && (
                                                     <div className="absolute inset-0 pointer-events-none">
                                                         <div className="absolute inset-0 bg-gradient-to-b from-brand-primary/0 via-brand-primary/5 to-brand-primary/0 animate-radar-scan opacity-20" />
@@ -990,7 +987,6 @@ export const PlayerPortal: React.FC<PlayerPortalProps> = ({ user, initialSection
                                                     </div>
                                                 )}
 
-                                                {/* Background Shimmer */}
                                                 <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.05] to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
                                                 
                                                 <ProgressCircle 
@@ -1012,7 +1008,6 @@ export const PlayerPortal: React.FC<PlayerPortalProps> = ({ user, initialSection
                                                     </span>
                                                 </div>
 
-                                                {/* Lock Icon */}
                                                 {isLocked && (
                                                     <div className="absolute top-2 right-2 p-1 bg-white/5 rounded-lg opacity-40 group-hover:opacity-0 transition-opacity">
                                                         <Shield size={10} className="text-white" />
@@ -1049,7 +1044,6 @@ export const PlayerPortal: React.FC<PlayerPortalProps> = ({ user, initialSection
                                 </div>
 
                                 <div className="relative p-8 space-y-6 overflow-hidden">
-                                    {/* Particle drift effect */}
                                     <div className="absolute inset-0 pointer-events-none">
                                         {[...Array(8)].map((_, i) => (
                                             <div 
@@ -1066,10 +1060,8 @@ export const PlayerPortal: React.FC<PlayerPortalProps> = ({ user, initialSection
                                             />
                                         ))}
                                     </div>
-                                    {/* Modal Header with Gamified Icon */}
                                     <div className="flex flex-col items-center text-center space-y-4">
                                         <div className="relative group/badge">
-                                            {/* Rotating Glow Ring */}
                                             <div className={`absolute -inset-6 rounded-full blur-2xl opacity-20 group-hover:opacity-40 transition-opacity duration-700 animate-pulse
                                                 ${selectedBadge.tierData.tierClass.replace('text-', 'bg-')}`} 
                                             />
@@ -1078,7 +1070,6 @@ export const PlayerPortal: React.FC<PlayerPortalProps> = ({ user, initialSection
                                                 transition-transform duration-700 group-hover:scale-110 group-hover:rotate-6`}>
                                                 <selectedBadge.config.icon size={48} className={`${selectedBadge.tierData.tierClass} drop-shadow-[0_0_20px_currentColor]`} />
                                                 
-                                                {/* Tier Level Badge */}
                                                 <div className={`absolute -bottom-2 -right-2 px-3 py-1 rounded-full text-[10px] font-black italic border border-white/20 shadow-lg
                                                     ${selectedBadge.tierData.tierClass.replace('text-', 'bg-')} text-brand-950`}>
                                                     LVL {selectedBadge.tierData.level}
@@ -1113,7 +1104,6 @@ export const PlayerPortal: React.FC<PlayerPortalProps> = ({ user, initialSection
                                         </button>
                                     </div>
 
-                                    {/* Stats Grid */}
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="group/stat relative p-5 rounded-[2rem] bg-white/5 border border-white/5 shadow-inner hover:bg-white/10 transition-colors overflow-hidden">
                                             <div className="absolute inset-0 bg-brand-accent/5 translate-y-full group-hover/stat:translate-y-0 transition-transform duration-500" />
@@ -1135,7 +1125,6 @@ export const PlayerPortal: React.FC<PlayerPortalProps> = ({ user, initialSection
                                         </div>
                                     </div>
 
-                                    {/* Progress Section */}
                                     {!selectedBadge.tierData.isMaxed ? (
                                         <div className="space-y-4 p-6 rounded-[2.5rem] bg-brand-primary/5 border border-brand-primary/10 relative overflow-hidden group/progress">
                                             <div className="absolute inset-0 bg-brand-primary/5 opacity-0 group-hover/progress:opacity-100 transition-opacity duration-500" />
@@ -1182,7 +1171,6 @@ export const PlayerPortal: React.FC<PlayerPortalProps> = ({ user, initialSection
                                         </div>
                                     )}
 
-                                    {/* Milestone Track */}
                                     <div className="pt-6 border-t border-white/5">
                                         <div className="flex justify-between gap-3">
                                             {selectedBadge.config.tiers.map((t: number, i: number) => (
@@ -1472,10 +1460,10 @@ export const PlayerPortal: React.FC<PlayerPortalProps> = ({ user, initialSection
                                                     itemStyle={{ padding: '4px 0' }}
                                                     cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 2 }}
                                                 />
-                                                <Line type="monotone" dataKey="Passing" stroke="#00C8FF" strokeWidth={4} dot={{ r: 6, strokeWidth: 0, fill: '#00C8FF' }} activeDot={{ r: 8, strokeWidth: 0, fill: '#00C8FF', shadow: '0 0 20px #00C8FF' }} animationDuration={2000} />
-                                                <Line type="monotone" dataKey="Shooting" stroke="#C3F629" strokeWidth={4} dot={{ r: 6, strokeWidth: 0, fill: '#C3F629' }} activeDot={{ r: 8, strokeWidth: 0, fill: '#C3F629', shadow: '0 0 20px #C3F629' }} animationDuration={2000} animationDelay={200} />
-                                                <Line type="monotone" dataKey="Control" stroke="#FF0080" strokeWidth={4} dot={{ r: 6, strokeWidth: 0, fill: '#FF0080' }} activeDot={{ r: 8, strokeWidth: 0, fill: '#FF0080', shadow: '0 0 20px #FF0080' }} animationDuration={2000} animationDelay={400} />
-                                                <Line type="monotone" dataKey="WeakFoot" stroke="#8A2BE2" strokeWidth={4} dot={{ r: 6, strokeWidth: 0, fill: '#8A2BE2' }} activeDot={{ r: 8, strokeWidth: 0, fill: '#8A2BE2', shadow: '0 0 20px #8A2BE2' }} animationDuration={2000} animationDelay={600} />
+                                                <Line type="monotone" dataKey="Passing" stroke="#00C8FF" strokeWidth={4} dot={{ r: 6, strokeWidth: 0, fill: '#00C8FF' }} activeDot={{ r: 8, strokeWidth: 0, fill: '#00C8FF' }} animationDuration={2000} />
+                                                <Line type="monotone" dataKey="Shooting" stroke="#C3F629" strokeWidth={4} dot={{ r: 6, strokeWidth: 0, fill: '#C3F629' }} activeDot={{ r: 8, strokeWidth: 0, fill: '#C3F629' }} animationDuration={2000} />
+                                                <Line type="monotone" dataKey="Control" stroke="#FF0080" strokeWidth={4} dot={{ r: 6, strokeWidth: 0, fill: '#FF0080' }} activeDot={{ r: 8, strokeWidth: 0, fill: '#FF0080' }} animationDuration={2000} />
+                                                <Line type="monotone" dataKey="WeakFoot" stroke="#8A2BE2" strokeWidth={4} dot={{ r: 6, strokeWidth: 0, fill: '#8A2BE2' }} activeDot={{ r: 8, strokeWidth: 0, fill: '#8A2BE2' }} animationDuration={2000} />
                                             </ComposedChart>
                                         </ResponsiveContainer>
                                     </div>

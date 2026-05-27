@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { StorageService } from '../services/storageService';
-import { Player, Match, AcademySettings, Role } from '../types';
+import { Player, Match, AcademySettings, Role, User } from '../types';
 import {
     Trophy, Calendar, Crown, Shield, Award, Sparkles, Zap,
     Medal, Printer, Loader2, Star, X, Activity, Users, Target

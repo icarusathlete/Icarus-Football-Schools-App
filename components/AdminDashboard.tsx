@@ -7,7 +7,7 @@ import {
   ChevronLeft, Shield, Radio, TrendingUp, Zap,
   ArrowUp, ArrowDown, Minus, CalendarPlus, Medal,
   MapPin, Layers, ChevronDown, Truck, LifeBuoy,
-  Settings, Plus, Edit2, Trash2, Check, X
+  Settings, Plus, Edit2, Trash2, Check, X, CheckCircle2
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { PageHeader } from './ui/PageHeader';
@@ -559,7 +559,7 @@ export const AdminDashboard: React.FC = () => {
       .filter(ps => ps.prevEval)
       .map(ps => {
         const prevE = ps.prevEval!;
-        const m2 = prevE.metrics || {};
+        const m2 = (prevE.metrics || {}) as any;
         let val = computeCompositeScore(prevE.overallRating || 0, ps.attRate, m2);
         if (rankingMetric === 'rating') val = prevE.overallRating || 0;
         else if (rankingMetric === 'attendance') val = ps.attRate;
@@ -591,7 +591,7 @@ export const AdminDashboard: React.FC = () => {
         venue: ps.venue,
         memberId: ps.memberId,
         compositeScore: ps.compositeScore,
-        attendanceRate: ps.attendanceRate,
+        attendanceRate: ps.attRate,
         overallRating: ps.overallRating,
         scoutScore: ps.scoutScore,
         developmentAreas: ps.developmentAreas,
