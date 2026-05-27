@@ -6,10 +6,12 @@ import {
   UserPlus, Trophy, AlertTriangle, Timer, XCircle,
   ChevronLeft, Shield, Radio, TrendingUp, Zap,
   ArrowUp, ArrowDown, Minus, CalendarPlus, Medal,
-  MapPin, Layers, ChevronDown, Truck, LifeBuoy
+  MapPin, Layers, ChevronDown, Truck, LifeBuoy,
+  Settings, Plus, Edit2, Trash2, Check, X
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { PageHeader } from './ui/PageHeader';
+import { ConfirmModal } from './ConfirmModal';
 import { 
   CentreStat, PlayerRow, ChartPoint, AgePoint, LeagueRanking, DashboardAlert,
   LogisticsStats, SupportStats,
@@ -130,6 +132,52 @@ export const AdminDashboard: React.FC = () => {
   const [rankingMetric, setRankingMetric] = useState<'composite' | 'rating' | 'attendance' | 'skills'>('composite');
   const [rankingLimit, setRankingLimit] = useState<number>(10);
   const [activityTypeFilter, setActivityTypeFilter] = useState<'all' | 'player' | 'match' | 'fee'>('all');
+  const [dashboardTab, setDashboardTab] = useState<'overview' | 'rankings' | 'analytics' | 'operations'>('overview');
+
+  // Academy Config State
+  const [showConfigModal, setShowConfigModal] = useState(false);
+  const [configTab, setConfigTab] = useState<'venues' | 'batches'>('venues');
+  const [newItemName, setNewItemName] = useState('');
+  const [editingItem, setEditingItem] = useState<{ id: string; name: string } | null>(null);
+  const [configDeleteModalOpen, setConfigDeleteModalOpen] = useState(false);
+  const [configItemToDelete, setConfigItemToDelete] = useState<{
+    type: 'venue' | 'batch'; id: string; name: string
+  } | null>(null);
+
+  const handleAddConfigItem = () => {
+    if (!newItemName.trim()) return;
+    if (configTab === 'venues') StorageService.addVenue(newItemName.trim());
+    else StorageService.addBatch(newItemName.trim());
+    setNewItemName('');
+    window.dispatchEvent(new CustomEvent('academy_data_update'));
+  };
+
+  const handleUpdateConfigItem = () => {
+    if (!editingItem || !newItemName.trim()) return;
+    if (configTab === 'venues') StorageService.updateVenue(editingItem.id, newItemName.trim());
+    else StorageService.updateBatch(editingItem.id, newItemName.trim());
+    setEditingItem(null);
+    setNewItemName('');
+    window.dispatchEvent(new CustomEvent('academy_data_update'));
+  };
+
+  const handleSecureConfigDelete = (type: 'venue' | 'batch', id: string, name: string) => {
+    setConfigItemToDelete({ type, id, name });
+    setConfigDeleteModalOpen(true);
+  };
+
+  const confirmConfigDelete = async () => {
+    if (!configItemToDelete) return;
+    try {
+      if (configItemToDelete.type === 'venue') await StorageService.deleteVenue(configItemToDelete.id);
+      else await StorageService.deleteBatch(configItemToDelete.id);
+      setConfigDeleteModalOpen(false);
+      setConfigItemToDelete(null);
+      window.dispatchEvent(new CustomEvent('academy_data_update'));
+    } catch {
+      alert('An error occurred.');
+    }
+  };
 
   // Raw Data State
   const [rawData, setRawData] = useState<{
@@ -624,12 +672,13 @@ export const AdminDashboard: React.FC = () => {
   // OVERVIEW VIEW
   // ═══════════════════════════════════════════════════════════════════════════
   return (
-    <div className="space-y-5 pb-32 font-display animate-in fade-in duration-500">
+    <div className="space-y-6 pb-32 font-display animate-in fade-in duration-500 text-left">
 
       <PageHeader 
         title="ACADEMY HUB" 
         subtitle="System Node: Dashboard // Operations · Intelligence · Management"
         extra={
+          <div className="flex flex-col sm:flex-row w-full md:w-auto items-center gap-3">
             <div className="flex flex-col sm:flex-row w-full md:w-auto glass-card p-2 rounded-2xl border border-white/10 gap-2 shadow-lg backdrop-blur-xl">
               <div className="relative">
                 <MapPin size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
@@ -668,406 +717,624 @@ export const AdminDashboard: React.FC = () => {
                 </div>
               </div>
             </div>
+            <button onClick={() => setShowConfigModal(true)}
+                className="p-3.5 rounded-2xl bg-white/5 hover:bg-[#C3F629] hover:text-brand-950 text-white/40 border border-white/10 hover:border-transparent transition-all duration-300 group shadow-2xl flex items-center justify-center shrink-0 self-stretch sm:self-auto"
+                title="Manage Venues & Batches"
+            >
+                <Settings size={16} className="group-hover:rotate-90 transition-transform duration-500" />
+            </button>
+          </div>
         }
       />
 
-      {/* KPI grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-7 gap-4">
+      {/* Sleek Segmented Pill Navigation Tab Bar */}
+      <div className="flex flex-wrap sm:flex-nowrap gap-2 bg-black/40 p-1.5 rounded-2xl border border-white/5 backdrop-blur-xl w-full sm:max-w-3xl">
         {[
-          { label: 'Total Enrolled', value: globalStats.players, sub: 'active players', icon: <Users size={16} />, color: '#CCFF00', accent: 'glass-card border-white/10 shadow-[0_15px_30px_rgba(13,27,138,0.2)]', showBar: true },
-          { label: 'New This Month', value: globalStats.newThisMonth, sub: new Date().toLocaleString('en-IN', { month: 'long' }), icon: <CalendarPlus size={16} />, color: '#CCFF00', accent: 'glass-card border-white/10', showBar: false },
-          { label: "Daily Attendance", value: `${globalStats.rate}%`, sub: `${globalStats.presentToday} present`, icon: <Activity size={16} />, color: '#CCFF00', accent: 'glass-card border-white/10 shadow-[0_15px_30px_rgba(13,27,138,0.2)]', showBar: true },
-          { label: 'Fees Overdue', value: globalStats.overdueCount, sub: `${globalStats.expiringCount} soon`, icon: <Receipt size={16} />, color: globalStats.overdueCount > 0 ? '#f87171' : '#CCFF00', accent: 'glass-card border-white/10', showBar: false },
-          { label: 'Active Support', value: supportStats.activeTickets, sub: `${supportStats.urgentTickets} urgent`, icon: <LifeBuoy size={16} />, color: supportStats.urgentTickets > 0 ? '#f87171' : '#CCFF00', accent: 'glass-card border-white/10', showBar: false },
-          { label: 'Inventory Alerts', value: logisticsStats.lowStockItems, sub: logisticsStats.totalValue ? `$${logisticsStats.totalValue.toLocaleString()} ASSET VALUE` : 'low stock items', icon: <Truck size={16} />, color: logisticsStats.lowStockItems > 0 ? '#f59e0b' : '#CCFF00', accent: 'glass-card border-white/10', showBar: false },
-          { label: 'System Alerts', value: alertItems.length, sub: alertItems.length > 0 ? 'review below' : 'all clear', icon: <AlertTriangle size={16} />, color: alertItems.length > 0 ? '#f59e0b' : '#CCFF00', accent: 'glass-card border-white/10', showBar: false },
-        ].map((k, i) => (
-          <div key={i} className={`rounded-[2rem] border p-6 group transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl relative overflow-hidden ${k.accent}`}>
-            {k.showBar && <div className="green-light-bar" />}
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-[9px] font-black uppercase italic tracking-[0.2em] text-white/40">{k.label}</p>
-              <span style={{ color: k.color }} className="opacity-60 group-hover:opacity-100 transition-opacity icon-glow-lime">{k.icon}</span>
-            </div>
-            <p className="text-4xl font-black italic leading-none tracking-tighter" style={{ color: k.color === '#CCFF00' ? '#ffffff' : k.color }}>
-              {k.color === '#CCFF00' ? <span className="text-white group-hover:text-[#CCFF00] transition-colors">{k.value}</span> : k.value}
-            </p>
-            <p className="text-[10px] font-black italic text-white/30 mt-3">{k.sub}</p>
-            
-            {/* Minimal Sky Blue Accent */}
-            <div className="absolute -bottom-6 -right-6 w-16 h-16 bg-[#00C8FF]/5 rounded-full blur-2xl group-hover:bg-[#00C8FF]/10 transition-all duration-700" />
-          </div>
+          { id: 'overview', label: 'Overview & Centres', count: activeCentres.length, countColor: 'text-[#C3F629]' },
+          { id: 'rankings', label: 'Athlete Rankings', count: leagueRankings.length, countColor: 'text-[#00C8FF]' },
+          { id: 'analytics', label: 'Analytics & Feed', count: 0, countColor: '' },
+          { id: 'operations', label: 'Operations HUD', count: alertItems.length, countColor: alertItems.length > 0 ? 'text-red-400 font-bold' : 'text-white/40' },
+        ].map(t => (
+          <button
+            key={t.id}
+            type="button"
+            onClick={() => setDashboardTab(t.id as any)}
+            className={`flex-1 py-3 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-500 italic relative flex items-center justify-center gap-2 whitespace-nowrap
+              ${dashboardTab === t.id
+                ? 'bg-[#C3F629] text-brand-950 shadow-lg shadow-[#C3F629]/20'
+                : 'text-white/40 hover:text-white'}`}
+          >
+            {t.label}
+            {t.count > 0 && (
+              <span className={`px-2 py-0.5 rounded text-[8px] font-mono leading-none ${dashboardTab === t.id ? 'bg-brand-950 text-[#C3F629]' : 'bg-white/10 ' + t.countColor}`}>
+                {t.count}
+              </span>
+            )}
+          </button>
         ))}
       </div>
 
-      {/* ── Alerts ─────────────────────────────────────────────────────────── */}
-      {alertItems.length > 0 && (
-        <div className="glass-card rounded-[2rem] border border-white/10 overflow-hidden ring-1 ring-white/5">
-          <div className="px-5 py-3.5 border-b border-white/10 flex items-center gap-2 bg-black/5">
-            <AlertTriangle size={12} className="text-amber-400 font-bold" />
-            <p className="text-[9px] font-black text-white/60 uppercase italic tracking-[0.3em]">ACTION REQUIRED</p>
-          </div>
-          <div className="p-3 flex flex-wrap gap-2">
-            {alertItems.map(a => (
-              <div key={a.id} className={`flex items-center gap-2.5 px-4 py-2.5 rounded-[1.25rem] border backdrop-blur-md ${alertStyle[a.severity]}`}>
-                {a.icon}
-                <div>
-                  <p className="text-[10px] font-black italic leading-tight text-white">{a.label}</p>
-                  <p className="text-[8px] font-bold italic opacity-60 text-white/80">{a.detail}</p>
+      {/* ─── TAB CONTENT: OVERVIEW & CENTRES ───────────────────────────────── */}
+      {dashboardTab === 'overview' && (
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+          
+          {/* Re-organized decluttered top KPIs */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              { label: 'Total Enrolled', value: globalStats.players, sub: 'Active Athletes', icon: <Users size={18} />, color: '#C3F629', accent: 'glass-card border-white/10 shadow-[0_15px_30px_rgba(13,27,138,0.2)]', showBar: true },
+              { label: "Daily Attendance", value: `${globalStats.rate}%`, sub: `${globalStats.presentToday} Present Today`, icon: <Activity size={18} />, color: '#C3F629', accent: 'glass-card border-white/10 shadow-[0_15px_30px_rgba(13,27,138,0.2)]', showBar: true },
+              { label: 'New This Month', value: globalStats.newThisMonth, sub: new Date().toLocaleString('en-IN', { month: 'long' }), icon: <CalendarPlus size={18} />, color: '#ffffff', accent: 'glass-card border-white/10', showBar: false },
+              { label: 'Active Venues', value: activeCentres.length, sub: `${emptyCentres.length} Inactive / Empty`, icon: <MapPin size={18} />, color: '#ffffff', accent: 'glass-card border-white/10', showBar: false },
+            ].map((k, i) => (
+              <div key={i} className={`rounded-[2rem] border p-6 group transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl relative overflow-hidden ${k.accent}`}>
+                {k.showBar && <div className="green-light-bar" />}
+                <div className="flex items-center justify-between mb-4">
+                  <p className="text-[9px] font-black uppercase italic tracking-[0.2em] text-white/40">{k.label}</p>
+                  <span style={{ color: k.color }} className="opacity-60 group-hover:opacity-100 transition-opacity icon-glow-lime">{k.icon}</span>
                 </div>
+                <p className="text-4xl font-black italic leading-none tracking-tighter text-white">
+                  <span className="text-white group-hover:text-[#C3F629] transition-colors">{k.value}</span>
+                </p>
+                <p className="text-[10px] font-black italic text-white/30 mt-3">{k.sub}</p>
+                <div className="absolute -bottom-6 -right-6 w-16 h-16 bg-[#00C8FF]/5 rounded-full blur-2xl group-hover:bg-[#00C8FF]/10 transition-all duration-700" />
               </div>
             ))}
           </div>
-        </div>
-      )}
 
-      {/* ── Academy League Rankings ─────────────────────────────────────────── */}
-      {leagueRankings.length > 0 && (
-        <div className="glass-card rounded-[2.5rem] border border-white/10 shadow-xl overflow-hidden ring-1 ring-white/5">
-          {/* Header */}
-          <div className="px-5 sm:px-8 py-5 border-b border-white/10 flex flex-col lg:flex-row lg:items-center gap-4 bg-black/5 justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-2xl bg-[#CCFF00]/10 border border-[#CCFF00]/20 flex items-center justify-center flex-shrink-0">
-                <Medal size={14} className="text-[#CCFF00]" />
-              </div>
-              <div>
-                <h3 className="text-[13px] font-black italic uppercase text-white tracking-tight">PERFORMANCE RANKINGS</h3>
-                <p className="text-[8px] font-black italic text-white/45 uppercase tracking-[0.3em]">
-                  TOP {rankingLimit === 1000 ? 'ALL' : rankingLimit} PLAYERS · {selectedBatch !== 'all' ? selectedBatch : selectedVenue !== 'all' ? selectedVenue : 'ALL CENTRES COMBINED'}
+          {/* Active Centres */}
+          {selectedBatch === 'all' && activeCentres.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 px-1">
+                <Radio size={12} className="text-[#C3F629] animate-pulse" />
+                <p className="text-[10px] font-black text-white/60 uppercase italic tracking-[0.35em]">
+                  {selectedVenue === 'all' ? 'OPERATIONAL TRAINING NODES' : `${selectedVenue.toUpperCase()} OVERVIEW`}
                 </p>
               </div>
-            </div>
-            <div className="flex gap-2 flex-wrap items-center">
-              <div className="relative">
-                <select
-                  value={rankingMetric}
-                  onChange={e => setRankingMetric(e.target.value as any)}
-                  className="bg-white/5 hover:bg-white/10 text-white font-bold text-[9px] uppercase tracking-wider px-3 py-1.5 rounded-xl border border-white/10 outline-none cursor-pointer appearance-none pr-7"
-                >
-                  <option value="composite" className="bg-[#0D1B8A]">SORT: COMPOSITE</option>
-                  <option value="rating" className="bg-[#0D1B8A]">SORT: COACH RATING</option>
-                  <option value="attendance" className="bg-[#0D1B8A]">SORT: ATTENDANCE</option>
-                  <option value="skills" className="bg-[#0D1B8A]">SORT: SKILL METRICS</option>
-                </select>
-                <ChevronDown size={10} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-white/40" />
+              <div className={`grid gap-5 ${activeCentres.length === 1 ? 'grid-cols-1 max-w-sm' : activeCentres.length === 2 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'}`}>
+                {activeCentres.map(c => (
+                  <CentreCard key={c.name} stat={c} onClick={() => { setSelectedVenue(c.name); setSelectedBatch('all'); }} />
+                ))}
               </div>
-              <div className="relative">
-                <select
-                  value={rankingLimit}
-                  onChange={e => setRankingLimit(Number(e.target.value))}
-                  className="bg-white/5 hover:bg-white/10 text-white font-bold text-[9px] uppercase tracking-wider px-3 py-1.5 rounded-xl border border-white/10 outline-none cursor-pointer appearance-none pr-7"
-                >
-                  <option value={5} className="bg-[#0D1B8A]">TOP 5</option>
-                  <option value={10} className="bg-[#0D1B8A]">TOP 10</option>
-                  <option value={25} className="bg-[#0D1B8A]">TOP 25</option>
-                  <option value={1000} className="bg-[#0D1B8A]">ALL</option>
-                </select>
-                <ChevronDown size={10} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-white/40" />
-              </div>
-              {[
-                { dot: 'bg-[#CCFF00]', label: 'Coach 40%' },
-                { dot: 'bg-brand-500', label: 'Att 35%' },
-                { dot: 'bg-brand-accent', label: 'Skills 25%' },
-              ].map((l, i) => (
-                <span key={i} className="flex items-center gap-1 text-[8px] font-black italic text-white/50 bg-black/20 border border-white/5 px-2 py-1 rounded-lg">
-                  <span className={`w-1 h-1 rounded-full ${l.dot} shadow-[0_0_8px_currentColor]`} />{l.label}
-                </span>
-              ))}
             </div>
-          </div>
+          )}
 
-          {/* Table scroll wrapper */}
-          <div className="overflow-x-auto custom-scrollbar-tactical">
-            <table className="w-full min-w-[900px]">
-              <thead>
-                <tr className="border-b border-white/[0.06] bg-brand-950/20">
-                  {['RANK', 'PLAYER PROFILE', 'COMPOSITE', 'RATING', 'ATTENDANCE', 'SKILLS', 'TREND', 'DEVELOPMENT'].map((h, i) => (
-                    <th key={i} className={`px-6 py-4 text-[9px] font-black italic text-white/60 uppercase tracking-[0.2em] ${
-                      i === 0 ? 'w-20 text-center' : i === 1 ? 'text-left' : 'text-center'
-                    }`}>{h}</th>
+          {/* Inactive Centres */}
+          {emptyCentres.length > 0 && (
+            <div className="glass-card rounded-[2rem] border border-white/10 px-6 py-5 ring-1 ring-white/5 opacity-40">
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="w-1.5 h-1.5 rounded-full bg-white/20" />
+                <p className="text-[9px] font-black text-white/40 uppercase italic tracking-[0.3em]">
+                  {emptyCentres.length} INACTIVE NODE{emptyCentres.length > 1 ? 'S' : ''} (ZERO ENROLMENT)
+                </p>
+                <p className="text-[9px] font-bold italic text-white/20 ml-auto">{emptyCentres.map(c => c.name).join(' · ')}</p>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ─── TAB CONTENT: ATHLETE LEAGUE & RANKINGS ─────────────────────────── */}
+      {dashboardTab === 'rankings' && (
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+          
+          {/* Roster (Specific venue roster if filters are active) */}
+          {(selectedVenue !== 'all' || selectedBatch !== 'all') && playerRoster.length > 0 && (
+            <div className="glass-card rounded-[2.5rem] border border-white/10 shadow-xl overflow-hidden ring-1 ring-white/5">
+              <div className="px-5 sm:px-8 py-5 border-b border-white/10 flex items-center gap-3 bg-black/5">
+                <Users size={14} className="text-[#C3F629]" />
+                <h3 className="text-[11px] font-black italic uppercase text-white tracking-[0.25em]">ATTENDANCE & EVALUATION ROSTER</h3>
+                <span className="ml-auto text-[9px] font-black text-[#C3F629] bg-[#C3F629]/10 border border-[#C3F629]/20 px-2.5 py-1 rounded-lg">{playerRoster.length} PLAYERS</span>
+              </div>
+              <div className="divide-y divide-white/[0.04] max-h-[400px] overflow-y-auto custom-scrollbar-tactical">
+                {playerRoster.map((p, i) => (
+                  <div key={i} className="flex items-center gap-4 px-5 sm:px-8 py-4 hover:bg-black/20 transition-colors">
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center text-[10px] font-black text-brand-950 flex-shrink-0"
+                      style={{ background: nameColor(p.name) }}>
+                      {initials(p.name)}
+                    </div>
+                    <div className="flex-1 min-w-0 text-left">
+                      <p className="text-[12px] font-black italic text-white truncate">{p.name}</p>
+                      <p className="text-[9px] font-bold text-white/25 italic">{p.memberId || 'No ID'}</p>
+                    </div>
+                    <div className="flex-1 max-w-[120px] space-y-1 hidden sm:block">
+                      <div className="h-[3px] bg-white/[0.06] rounded-full overflow-hidden">
+                        <div className="h-full rounded-full transition-all duration-700" style={{ width: `${p.rate}%`, background: rateColor(p.rate) }} />
+                      </div>
+                      <p className="text-[8px] font-black italic text-white/20 text-left">
+                        {p.sessions > 0 ? `${p.present}/${p.sessions} sessions` : 'No records'}
+                      </p>
+                    </div>
+                    <div className="text-right flex-shrink-0 w-12">
+                      {p.sessions > 0
+                        ? <p className="text-[13px] font-black italic" style={{ color: rateColor(p.rate) }}>{p.rate}%</p>
+                        : <p className="text-[11px] font-black italic text-white/15">—</p>}
+                    </div>
+                    <div className="text-right flex-shrink-0 w-10 hidden sm:block">
+                      {p.rating > 0
+                        ? <p className="text-[11px] font-black italic text-white/40">⭐ {p.rating}</p>
+                        : <p className="text-[10px] font-black italic text-white/12">—</p>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Table rankings */}
+          {leagueRankings.length > 0 ? (
+            <div className="glass-card rounded-[2.5rem] border border-white/10 shadow-xl overflow-hidden ring-1 ring-white/5">
+              <div className="px-5 sm:px-8 py-5 border-b border-white/10 flex flex-col lg:flex-row lg:items-center gap-4 bg-black/5 justify-between">
+                <div className="flex items-center gap-2.5 text-left">
+                  <div className="w-8 h-8 rounded-2xl bg-[#C3F629]/10 border border-[#C3F629]/20 flex items-center justify-center flex-shrink-0">
+                    <Medal size={14} className="text-[#C3F629]" />
+                  </div>
+                  <div>
+                    <h3 className="text-[13px] font-black italic uppercase text-white tracking-tight leading-none">PERFORMANCE RANKINGS</h3>
+                    <p className="text-[8px] font-black italic text-white/45 uppercase tracking-[0.3em] mt-1.5">
+                      TOP {rankingLimit === 1000 ? 'ALL' : rankingLimit} PLAYERS · {selectedBatch !== 'all' ? selectedBatch : selectedVenue !== 'all' ? selectedVenue : 'ALL CENTRES COMBINED'}
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex gap-2 flex-wrap items-center">
+                  <div className="relative">
+                    <select
+                      value={rankingMetric}
+                      onChange={e => setRankingMetric(e.target.value as any)}
+                      className="bg-white/5 hover:bg-white/10 text-white font-bold text-[9px] uppercase tracking-wider px-3 py-1.5 rounded-xl border border-white/10 outline-none cursor-pointer appearance-none pr-7"
+                    >
+                      <option value="composite" className="bg-[#0D1B8A]">SORT: COMPOSITE</option>
+                      <option value="rating" className="bg-[#0D1B8A]">SORT: COACH RATING</option>
+                      <option value="attendance" className="bg-[#0D1B8A]">SORT: ATTENDANCE</option>
+                      <option value="skills" className="bg-[#0D1B8A]">SORT: SKILL METRICS</option>
+                    </select>
+                    <ChevronDown size={10} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-white/40" />
+                  </div>
+                  <div className="relative">
+                    <select
+                      value={rankingLimit}
+                      onChange={e => setRankingLimit(Number(e.target.value))}
+                      className="bg-white/5 hover:bg-white/10 text-white font-bold text-[9px] uppercase tracking-wider px-3 py-1.5 rounded-xl border border-white/10 outline-none cursor-pointer appearance-none pr-7"
+                    >
+                      <option value={5} className="bg-[#0D1B8A]">TOP 5</option>
+                      <option value={10} className="bg-[#0D1B8A]">TOP 10</option>
+                      <option value={25} className="bg-[#0D1B8A]">TOP 25</option>
+                      <option value={1000} className="bg-[#0D1B8A]">ALL</option>
+                    </select>
+                    <ChevronDown size={10} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-white/40" />
+                  </div>
+                  {[
+                    { dot: 'bg-[#C3F629]', label: 'Coach 40%' },
+                    { dot: 'bg-brand-500', label: 'Att 35%' },
+                    { dot: 'bg-brand-accent', label: 'Skills 25%' },
+                  ].map((l, i) => (
+                    <span key={i} className="flex items-center gap-1 text-[8px] font-black italic text-white/50 bg-black/20 border border-white/5 px-2 py-1 rounded-lg">
+                      <span className={`w-1 h-1 rounded-full ${l.dot} shadow-[0_0_8px_currentColor]`} />{l.label}
+                    </span>
                   ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/[0.02]">
-                {leagueRankings.map((r) => {
-                  const trendConfig = {
-                    up: { icon: <ArrowUp size={11} />, color: '#4ade80', label: `+${r.posChange}`, bg: 'bg-emerald-500/10 border-emerald-500/20' },
-                    down: { icon: <ArrowDown size={11} />, color: '#f87171', label: `-${r.posChange}`, bg: 'bg-red-500/10 border-red-500/20' },
-                    stable: { icon: <Minus size={11} />, color: 'rgba(255,255,255,0.25)', label: '—', bg: 'bg-brand-950 border-white/10' },
-                    new: { icon: <Zap size={11} />, color: '#f59e0b', label: 'NEW', bg: 'bg-amber-500/10 border-amber-500/20' },
-                  }[r.trend];
-                  const medalColors = ['#CCFF00', '#C0C0C0', '#CD7F32'];
-                  const isTop3 = r.rank <= 3;
-                  return (
-                    <tr key={r.name} className="hover:bg-black/10 transition-colors group">
-                      {/* Rank */}
-                      <td className="px-4 py-4 text-center">
-                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-[11px] font-black italic mx-auto ${
-                          isTop3 ? 'shadow-lg' : ''
-                        }`} style={{
-                          background: isTop3 ? `${medalColors[r.rank - 1]}20` : 'rgba(255,255,255,0.05)',
-                          color: isTop3 ? medalColors[r.rank - 1] : 'rgba(255,255,255,0.3)',
-                          border: isTop3 ? `1px solid ${medalColors[r.rank - 1]}30` : '1px solid rgba(255,255,255,0.06)',
-                        }}>{r.rank}</div>
-                      </td>
-                      {/* Player */}
-                      <td className="px-4 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-xl flex items-center justify-center text-[10px] font-black flex-shrink-0"
-                            style={{ background: nameColor(r.name), color: '#0D1B8A' }}>
-                            {initials(r.name)}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-[12px] font-black italic text-white truncate">{r.name}</p>
-                            <p className="text-[8px] font-bold italic text-white/50 truncate">{r.venue}</p>
-                          </div>
-                        </div>
-                      </td>
-                      {/* Composite */}
-                      <td className="px-4 py-4 text-center">
-                        <div className="inline-flex flex-col items-center">
-                          <span className="text-[16px] font-black italic leading-none" style={{ color: r.compositeScore >= 70 ? '#CCFF00' : r.compositeScore >= 50 ? '#f59e0b' : '#f87171' }}>
-                            {r.compositeScore}
-                          </span>
-                          <span className="text-[7px] font-black italic text-white/40">/100</span>
-                        </div>
-                      </td>
-                      {/* Scout rating */}
-                      <td className="px-4 py-4 text-center">
-                        <span className="text-[13px] font-black italic text-[#CCFF00]">{r.overallRating}</span>
-                        <span className="text-[8px] font-black italic text-white/20">/10</span>
-                      </td>
-                      {/* Attendance */}
-                      <td className="px-4 py-4 text-center">
-                        <div className="flex flex-col items-center gap-1">
-                          <span className="text-[12px] font-black italic" style={{ color: rateColor(r.attendanceRate) }}>{r.attendanceRate}%</span>
-                          <div className="w-10 h-[2px] bg-white/[0.06] rounded-full overflow-hidden">
-                            <div className="h-full rounded-full" style={{ width: `${r.attendanceRate}%`, background: rateColor(r.attendanceRate) }} />
-                          </div>
-                        </div>
-                      </td>
-                      {/* Skill avg */}
-                      <td className="px-4 py-4 text-center">
-                        <span className="text-[12px] font-black italic text-purple-400">{r.scoutScore}</span>
-                        <span className="text-[8px] font-black italic text-white/20">/10</span>
-                      </td>
-                      {/* Trend */}
-                      <td className="px-4 py-4 text-center">
-                        <div className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border text-[9px] font-black italic ${trendConfig.bg}`}
-                          style={{ color: trendConfig.color }}>
-                          {trendConfig.icon}
-                          {trendConfig.label}
-                        </div>
-                      </td>
-                      {/* Dev areas */}
-                      <td className="px-4 py-4 hidden lg:table-cell">
-                        <div className="flex flex-wrap gap-1 max-w-[160px]">
-                          {r.developmentAreas.slice(0, 2).map((a, i) => (
-                            <span key={i} className="text-[7px] font-black italic text-white/40 bg-brand-950 border border-white/10 px-2 py-0.5 rounded-lg">{a}</span>
-                          ))}
-                          {r.developmentAreas.length > 2 && (
-                            <span className="text-[7px] font-black italic text-white/20">+{r.developmentAreas.length - 2}</span>
-                          )}
-                        </div>
-                      </td>
+                </div>
+              </div>
+
+              {/* Table Rankings */}
+              <div className="overflow-x-auto custom-scrollbar-tactical">
+                <table className="w-full min-w-[900px]">
+                  <thead>
+                    <tr className="border-b border-white/[0.06] bg-brand-950/20">
+                      {['RANK', 'PLAYER PROFILE', 'COMPOSITE', 'RATING', 'ATTENDANCE', 'SKILLS', 'TREND', 'DEVELOPMENT'].map((h, i) => (
+                        <th key={i} className={`px-6 py-4 text-[9px] font-black italic text-white/60 uppercase tracking-[0.2em] ${
+                          i === 0 ? 'w-20 text-center' : i === 1 ? 'text-left' : 'text-center'
+                        }`}>{h}</th>
+                      ))}
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                  </thead>
+                  <tbody className="divide-y divide-white/[0.02]">
+                    {leagueRankings.map((r) => {
+                      const trendConfig = {
+                        up: { icon: <ArrowUp size={11} />, color: '#4ade80', label: `+${r.posChange}`, bg: 'bg-emerald-500/10 border-emerald-500/20' },
+                        down: { icon: <ArrowDown size={11} />, color: '#f87171', label: `-${r.posChange}`, bg: 'bg-red-500/10 border-red-500/20' },
+                        stable: { icon: <Minus size={11} />, color: 'rgba(255,255,255,0.25)', label: '—', bg: 'bg-brand-950 border-white/10' },
+                        new: { icon: <Zap size={11} />, color: '#f59e0b', label: 'NEW', bg: 'bg-amber-500/10 border-amber-500/20' },
+                      }[r.trend];
+                      const medalColors = ['#C3F629', '#C0C0C0', '#CD7F32'];
+                      const isTop3 = r.rank <= 3;
+                      return (
+                        <tr key={r.name} className="hover:bg-black/10 transition-colors group">
+                          <td className="px-4 py-4 text-center">
+                            <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-[11px] font-black italic mx-auto ${
+                              isTop3 ? 'shadow-lg' : ''
+                            }`} style={{
+                              background: isTop3 ? `${medalColors[r.rank - 1]}20` : 'rgba(255,255,255,0.05)',
+                              color: isTop3 ? medalColors[r.rank - 1] : 'rgba(255,255,255,0.3)',
+                              border: isTop3 ? `1px solid ${medalColors[r.rank - 1]}30` : '1px solid rgba(255,255,255,0.06)',
+                            }}>{r.rank}</div>
+                          </td>
+                          <td className="px-4 py-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-9 h-9 rounded-xl flex items-center justify-center text-[10px] font-black flex-shrink-0"
+                                style={{ background: nameColor(r.name), color: '#0D1B8A' }}>
+                                {initials(r.name)}
+                              </div>
+                              <div className="min-w-0 text-left">
+                                <p className="text-[12px] font-black italic text-white truncate">{r.name}</p>
+                                <p className="text-[8px] font-bold italic text-white/50 truncate">{r.venue}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-4 py-4 text-center">
+                            <div className="inline-flex flex-col items-center">
+                              <span className="text-[16px] font-black italic leading-none" style={{ color: r.compositeScore >= 70 ? '#C3F629' : r.compositeScore >= 50 ? '#f59e0b' : '#f87171' }}>
+                                {r.compositeScore}
+                              </span>
+                              <span className="text-[7px] font-black italic text-white/40">/100</span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-4 text-center">
+                            <span className="text-[13px] font-black italic text-[#C3F629]">{r.overallRating}</span>
+                            <span className="text-[8px] font-black italic text-white/20">/10</span>
+                          </td>
+                          <td className="px-4 py-4 text-center">
+                            <div className="flex flex-col items-center gap-1">
+                              <span className="text-[12px] font-black italic" style={{ color: rateColor(r.attendanceRate) }}>{r.attendanceRate}%</span>
+                              <div className="w-10 h-[2px] bg-white/[0.06] rounded-full overflow-hidden">
+                                <div className="h-full rounded-full" style={{ width: `${r.attendanceRate}%`, background: rateColor(r.attendanceRate) }} />
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-4 py-4 text-center">
+                            <span className="text-[12px] font-black italic text-purple-400">{r.scoutScore}</span>
+                            <span className="text-[8px] font-black italic text-white/20">/10</span>
+                          </td>
+                          <td className="px-4 py-4 text-center">
+                            <div className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border text-[9px] font-black italic ${trendConfig.bg}`}
+                              style={{ color: trendConfig.color }}>
+                              {trendConfig.icon}
+                              {trendConfig.label}
+                            </div>
+                          </td>
+                          <td className="px-4 py-4 text-left">
+                            <div className="flex flex-wrap gap-1 max-w-[160px]">
+                              {r.developmentAreas.slice(0, 2).map((a, i) => (
+                                <span key={i} className="text-[7px] font-black italic text-white/40 bg-brand-950 border border-white/10 px-2 py-0.5 rounded-lg">{a}</span>
+                              ))}
+                              {r.developmentAreas.length > 2 && (
+                                <span className="text-[7px] font-black italic text-white/20">+{r.developmentAreas.length - 2}</span>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Legend Footer */}
+              <div className="px-5 sm:px-8 py-3.5 border-t border-white/[0.04] flex flex-wrap gap-4 bg-black/5">
+                {[
+                  { icon: <ArrowUp size={9} className="text-emerald-400" />, label: 'Climbing vs last evaluation', color: 'text-emerald-400' },
+                  { icon: <ArrowDown size={9} className="text-red-400" />, label: 'Dropped vs last evaluation', color: 'text-red-400' },
+                  { icon: <Zap size={9} className="text-amber-400" />, label: 'First time ranked', color: 'text-amber-400' },
+                ].map((l, i) => (
+                  <span key={i} className={`flex items-center gap-1 text-[8px] font-black italic ${l.color} opacity-80`}>{l.icon}{l.label}</span>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="py-32 glass-card flex flex-col items-center justify-center gap-4 text-white/10">
+              <Medal size={64} strokeWidth={1.5} />
+              <p className="text-sm font-black uppercase tracking-[0.3em] text-white/30 italic">No player rankings available</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ─── TAB CONTENT: ANALYTICS & RECENT FEED ───────────────────────────── */}
+      {dashboardTab === 'analytics' && (
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+          
+          {/* Trend Chart */}
+          <div className="glass-card p-6 sm:p-8 rounded-[2.5rem] border border-white/10 shadow-xl overflow-hidden ring-1 ring-white/5">
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2">
+                <Clock size={13} className="text-[#C3F629]" />
+                <h3 className="text-[11px] font-black italic uppercase text-white tracking-[0.25em]">ATTENDANCE TREND (7 DAYS)</h3>
+              </div>
+              <div className="flex gap-3 text-[9px] font-black italic text-white/40">
+                <span className="flex items-center gap-1"><span className="w-3 h-0.5 bg-[#C3F629] inline-block rounded" /> Present</span>
+                <span className="flex items-center gap-1"><span className="w-3 h-0.5 bg-white inline-block rounded opacity-20" /> Absent</span>
+              </div>
+            </div>
+            <div className="h-[200px] sm:h-[240px]">{renderChart(chartAll)}</div>
           </div>
 
-          {/* Legend footer */}
-          <div className="px-5 sm:px-8 py-3.5 border-t border-white/[0.04] flex flex-wrap gap-4 bg-black/5">
-            {[
-              { icon: <ArrowUp size={9} className="text-emerald-400" />, label: 'Climbing vs last evaluation', color: 'text-emerald-400' },
-              { icon: <ArrowDown size={9} className="text-red-400" />, label: 'Dropped vs last evaluation', color: 'text-red-400' },
-              { icon: <Zap size={9} className="text-amber-400" />, label: 'First time ranked', color: 'text-amber-400' },
-            ].map((l, i) => (
-              <span key={i} className={`flex items-center gap-1 text-[8px] font-black italic ${l.color} opacity-80`}>{l.icon}{l.label}</span>
-            ))}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            {/* Age Distribution */}
+            <div className="glass-card p-6 sm:p-8 rounded-[2.5rem] border border-white/10 shadow-xl ring-1 ring-white/5">
+              <div className="flex items-center gap-2 mb-5">
+                <TrendingUp size={13} className="text-[#C3F629]" />
+                <h3 className="text-[11px] font-black italic uppercase text-white tracking-[0.25em]">DEMOGRAPHIC DISTRIBUTION</h3>
+              </div>
+              {ageAll.length > 0 ? (
+                <div className="space-y-2.5">
+                  {ageAll.map(g => {
+                    const max = Math.max(...ageAll.map(x => x.value));
+                    const total = ageAll.reduce((s, x) => s + x.value, 0);
+                    return (
+                      <div key={g.name} className="flex items-center gap-3">
+                        <span className="text-[9px] font-black uppercase italic text-white/40 w-8 flex-shrink-0 text-left">{g.name}</span>
+                        <div className="flex-1 h-6 bg-black/20 rounded-xl overflow-hidden">
+                          <div className="h-full rounded-xl flex items-center px-2.5 transition-all duration-1000"
+                            style={{ width: `${(g.value / max) * 100}%`, background: g.color, minWidth: '2rem' }}>
+                            <span className="text-[10px] font-black italic text-brand-950">{g.value}</span>
+                          </div>
+                        </div>
+                        <span className="text-[9px] font-black italic text-white/20 w-7 text-right">{Math.round((g.value / total) * 100)}%</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="h-40 flex items-center justify-center opacity-25">
+                  <p className="text-[9px] font-black italic text-white/25 uppercase">No player data yet</p>
+                </div>
+              )}
+            </div>
+
+            {/* Activity Feed */}
+            <div className="glass-card p-6 sm:p-8 rounded-[2.5rem] border border-white/10 shadow-xl ring-1 ring-white/5 text-left">
+              <div className="flex items-center justify-between gap-2 mb-5">
+                <div className="flex items-center gap-2">
+                  <Radio size={13} className="text-[#C3F629] animate-pulse" />
+                  <h3 className="text-[11px] font-black italic uppercase text-white tracking-[0.25em]">RECENT ACTIVITY</h3>
+                </div>
+                <div className="relative">
+                  <select
+                    value={activityTypeFilter}
+                    onChange={e => setActivityTypeFilter(e.target.value as any)}
+                    className="bg-white/5 hover:bg-white/10 text-white font-bold text-[9px] uppercase tracking-wider px-3 py-1.5 rounded-xl border border-white/10 outline-none cursor-pointer appearance-none pr-7"
+                  >
+                    <option value="all" className="bg-[#0D1B8A]">ALL TYPES</option>
+                    <option value="player" className="bg-[#0D1B8A]">PLAYERS</option>
+                    <option value="match" className="bg-[#0D1B8A]">MATCHES</option>
+                    <option value="fee" className="bg-[#0D1B8A]">FEES</option>
+                  </select>
+                  <ChevronDown size={10} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-white/40" />
+                </div>
+              </div>
+              {activityFeed.length > 0 ? (
+                <div className="space-y-0.5 max-h-[220px] overflow-y-auto custom-scrollbar-tactical">
+                  {activityFeed.map(item => (
+                    <div key={item.id} className="flex items-center gap-3 py-2.5 border-b border-white/[0.04] last:border-0">
+                      <div className="flex-shrink-0 w-7 h-7 rounded-xl flex items-center justify-center"
+                        style={{ background: `${feedColor[item.type]}12`, color: feedColor[item.type] }}>
+                        {feedIcon[item.type]}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[11px] font-black italic text-white truncate">{item.label}</p>
+                        <p className="text-[8px] font-bold italic text-white/25">{item.sub}</p>
+                      </div>
+                      <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: feedColor[item.type], opacity: 0.5 }} />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="h-40 flex items-center justify-center opacity-25">
+                  <p className="text-[9px] font-black italic text-white/25 uppercase">No activity yet</p>
+                </div>
+              )}
+            </div>
+
           </div>
         </div>
       )}
 
-      {/* ── Filtered Player Roster (Visible when a specific venue/batch is selected) ── */}
-      {(selectedVenue !== 'all' || selectedBatch !== 'all') && playerRoster.length > 0 && (
-        <div className="glass-card rounded-[2.5rem] border border-white/10 shadow-xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500 ring-1 ring-white/5">
-          <div className="px-5 sm:px-8 py-5 border-b border-white/10 flex items-center gap-3 bg-black/5">
-            <Users size={14} className="text-[#CCFF00]" />
-            <h3 className="text-[11px] font-black italic uppercase text-white tracking-[0.25em]">ATTENDANCE & EVALUATION ROSTER</h3>
-            <span className="ml-auto text-[9px] font-black text-white/40 bg-black/30 px-2.5 py-1 rounded-lg ring-1 ring-white/5">{playerRoster.length} PLAYERS</span>
-          </div>
-          <div className="divide-y divide-white/[0.04]">
-            {playerRoster.map((p, i) => (
-              <div key={i} className="flex items-center gap-4 px-5 sm:px-8 py-4 hover:bg-black/20 transition-colors">
-                {/* Avatar */}
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center text-[10px] font-black text-brand-950 flex-shrink-0"
-                  style={{ background: nameColor(p.name) }}>
-                  {initials(p.name)}
-                </div>
-                {/* Name */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-[12px] font-black italic text-white truncate">{p.name}</p>
-                  <p className="text-[9px] font-bold text-white/25 italic">{p.memberId || 'No ID'}</p>
-                </div>
-                {/* Attendance bar */}
-                <div className="flex-1 max-w-[120px] space-y-1 hidden sm:block">
-                  <div className="h-[3px] bg-white/[0.06] rounded-full overflow-hidden">
-                    <div className="h-full rounded-full transition-all duration-700" style={{ width: `${p.rate}%`, background: rateColor(p.rate) }} />
+      {/* ─── TAB CONTENT: OPERATIONS & SYSTEM ALERTS HUD ────────────────────── */}
+      {dashboardTab === 'operations' && (
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+          
+          {/* Critical Alerts */}
+          {alertItems.length > 0 ? (
+            <div className="glass-card rounded-[2rem] border border-white/10 overflow-hidden ring-1 ring-white/5 text-left">
+              <div className="px-5 py-3.5 border-b border-white/10 flex items-center gap-2 bg-black/5">
+                <AlertTriangle size={12} className="text-amber-400 font-bold" />
+                <p className="text-[9px] font-black text-white/60 uppercase italic tracking-[0.3em]">CRITICAL NODE ALERTS</p>
+              </div>
+              <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+                {alertItems.map(a => (
+                  <div key={a.id} className={`flex items-center gap-3 px-5 py-3.5 rounded-[1.5rem] border backdrop-blur-md ${alertStyle[a.severity]}`}>
+                    <div className="flex-shrink-0">{a.icon}</div>
+                    <div className="text-left">
+                      <p className="text-[11px] font-black italic leading-tight text-white">{a.label}</p>
+                      <p className="text-[9px] font-bold italic opacity-60 text-white/80 mt-1">{a.detail}</p>
+                    </div>
                   </div>
-                  <p className="text-[8px] font-black italic text-white/20">
-                    {p.sessions > 0 ? `${p.present}/${p.sessions} sessions` : 'No records'}
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="glass-card py-16 flex flex-col items-center justify-center gap-4 text-white/10 border border-white/10">
+              <CheckCircle2 size={48} className="text-[#C3F629] animate-bounce" />
+              <p className="text-xs font-black uppercase tracking-[0.25em] text-white/40 italic">ALL STATIONS SECURE · NO CRITICAL ALERTS</p>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            {/* Logistics Widget */}
+            <div className="glass-card p-6 sm:p-8 rounded-[2.5rem] border border-white/10 shadow-xl ring-1 ring-white/5 text-left">
+              <div className="flex items-center gap-2 mb-6 border-b border-white/5 pb-4">
+                <Truck size={14} className="text-[#C3F629]" />
+                <h3 className="text-[11px] font-black italic uppercase text-white tracking-[0.25em]">LOGISTICS & ASSETS</h3>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+                  <p className="text-[8px] font-black text-white/30 uppercase tracking-widest italic">VALUATION</p>
+                  <p className="text-xl sm:text-2xl font-black text-[#C3F629] mt-1">₹{(logisticsStats.totalValue || 0).toLocaleString('en-IN')}</p>
+                  <p className="text-[7px] font-black text-white/20 uppercase tracking-widest mt-1">Active Kit Assets</p>
+                </div>
+                <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+                  <p className="text-[8px] font-black text-white/30 uppercase tracking-widest italic">LOW STOCK</p>
+                  <p className={`text-xl sm:text-2xl font-black mt-1 ${logisticsStats.lowStockItems > 0 ? 'text-red-400' : 'text-[#C3F629]'}`}>
+                    {logisticsStats.lowStockItems} ITEMS
+                  </p>
+                  <p className="text-[7px] font-black text-white/20 uppercase tracking-widest mt-1">Below Safety Limit</p>
+                </div>
+              </div>
+
+              {logisticsStats.criticalItems.length > 0 && (
+                <div className="bg-red-500/5 border border-red-500/10 rounded-2xl p-4">
+                  <p className="text-[8px] font-black text-red-400 uppercase tracking-widest italic mb-2 flex items-center gap-1.5"><AlertTriangle size={10} /> CRITICAL RE-ORDER NEEDED</p>
+                  <div className="flex flex-wrap gap-2">
+                    {logisticsStats.criticalItems.map((item, idx) => (
+                      <span key={idx} className="px-3 py-1 bg-red-500/10 border border-red-500/20 text-red-400 text-[9px] font-black uppercase rounded-lg italic">{item}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Support Desk Widget */}
+            <div className="glass-card p-6 sm:p-8 rounded-[2.5rem] border border-white/10 shadow-xl ring-1 ring-white/5 text-left">
+              <div className="flex items-center gap-2 mb-6 border-b border-white/5 pb-4">
+                <LifeBuoy size={14} className="text-[#C3F629]" />
+                <h3 className="text-[11px] font-black italic uppercase text-white tracking-[0.25em]">SUPPORT DESK HUD</h3>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+                  <p className="text-[8px] font-black text-white/30 uppercase tracking-widest italic">OPEN TICKETS</p>
+                  <p className="text-xl sm:text-2xl font-black text-white mt-1">{supportStats.activeTickets}</p>
+                  <p className="text-[7px] font-black text-white/20 uppercase tracking-widest mt-1">Pending Resolution</p>
+                </div>
+                <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+                  <p className="text-[8px] font-black text-red-400/60 uppercase tracking-widest italic">CRITICAL SLAS</p>
+                  <p className={`text-xl sm:text-2xl font-black mt-1 ${supportStats.urgentTickets > 0 ? 'text-red-400' : 'text-[#C3F629]'}`}>
+                    {supportStats.urgentTickets} TICKETS
+                  </p>
+                  <p className="text-[7px] font-black text-white/20 uppercase tracking-widest mt-1">Requires Direct Attention</p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-4 bg-white/[0.02] border border-white/5 rounded-2xl">
+                <div>
+                  <p className="text-xs font-black italic text-white uppercase tracking-wider leading-none">Global Desk Health</p>
+                  <p className="text-[8px] font-black text-white/30 uppercase tracking-[0.2em] mt-1.5">Resolution efficiency</p>
+                </div>
+                <span className="text-xs font-black italic px-3 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">98.4% SAFE</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* ─── Config Modal ───────────────────────────────────────────────────── */}
+      {showConfigModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="w-full max-w-xl glass-card rounded-3xl sm:rounded-[2.5rem] border border-white/10 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500 ring-1 ring-white/5 max-h-[90vh] flex flex-col">
+            <div className="absolute top-0 left-0 w-full h-1 sm:h-1.5 bg-[#C3F629] opacity-40" />
+            
+            <div className="flex justify-between items-center p-5 sm:p-8 border-b border-[#ffffff12] bg-[#ffffff03]">
+              <div className="flex items-center gap-3 sm:gap-4 font-display">
+                <div className="p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl bg-[#C3F629]/10 border border-[#C3F629]/20 text-[#C3F629]">
+                  <Settings size={20} className="sm:w-[22px] sm:h-[22px]" />
+                </div>
+                <div className="text-left">
+                  <h3 className="text-base sm:text-lg font-black text-white uppercase tracking-tight italic font-display leading-none">Academy <span className="text-[#C3F629]">Config</span></h3>
+                  <p className="text-[8px] sm:text-[10px] font-bold text-white/45 uppercase tracking-widest mt-1">Venues & Batch Management</p>
+                </div>
+              </div>
+              <button onClick={() => { setShowConfigModal(false); setEditingItem(null); setNewItemName(''); }}
+                className="p-2.5 sm:p-3 rounded-lg sm:rounded-xl text-white/40 hover:text-white hover:bg-white/5 transition-all border border-transparent hover:border-white/10">
+                <X size={18} className="sm:w-5 sm:h-5" />
+              </button>
+            </div>
+
+            <div className="px-8 pt-6">
+              <div className="flex gap-1.5 p-1.5 bg-white/5 rounded-2xl border border-white/10 shadow-inner">
+                {(['venues', 'batches'] as const).map(t => (
+                  <button key={t} onClick={() => { setConfigTab(t); setEditingItem(null); setNewItemName(''); }}
+                    className={`flex-1 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all duration-500 italic
+                      ${configTab === t ? 'bg-[#C3F629] text-brand-950 shadow-lg shadow-[#C3F629]/20' : 'text-white/40 hover:text-white'}`}>
+                    {t === 'venues' ? 'Venues' : 'Batches'}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="px-6 sm:px-8 pt-6 flex flex-col sm:flex-row gap-3">
+              <input type="text" className="w-full bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl px-4 sm:px-6 py-3.5 sm:py-4 text-xs sm:text-sm font-bold text-white placeholder:text-white/20 focus:border-[#C3F629] outline-none transition-all shadow-inner"
+                value={newItemName} onChange={e => setNewItemName(e.target.value)}
+                placeholder={editingItem ? 'Update name…' : `Add new ${configTab === 'venues' ? 'venue' : 'batch'}…`}
+                onKeyDown={e => e.key === 'Enter' && (editingItem ? handleUpdateConfigItem() : handleAddConfigItem())} />
+              <div className="flex gap-2 shrink-0">
+                <button onClick={editingItem ? handleUpdateConfigItem : handleAddConfigItem}
+                  className="flex-1 sm:flex-none px-6 sm:px-7 py-3.5 sm:py-4 rounded-xl sm:rounded-2xl bg-[#C3F629] text-brand-950 font-black text-[10px] sm:text-[11px] uppercase tracking-widest hover:scale-[1.05] shadow-lg shadow-[#C3F629]/20 transition-all flex items-center justify-center gap-2 italic">
+                  {editingItem ? <Check size={14} className="sm:w-4 sm:h-4" /> : <Plus size={14} className="sm:w-4 sm:h-4" />}
+                  {editingItem ? 'Save' : 'Add'}
+                </button>
+                {editingItem && (
+                  <button onClick={() => { setEditingItem(null); setNewItemName(''); }}
+                    className="px-4 py-3.5 sm:py-4 rounded-xl sm:rounded-2xl bg-white/5 border border-white/10 text-white/40 hover:text-white transition-all flex items-center justify-center">
+                    <X size={14} className="sm:w-4 sm:h-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* List */}
+            <div className="px-6 sm:px-8 py-6 max-h-[320px] overflow-y-auto space-y-3">
+              {(configTab === 'venues' ? rawData.venues : rawData.batches).map(item => (
+                <div key={item.id}
+                  className="flex justify-between items-center px-4 sm:px-6 py-3 sm:py-4 rounded-xl sm:rounded-2xl border border-white/10 bg-white/5 group/item hover:border-[#C3F629]/30 hover:bg-white/10 transition-all duration-300 shadow-sm hover:shadow-md ring-1 ring-white/5">
+                  <div className="flex items-center gap-3 sm:gap-4 font-display">
+                    <div className="w-2 h-2 rounded-full bg-[#C3F629]/40 group-hover/item:bg-[#C3F629] transition-colors" />
+                    <span className="text-[11px] sm:text-sm font-bold text-white group-hover/item:text-[#C3F629] transition-colors italic font-display truncate max-w-[150px] sm:max-w-none">{item.name}</span>
+                  </div>
+                  <div className="flex items-center gap-1 sm:gap-2 opacity-100 sm:opacity-0 group-hover/item:opacity-100 transition-opacity duration-300">
+                    <button onClick={() => { setEditingItem(item); setNewItemName(item.name); }}
+                      className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl text-white/40 hover:text-[#C3F629] hover:bg-white/5 transition-all">
+                      <Edit2 size={14} className="sm:w-[15px] sm:h-[15px]" />
+                    </button>
+                    <button onClick={() => handleSecureConfigDelete(configTab === 'venues' ? 'venue' : 'batch', item.id, item.name)}
+                      className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-all">
+                      <Trash2 size={14} className="sm:w-[15px] sm:h-[15px]" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {(configTab === 'venues' ? rawData.venues : rawData.batches).length === 0 && (
+                <div className="py-20 flex flex-col items-center gap-4 text-white/10">
+                  <Layers size={40} strokeWidth={1.5} />
+                  <p className="text-[11px] font-black uppercase tracking-widest italic opacity-50">
+                    No {configTab === 'venues' ? 'venues' : 'batches'} added
                   </p>
                 </div>
-                {/* Rate */}
-                <div className="text-right flex-shrink-0 w-12">
-                  {p.sessions > 0
-                    ? <p className="text-[13px] font-black italic" style={{ color: rateColor(p.rate) }}>{p.rate}%</p>
-                    : <p className="text-[11px] font-black italic text-white/15">—</p>}
-                </div>
-                {/* Rating */}
-                <div className="text-right flex-shrink-0 w-10 hidden sm:block">
-                  {p.rating > 0
-                    ? <p className="text-[11px] font-black italic text-white/40">⭐ {p.rating}</p>
-                    : <p className="text-[10px] font-black italic text-white/12">—</p>}
-                </div>
-              </div>
-            ))}
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-8 py-6 bg-white/5 border-t border-white/10 flex justify-end">
+              <button onClick={() => { setShowConfigModal(false); setEditingItem(null); setNewItemName(''); }}
+                className="px-8 py-3 rounded-xl bg-white/5 border border-white/10 text-[11px] font-black text-white/40 uppercase tracking-widest hover:text-white hover:bg-white/10 shadow-sm transition-all italic tracking-[0.2em]">
+                Close Protocol
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      {/* ── Active Centre Cards (Only shows when no specific batch is selected) ── */}
-      {selectedBatch === 'all' && activeCentres.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center gap-2 px-1">
-            <Radio size={12} className="text-[#CCFF00]" />
-            <p className="text-[10px] font-black text-white/60 uppercase italic tracking-[0.35em]">
-              {selectedVenue === 'all' ? 'OPERATIONAL NODES' : `${selectedVenue.toUpperCase()} OVERVIEW`}
-            </p>
-            <div className="ml-auto flex items-center gap-2">
-                <span className="text-[9px] font-black text-[#CCFF00] bg-[#CCFF00]/10 border border-[#CCFF00]/20 px-3 py-1 rounded-full uppercase italic tracking-wider">LIVE STATUS</span>
-                <span className="text-[9px] font-black text-white/40 glass-card px-3 py-1 rounded-lg border border-white/10 ring-1 ring-white/5">{activeCentres.length} NODES</span>
-            </div>
-          </div>
-          <div className={`grid gap-4 ${activeCentres.length === 1 ? 'grid-cols-1 max-w-sm' : activeCentres.length === 2 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'}`}>
-            {activeCentres.map(c => <CentreCard key={c.name} stat={c} onClick={() => { setSelectedVenue(c.name); setSelectedBatch('all'); }} />)}
-          </div>
-        </div>
-      )}
-
-      {/* ── Analytics Row ───────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 gap-5">
-
-        {/* 7-day chart */}
-        <div className="glass-card p-6 sm:p-8 rounded-[2.5rem] border border-white/10 shadow-xl overflow-hidden ring-1 ring-white/5">
-          <div className="flex items-center justify-between mb-5">
-            <div className="flex items-center gap-2">
-              <Clock size={13} className="text-[#CCFF00]" />
-              <h3 className="text-[11px] font-black italic uppercase text-white tracking-[0.25em]">ATTENDANCE TREND (7 DAYS)</h3>
-            </div>
-            <div className="flex gap-3 text-[9px] font-black italic text-white/40">
-              <span className="flex items-center gap-1"><span className="w-3 h-0.5 bg-[#CCFF00] inline-block rounded" /> Present</span>
-              <span className="flex items-center gap-1"><span className="w-3 h-0.5 bg-white inline-block rounded opacity-20" /> Absent</span>
-            </div>
-          </div>
-          <div className="h-[200px] sm:h-[240px]">{renderChart(chartAll)}</div>
-        </div>
-      </div>
-
-      {/* ── Bottom Row ──────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-
-        {/* Age distribution */}
-        <div className="glass-card p-6 sm:p-8 rounded-[2.5rem] border border-white/10 shadow-xl ring-1 ring-white/5">
-          <div className="flex items-center gap-2 mb-5">
-            <TrendingUp size={13} className="text-[#CCFF00]" />
-            <h3 className="text-[11px] font-black italic uppercase text-white tracking-[0.25em]">DEMOGRAPHIC DISTRIBUTION</h3>
-          </div>
-          {ageAll.length > 0 ? (
-            <div className="space-y-2.5">
-              {ageAll.map(g => {
-                const max = Math.max(...ageAll.map(x => x.value));
-                const total = ageAll.reduce((s, x) => s + x.value, 0);
-                return (
-                  <div key={g.name} className="flex items-center gap-3">
-                    <span className="text-[9px] font-black uppercase italic text-white/40 w-8 flex-shrink-0">{g.name}</span>
-                    <div className="flex-1 h-6 bg-black/20 rounded-xl overflow-hidden">
-                      <div className="h-full rounded-xl flex items-center px-2.5 transition-all duration-1000"
-                        style={{ width: `${(g.value / max) * 100}%`, background: g.color, minWidth: '2rem' }}>
-                        <span className="text-[10px] font-black italic text-brand-950">{g.value}</span>
-                      </div>
-                    </div>
-                    <span className="text-[9px] font-black italic text-white/20 w-7 text-right">{Math.round((g.value / total) * 100)}%</span>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="h-40 flex items-center justify-center opacity-25">
-              <p className="text-[9px] font-black italic text-white/25 uppercase">No player data yet</p>
-            </div>
-          )}
-        </div>
-
-        {/* Activity feed */}
-        <div className="glass-card p-6 sm:p-8 rounded-[2.5rem] border border-white/10 shadow-xl ring-1 ring-white/5">
-          <div className="flex items-center justify-between gap-2 mb-5">
-            <div className="flex items-center gap-2">
-              <Radio size={13} className="text-[#CCFF00]" />
-              <h3 className="text-[11px] font-black italic uppercase text-white tracking-[0.25em]">RECENT ACTIVITY</h3>
-            </div>
-            <div className="relative">
-              <select
-                value={activityTypeFilter}
-                onChange={e => setActivityTypeFilter(e.target.value as any)}
-                className="bg-white/5 hover:bg-white/10 text-white font-bold text-[9px] uppercase tracking-wider px-3 py-1.5 rounded-xl border border-white/10 outline-none cursor-pointer appearance-none pr-7"
-              >
-                <option value="all" className="bg-[#0D1B8A]">ALL TYPES</option>
-                <option value="player" className="bg-[#0D1B8A]">PLAYERS</option>
-                <option value="match" className="bg-[#0D1B8A]">MATCHES</option>
-                <option value="fee" className="bg-[#0D1B8A]">FEES</option>
-              </select>
-              <ChevronDown size={10} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-white/40" />
-            </div>
-          </div>
-          {activityFeed.length > 0 ? (
-            <div className="space-y-0.5">
-              {activityFeed.map(item => (
-                <div key={item.id} className="flex items-center gap-3 py-2.5 border-b border-white/[0.04] last:border-0">
-                  <div className="flex-shrink-0 w-7 h-7 rounded-xl flex items-center justify-center"
-                    style={{ background: `${feedColor[item.type]}12`, color: feedColor[item.type] }}>
-                    {feedIcon[item.type]}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[11px] font-black italic text-white truncate">{item.label}</p>
-                    <p className="text-[8px] font-bold italic text-white/25">{item.sub}</p>
-                  </div>
-                  <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: feedColor[item.type], opacity: 0.5 }} />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="h-40 flex items-center justify-center opacity-25">
-              <p className="text-[9px] font-black italic text-white/25 uppercase">No activity yet</p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* ── Inactive Nodes (collapsed) ───────────────────────────────────── */}
-      {emptyCentres.length > 0 && (
-        <div className="glass-card rounded-[2rem] border border-white/10 px-5 py-4 ring-1 ring-white/5 opacity-40">
-          <div className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-white/20" />
-            <p className="text-[9px] font-black text-white/40 uppercase italic tracking-[0.3em]">
-              {emptyCentres.length} INACTIVE NODE{emptyCentres.length > 1 ? 'S' : ''} (ZERO ENROLMENT)
-            </p>
-            <p className="text-[9px] font-bold italic text-white/20 ml-auto">{emptyCentres.map(c => c.name).join(' · ')}</p>
-          </div>
-        </div>
-      )}
-
+      {/* ─── Confirm Config Modal ───────────────────────────────────────────── */}
+      <ConfirmModal
+        isOpen={configDeleteModalOpen}
+        title={`Delete ${configItemToDelete?.type}`}
+        message={`Are you sure you want to permanently delete "${configItemToDelete?.name}"? This action cannot be undone.`}
+        onConfirm={confirmConfigDelete}
+        onCancel={() => { setConfigDeleteModalOpen(false); setConfigItemToDelete(null); }}
+        requireTypeToConfirm="delete"
+      />
     </div>
   );
 };
