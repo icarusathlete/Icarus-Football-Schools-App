@@ -235,7 +235,6 @@ export const CoachAttendance: React.FC = () => {
       ═══════════════════════════════ */}
       <PageHeader 
         title="SESSION ROLLCALL" 
-        subtitle="Icarus // Attendance Protocol"
         extra={
           <div className="grid grid-cols-2 sm:flex gap-4 w-full lg:w-auto">
             <div className="bg-white/5 backdrop-blur-xl p-5 rounded-2xl border border-white/10 text-center min-w-[110px] transition-all hover:bg-white/10 hover:border-brand-500/30 group/stat">
