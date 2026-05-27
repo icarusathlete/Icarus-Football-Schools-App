@@ -371,10 +371,7 @@ export const PlayerRegistration: React.FC = () => {
   /*  Render                                                                  */
   /* ─────────────────────────────────────────────────────────────────────── */
   return (
-    <div className="min-h-screen bg-transparent p-4 sm:p-10 md:p-16 font-['Manrope'] selection:bg-brand-500/20 relative overflow-hidden">
-      {/* Subtle Background Accents */}
-      <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.05]"
-        style={{ backgroundImage: 'repeating-linear-gradient(0deg,#ffffff 0,#ffffff 1px,transparent 1px,transparent 40px),repeating-linear-gradient(90deg,#ffffff 0,#ffffff 1px,transparent 1px,transparent 40px)' }} />
+    <div className="space-y-6 pb-32 font-display relative overflow-hidden text-left">
 
       {/* ─── Success Overlay ────────────────────────────────────────────── */}
       {status === 'success' && (
