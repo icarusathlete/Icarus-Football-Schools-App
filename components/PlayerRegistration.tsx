@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { PageHeader } from './ui/PageHeader';
 import {
   Upload, Save, X, User, Phone, Shield, Camera, Check, RefreshCw,
   AlertCircle, Calendar, Briefcase, Trash2, MapPin, Settings, Map,
@@ -22,7 +23,7 @@ const SectionHeader: React.FC<{
   subtitle: string;
   iconGlow?: string;
   accentClass?: string;
-}> = ({ icon, title, accent, subtitle, iconGlow = 'shadow-[#CCFF00]/20', accentClass = 'text-[#CCFF00]' }) => (
+}> = ({ icon, title, accent, subtitle, iconGlow = 'shadow-[#C3F629]/20', accentClass = 'text-[#C3F629]' }) => (
   <div className="flex items-center gap-3 sm:gap-5 mb-6 sm:mb-10 pb-6 sm:pb-8 border-b border-white/10 relative">
     <div className={`p-2.5 sm:p-4 rounded-xl sm:rounded-2xl bg-white/5 text-white shadow-xl ${iconGlow} relative z-10 border border-white/10 flex items-center justify-center`}>
       {React.cloneElement(icon as React.ReactElement<any>, { 
@@ -50,7 +51,7 @@ const FieldLabel: React.FC<{ icon?: React.ReactNode; label: string; required?: b
     {icon && <span className="text-white/20">{icon}</span>}
     <label className="text-[11px] font-black text-white/40 uppercase tracking-[0.15em] italic">
       {label}
-      {required && <span className="text-[#CCFF00] ml-2">*</span>}
+      {required && <span className="text-[#C3F629] ml-2">*</span>}
     </label>
   </div>
 );
@@ -379,17 +380,17 @@ export const PlayerRegistration: React.FC = () => {
       {status === 'success' && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-8 animate-in fade-in duration-300">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-xl" />
-          <div className="relative bg-[#CCFF00] p-8 sm:p-12 rounded-[2.5rem] sm:rounded-[3rem] shadow-2xl flex flex-col items-center text-center max-w-sm w-full">
+          <div className="relative bg-[#C3F629] p-8 sm:p-12 rounded-[2.5rem] sm:rounded-[3rem] shadow-2xl flex flex-col items-center text-center max-w-sm w-full">
             <div className="w-16 h-16 sm:w-24 sm:h-24 bg-brand-950 rounded-full flex items-center justify-center mb-6 sm:mb-8 shadow-inner">
-              <Check size={32} className="text-[#CCFF00] sm:hidden" />
-              <Check size={48} className="text-[#CCFF00] hidden sm:block" />
+              <Check size={32} className="text-[#C3F629] sm:hidden" />
+              <Check size={48} className="text-[#C3F629] hidden sm:block" />
             </div>
             <h2 className="text-xl sm:text-3xl font-black text-brand-950 uppercase tracking-tighter mb-3 sm:mb-4 font-display italic leading-none">Protocol Complete</h2>
             <p className="text-brand-950/70 text-[10px] sm:text-sm font-bold uppercase tracking-widest mb-6 sm:mb-8 leading-relaxed">
               {statusMsg}
             </p>
             <button onClick={() => setStatus('idle')}
-              className="w-full py-4 rounded-xl sm:rounded-2xl bg-brand-950 text-[#CCFF00] font-black text-[10px] sm:text-[11px] uppercase tracking-widest hover:scale-105 transition-all shadow-xl shadow-black/20 italic">
+              className="w-full py-4 rounded-xl sm:rounded-2xl bg-brand-950 text-[#C3F629] font-black text-[10px] sm:text-[11px] uppercase tracking-widest hover:scale-105 transition-all shadow-xl shadow-black/20 italic">
               Acknowledge & Continue
             </button>
           </div>
@@ -399,54 +400,44 @@ export const PlayerRegistration: React.FC = () => {
       <div className="max-w-7xl mx-auto space-y-12 relative z-10 animate-fade-in">
 
         {/* ─── Page Header HUD ────────────────────────────────────────────── */}
-        <div className="glass-card flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8 sm:gap-10 p-6 sm:p-10 md:p-14 rounded-[2rem] sm:rounded-[3.5rem] border border-white/10 shadow-2xl relative overflow-hidden group mb-6 sm:mb-10 mt-0 ring-1 ring-white/5">
-          <div className="absolute top-0 right-0 p-12 opacity-[0.03] pointer-events-none transition-transform duration-1000 group-hover:scale-110 group-hover:rotate-12 hidden sm:block">
-            <User size={280} className="text-white" />
-          </div>
-          
-          <div className="relative z-10 space-y-2 sm:space-y-4 w-full sm:w-auto">
-            <div className="flex items-center gap-3 sm:gap-4 text-brand-500 font-bold uppercase text-[8px] sm:text-[10px] tracking-[0.3em] sm:tracking-[0.4em] italic mb-1 sm:mb-2">
-              <span className="w-6 sm:w-10 h-px bg-white/10"></span>
-              Official Registration Portal
-            </div>
-            <h2 className="text-2xl sm:text-5xl md:text-6xl font-black italic text-white uppercase tracking-tighter leading-[0.95] flex flex-wrap items-center gap-x-2 sm:gap-x-4 font-display">
-              ACADEMY <span className="text-[#CCFF00] font-black">ONBOARDING</span>
-            </h2>
-            <p className="text-white/40 font-bold uppercase text-[8px] sm:text-[10px] tracking-[0.2em] sm:tracking-[0.3em] pt-1 sm:pt-2">System Node: Onboarding // Operational Dataset Intake</p>
-          </div>
+        <PageHeader 
+          title="ACADEMY ONBOARDING" 
+          subtitle="SYSTEM NODE // ONBOARDING // OPERATIONAL DATASET INTAKE"
+          extra={
+            <>
+              <div className="flex gap-2 bg-black/40 p-1.5 sm:p-2 rounded-2xl border border-white/5 backdrop-blur-xl">
+                {( [['player', User, 'Athletes'], ['coach', Shield, 'Coaches']] as const).map(([m, Icon, label]) => (
+                  <button 
+                    key={m} 
+                    type="button"
+                    onClick={() => { setMode(m as any); setErrors({}); }}
+                    className={`flex items-center justify-center gap-2 sm:gap-3 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-[0.1em] sm:tracking-[0.15em] transition-all duration-500 italic whitespace-nowrap
+                      ${mode === m
+                        ? 'bg-brand-accent text-brand-950 shadow-lg shadow-brand-accent/20 border-brand-accent scale-[1.02]'
+                        : 'text-white/40 hover:text-brand-accent hover:bg-white/10'}`}
+                  >
+                    <Icon size={14} className="sm:w-4 sm:h-4" />
+                    {label}
+                  </button>
+                ))}
+              </div>
 
-          <div className="relative z-10 flex flex-col sm:flex-row items-stretch sm:items-center gap-5 w-full lg:w-auto">
-            <div className="flex gap-2 bg-black/40 p-2 sm:p-2.5 rounded-2xl sm:rounded-[2rem] border border-white/10 shadow-inner overflow-x-auto no-scrollbar">
-              {( [['player', User, 'Athletes'], ['coach', Shield, 'Coaches']] as const).map(([m, Icon, label]) => (
-                <button 
-                  key={m} 
-                  onClick={() => { setMode(m as any); setErrors({}); }}
-                  className={`flex items-center justify-center gap-2 sm:gap-3 px-4 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl text-[9px] sm:text-[11px] font-black uppercase tracking-[0.1em] sm:tracking-[0.15em] transition-all duration-500 italic whitespace-nowrap flex-1
-                    ${mode === m
-                      ? 'bg-[#CCFF00] text-brand-950 shadow-lg shadow-[#CCFF00]/20 border-[#CCFF00] scale-[1.02]'
-                      : 'text-white/40 hover:text-[#CCFF00] hover:bg-white/10'}`}
-                >
-                  <Icon size={14} className="sm:w-4 sm:h-4" />
-                  {label}
+              <div className="flex items-center gap-3">
+                {mode === 'player' && (
+                  <div className="px-5 sm:px-8 py-2 sm:py-2.5 rounded-xl bg-brand-950 border border-white/10 flex flex-col items-center min-w-[100px] sm:min-w-[120px] shadow-2xl">
+                    <p className="text-[7px] sm:text-[8px] font-black text-white/40 uppercase tracking-widest mb-0.5 italic">NEXT ASSIGNMENT</p>
+                    <p className="text-sm sm:text-base font-black text-brand-accent italic tracking-tighter leading-none">{nextId}</p>
+                  </div>
+                )}
+
+                <button onClick={() => setShowConfigModal(true)}
+                  className="p-3 sm:p-3.5 rounded-xl bg-white/5 hover:bg-brand-accent hover:text-brand-950 text-white/40 border border-white/10 transition-all duration-300 group shadow-2xl">
+                  <Settings size={16} className="group-hover:rotate-90 transition-transform duration-500" />
                 </button>
-              ))}
-            </div>
-
-            <div className="flex items-center gap-4">
-              {mode === 'player' && (
-                <div className="flex-1 sm:flex-none px-6 sm:px-10 py-3 sm:py-4 rounded-2xl bg-brand-900/50 backdrop-blur-xl border border-white/10 flex flex-col items-center min-w-[110px] sm:min-w-[130px] shadow-2xl ring-1 ring-white/5">
-                  <p className="text-[7px] sm:text-[9px] font-black text-white/40 uppercase tracking-widest mb-1 italic">NEXT ASSIGNMENT</p>
-                  <p className="text-lg sm:text-xl font-black text-[#CCFF00] italic tracking-tighter leading-none">{nextId}</p>
-                </div>
-              )}
-
-              <button onClick={() => setShowConfigModal(true)}
-                className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-brand-900/50 backdrop-blur-xl border border-white/10 text-white/40 hover:text-[#CCFF00] hover:bg-brand-900 transition-all duration-300 group shadow-2xl ring-1 ring-white/5">
-                <Settings size={18} className="sm:w-5 sm:h-5 group-hover:rotate-90 transition-transform duration-500" />
-              </button>
-            </div>
-          </div>
-        </div>
+              </div>
+            </>
+          }
+        />
 
         {/* ─── Forms ─────────────────────────────────────────────────────── */}
         <div className="animate-in fade-in slide-in-from-bottom-6 duration-700">
@@ -455,16 +446,16 @@ export const PlayerRegistration: React.FC = () => {
               <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
                 <div className="xl:col-span-4 space-y-6">
                   <div className="glass-card p-6 sm:p-10 rounded-[2rem] sm:rounded-[3rem] border border-white/10 shadow-2xl relative overflow-hidden group ring-1 ring-white/5">
-                    <div className="absolute top-0 left-0 w-full h-1 sm:h-1.5 bg-[#CCFF00] opacity-40" />
+                    <div className="absolute top-0 left-0 w-full h-1 sm:h-1.5 bg-[#C3F629] opacity-40" />
                     <SectionHeader
-                      icon={<Camera size={16} className="text-[#CCFF00]" />}
+                      icon={<Camera size={16} className="text-[#C3F629]" />}
                       title="Athlete" accent="Photo"
                       subtitle="Profile identity capture"
                     />
                     <div className="flex flex-col items-center">
                       <div className="relative group/photo mb-6">
                         <div className={`w-32 h-40 sm:w-44 sm:h-52 rounded-2xl sm:rounded-[2rem] overflow-hidden border-2 border-dashed transition-all duration-500 flex items-center justify-center
-                          ${previewUrl ? 'border-[#CCFF00]/40 shadow-lg shadow-[#CCFF00]/5' : 'border-white/10 group-hover/photo:border-white/20'}`}>
+                          ${previewUrl ? 'border-[#C3F629]/40 shadow-lg shadow-[#C3F629]/5' : 'border-white/10 group-hover/photo:border-white/20'}`}>
                           {previewUrl ? (
                             <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
                           ) : (
@@ -485,7 +476,7 @@ export const PlayerRegistration: React.FC = () => {
 
                 <div className="xl:col-span-8 space-y-6 sm:space-y-10">
                   <div className="glass-card p-6 sm:p-10 rounded-[2rem] sm:rounded-[3rem] border border-white/10 shadow-2xl relative overflow-hidden group ring-1 ring-white/5">
-                    <div className="absolute top-0 left-0 w-full h-1 sm:h-1.5 bg-[#CCFF00] opacity-40" />
+                    <div className="absolute top-0 left-0 w-full h-1 sm:h-1.5 bg-[#C3F629] opacity-40" />
                     <SectionHeader
                       icon={<User size={16} className="text-white" />}
                       title="Personal" accent="Information"
@@ -508,7 +499,7 @@ export const PlayerRegistration: React.FC = () => {
                   </div>
 
                   <div className="glass-card p-6 sm:p-10 rounded-3xl sm:rounded-[3.5rem] border border-white/10 shadow-2xl relative overflow-hidden group ring-1 ring-white/5">
-                    <div className="absolute top-0 left-0 w-full h-1 sm:h-1.5 bg-[#CCFF00] opacity-40" />
+                    <div className="absolute top-0 left-0 w-full h-1 sm:h-1.5 bg-[#C3F629] opacity-40" />
                     <FieldLabel icon={<Briefcase size={11} />} label="Player Position" required />
                     <div className="relative">
                       <select
@@ -527,9 +518,9 @@ export const PlayerRegistration: React.FC = () => {
 
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 sm:gap-10">
                   <div className="glass-card p-6 sm:p-10 rounded-[2rem] sm:rounded-[3.5rem] border border-white/10 shadow-2xl relative overflow-hidden group ring-1 ring-white/5">
-                    <div className="absolute top-0 left-0 w-full h-1 sm:h-1.5 bg-[#CCFF00] opacity-40" />
+                    <div className="absolute top-0 left-0 w-full h-1 sm:h-1.5 bg-[#C3F629] opacity-40" />
                   <SectionHeader
-                    icon={<MapPin className="text-[#CCFF00]" />}
+                    icon={<MapPin className="text-[#C3F629]" />}
                     title="Academy"
                     accent="Deployment"
                     subtitle="Venue & Cluster Assignment"
@@ -631,7 +622,7 @@ export const PlayerRegistration: React.FC = () => {
                   <button
                     type="submit"
                     disabled={status === 'submitting'}
-                    className="w-full sm:w-auto sm:min-w-[300px] h-14 sm:h-20 bg-[#CCFF00] text-brand-950 font-black uppercase italic tracking-[0.15em] sm:tracking-[0.25em] text-[10px] sm:text-sm rounded-xl sm:rounded-[1.5rem] shadow-2xl shadow-[#CCFF00]/30 hover:shadow-[#CCFF00]/50 hover:scale-[1.02] active:scale-95 transition-all duration-500 flex items-center justify-center gap-3 sm:gap-4 relative overflow-hidden group"
+                    className="w-full sm:w-auto sm:min-w-[300px] h-14 sm:h-20 bg-[#C3F629] text-brand-950 font-black uppercase italic tracking-[0.15em] sm:tracking-[0.25em] text-[10px] sm:text-sm rounded-xl sm:rounded-[1.5rem] shadow-2xl shadow-[#C3F629]/30 hover:shadow-[#C3F629]/50 hover:scale-[1.02] active:scale-95 transition-all duration-500 flex items-center justify-center gap-3 sm:gap-4 relative overflow-hidden group"
                   >
                     <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 skew-x-12" />
                     {status === 'submitting' ? (
@@ -649,7 +640,7 @@ export const PlayerRegistration: React.FC = () => {
               <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
                 <div className="xl:col-span-4 space-y-6">
                   <div className="glass-card p-6 sm:p-10 rounded-[2rem] sm:rounded-[2.5rem] border border-white/10 shadow-2xl relative overflow-hidden group ring-1 ring-white/5">
-                    <div className="absolute top-0 left-0 w-full h-1 sm:h-1.5 bg-[#CCFF00] opacity-40" />
+                    <div className="absolute top-0 left-0 w-full h-1 sm:h-1.5 bg-[#C3F629] opacity-40" />
                     <SectionHeader
                       icon={<Camera size={16} />}
                       title="Coach" accent="Protocol"
@@ -658,7 +649,7 @@ export const PlayerRegistration: React.FC = () => {
                     <div className="flex flex-col items-center">
                       <div className="relative group/photo mb-6">
                         <div className={`w-32 h-40 sm:w-44 sm:h-52 rounded-2xl overflow-hidden border-2 border-dashed transition-all duration-500 flex items-center justify-center
-                          ${coachPreviewUrl ? 'border-[#CCFF00]/40 shadow-lg shadow-[#CCFF00]/5' : 'border-white/10 group-hover/photo:border-white/20'}`}>
+                          ${coachPreviewUrl ? 'border-[#C3F629]/40 shadow-lg shadow-[#C3F629]/5' : 'border-white/10 group-hover/photo:border-white/20'}`}>
                           {coachPreviewUrl ? (
                             <img src={coachPreviewUrl} alt="Preview" className="w-full h-full object-cover" />
                           ) : (
@@ -668,7 +659,7 @@ export const PlayerRegistration: React.FC = () => {
                             </div>
                           )}
                         </div>
-                        <label className="absolute -bottom-3 -right-3 sm:-bottom-4 sm:-right-4 cursor-pointer bg-[#CCFF00] text-brand-950 p-2.5 sm:p-3.5 rounded-lg sm:rounded-xl shadow-[0_8px_24px_rgba(204,255,0,0.4)] hover:scale-110 active:scale-95 transition-all z-10">
+                        <label className="absolute -bottom-3 -right-3 sm:-bottom-4 sm:-right-4 cursor-pointer bg-[#C3F629] text-brand-950 p-2.5 sm:p-3.5 rounded-lg sm:rounded-xl shadow-[0_8px_24px_rgba(204,255,0,0.4)] hover:scale-110 active:scale-95 transition-all z-10">
                           <Upload size={14} className="sm:w-4 sm:h-4" />
                           <input type="file" accept="image/*" className="hidden" onChange={handleCoachFileChange} />
                         </label>
@@ -677,7 +668,7 @@ export const PlayerRegistration: React.FC = () => {
                   </div>
 
                   <div className="glass-card p-6 sm:p-10 rounded-3xl sm:rounded-[2.5rem] border border-white/10 shadow-2xl relative overflow-hidden group ring-1 ring-white/5">
-                    <div className="absolute top-0 left-0 w-full h-1 sm:h-1.5 bg-[#CCFF00] opacity-40" />
+                    <div className="absolute top-0 left-0 w-full h-1 sm:h-1.5 bg-[#C3F629] opacity-40" />
                     <SectionHeader
                       icon={<Shield size={16} className="text-white" />}
                       title="Personnel" accent="Metrics"
@@ -715,9 +706,9 @@ export const PlayerRegistration: React.FC = () => {
 
                 <div className="xl:col-span-8 space-y-6">
                   <div className="glass-card p-6 sm:p-10 rounded-[2rem] sm:rounded-[2.5rem] border border-white/10 shadow-2xl relative overflow-hidden group ring-1 ring-white/5">
-                    <div className="absolute top-0 left-0 w-full h-1 sm:h-1.5 bg-[#CCFF00] opacity-40" />
+                    <div className="absolute top-0 left-0 w-full h-1 sm:h-1.5 bg-[#C3F629] opacity-40" />
                     <SectionHeader
-                      icon={<MapPin size={16} className="text-[#CCFF00]" />}
+                      icon={<MapPin size={16} className="text-[#C3F629]" />}
                       title="Zone" accent="Assignment"
                       subtitle="Operational venue reach"
                     />
@@ -729,7 +720,7 @@ export const PlayerRegistration: React.FC = () => {
                             <button key={v.id} type="button" onClick={() => toggleCoachAssignment('venue', v.name)}
                               className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all duration-300 border
                                 ${coachForm.assignedVenues.includes(v.name)
-                                  ? 'bg-[#CCFF00] text-brand-950 border-[#CCFF00] shadow-lg shadow-[#CCFF00]/20'
+                                  ? 'bg-[#C3F629] text-brand-950 border-[#C3F629] shadow-lg shadow-[#C3F629]/20'
                                   : 'bg-white/5 text-white/40 border-white/10 hover:border-white/20'}`}>
                               {v.name}
                             </button>
@@ -743,7 +734,7 @@ export const PlayerRegistration: React.FC = () => {
                             <button key={b.id} type="button" onClick={() => toggleCoachAssignment('batch', b.name)}
                               className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all duration-300 border
                                 ${coachForm.assignedBatches.includes(b.name)
-                                  ? 'bg-[#CCFF00] text-brand-950 border-[#CCFF00] shadow-lg shadow-[#CCFF00]/20'
+                                  ? 'bg-[#C3F629] text-brand-950 border-[#C3F629] shadow-lg shadow-[#C3F629]/20'
                                   : 'bg-white/5 text-white/40 border-white/10 hover:border-white/20'}`}>
                               {b.name}
                             </button>
@@ -796,7 +787,7 @@ export const PlayerRegistration: React.FC = () => {
 
                   <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-6 pt-2">
                     <div className="flex items-center gap-3 px-5 py-4 rounded-xl border border-white/10 bg-white/5">
-                      <div className="w-2 h-2 rounded-full bg-[#CCFF00] animate-pulse" />
+                      <div className="w-2 h-2 rounded-full bg-[#C3F629] animate-pulse" />
                       <div>
                         <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest leading-none mb-1">Registration Status</p>
                         <p className="text-xs font-black text-white italic uppercase font-display leading-none">Initial Entry Mode</p>
@@ -808,7 +799,7 @@ export const PlayerRegistration: React.FC = () => {
                           Reset Protocol
                         </button>
                         <button type="submit" disabled={status === 'submitting'}
-                          className="px-8 sm:px-12 py-4 rounded-xl sm:rounded-2xl bg-[#CCFF00] text-brand-950 font-black text-[10px] sm:text-[11px] uppercase tracking-widest hover:scale-[1.02] shadow-xl shadow-[#CCFF00]/20 transition-all flex items-center justify-center gap-3 italic group">
+                          className="px-8 sm:px-12 py-4 rounded-xl sm:rounded-2xl bg-[#C3F629] text-brand-950 font-black text-[10px] sm:text-[11px] uppercase tracking-widest hover:scale-[1.02] shadow-xl shadow-[#C3F629]/20 transition-all flex items-center justify-center gap-3 italic group">
                           {status === 'submitting' ? (
                             <RefreshCw size={16} className="animate-spin" />
                           ) : (
@@ -828,15 +819,15 @@ export const PlayerRegistration: React.FC = () => {
       {showConfigModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
           <div className="w-full max-w-xl glass-card rounded-3xl sm:rounded-[2.5rem] border border-white/10 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500 ring-1 ring-white/5 max-h-[90vh] flex flex-col">
-            <div className="absolute top-0 left-0 w-full h-1 sm:h-1.5 bg-[#CCFF00] opacity-40" />
+            <div className="absolute top-0 left-0 w-full h-1 sm:h-1.5 bg-[#C3F629] opacity-40" />
             
             <div className="flex justify-between items-center p-5 sm:p-8 border-b border-white/10 bg-white/5">
               <div className="flex items-center gap-3 sm:gap-4">
-                <div className="p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl bg-[#CCFF00]/10 border border-[#CCFF00]/20 text-[#CCFF00]">
+                <div className="p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl bg-[#C3F629]/10 border border-[#C3F629]/20 text-[#C3F629]">
                   <Settings size={20} className="sm:w-[22px] sm:h-[22px]" />
                 </div>
                 <div>
-                  <h3 className="text-base sm:text-lg font-black text-white uppercase tracking-tight italic font-display leading-none">Academy <span className="text-[#CCFF00]">Config</span></h3>
+                  <h3 className="text-base sm:text-lg font-black text-white uppercase tracking-tight italic font-display leading-none">Academy <span className="text-[#C3F629]">Config</span></h3>
                   <p className="text-[8px] sm:text-[10px] font-bold text-white/40 uppercase tracking-widest mt-1">Venues & Batch Management</p>
                 </div>
               </div>
@@ -851,7 +842,7 @@ export const PlayerRegistration: React.FC = () => {
                 {(['venues', 'batches'] as const).map(t => (
                   <button key={t} onClick={() => setConfigTab(t)}
                     className={`flex-1 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all duration-500 italic
-                      ${configTab === t ? 'bg-[#CCFF00] text-brand-950 shadow-lg shadow-[#CCFF00]/20' : 'text-white/40 hover:text-white'}`}>
+                      ${configTab === t ? 'bg-[#C3F629] text-brand-950 shadow-lg shadow-[#C3F629]/20' : 'text-white/40 hover:text-white'}`}>
                     {t === 'venues' ? 'Venues' : 'Batches'}
                   </button>
                 ))}
@@ -859,13 +850,13 @@ export const PlayerRegistration: React.FC = () => {
             </div>
 
             <div className="px-6 sm:px-8 pt-6 flex flex-col sm:flex-row gap-3">
-              <input type="text" className="w-full bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl px-4 sm:px-6 py-3.5 sm:py-4 text-xs sm:text-sm font-bold text-white placeholder:text-white/20 focus:border-[#CCFF00] outline-none transition-all shadow-inner"
+              <input type="text" className="w-full bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl px-4 sm:px-6 py-3.5 sm:py-4 text-xs sm:text-sm font-bold text-white placeholder:text-white/20 focus:border-[#C3F629] outline-none transition-all shadow-inner"
                 value={newItemName} onChange={e => setNewItemName(e.target.value)}
                 placeholder={editingItem ? 'Update name…' : `Add new ${configTab === 'venues' ? 'venue' : 'batch'}…`}
                 onKeyDown={e => e.key === 'Enter' && (editingItem ? handleUpdateItem() : handleAddItem())} />
               <div className="flex gap-2 shrink-0">
                 <button onClick={editingItem ? handleUpdateItem : handleAddItem}
-                  className="flex-1 sm:flex-none px-6 sm:px-7 py-3.5 sm:py-4 rounded-xl sm:rounded-2xl bg-[#CCFF00] text-brand-950 font-black text-[10px] sm:text-[11px] uppercase tracking-widest hover:scale-[1.05] shadow-lg shadow-[#CCFF00]/20 transition-all flex items-center justify-center gap-2 italic">
+                  className="flex-1 sm:flex-none px-6 sm:px-7 py-3.5 sm:py-4 rounded-xl sm:rounded-2xl bg-[#C3F629] text-brand-950 font-black text-[10px] sm:text-[11px] uppercase tracking-widest hover:scale-[1.05] shadow-lg shadow-[#C3F629]/20 transition-all flex items-center justify-center gap-2 italic">
                   {editingItem ? <Check size={14} className="sm:w-4 sm:h-4" /> : <Plus size={14} className="sm:w-4 sm:h-4" />}
                   {editingItem ? 'Save' : 'Add'}
                 </button>
@@ -882,14 +873,14 @@ export const PlayerRegistration: React.FC = () => {
             <div className="px-6 sm:px-8 py-6 max-h-[320px] overflow-y-auto space-y-3">
               {(configTab === 'venues' ? venues : batches).map(item => (
                 <div key={item.id}
-                  className="flex justify-between items-center px-4 sm:px-6 py-3 sm:py-4 rounded-xl sm:rounded-2xl border border-white/10 bg-white/5 group/item hover:border-[#CCFF00]/30 hover:bg-white/10 transition-all duration-300 shadow-sm hover:shadow-md ring-1 ring-white/5">
+                  className="flex justify-between items-center px-4 sm:px-6 py-3 sm:py-4 rounded-xl sm:rounded-2xl border border-white/10 bg-white/5 group/item hover:border-[#C3F629]/30 hover:bg-white/10 transition-all duration-300 shadow-sm hover:shadow-md ring-1 ring-white/5">
                   <div className="flex items-center gap-3 sm:gap-4">
-                    <div className="w-2 h-2 rounded-full bg-[#CCFF00]/40 group-hover/item:bg-[#CCFF00] transition-colors" />
-                    <span className="text-[11px] sm:text-sm font-bold text-white group-hover/item:text-[#CCFF00] transition-colors italic font-display truncate max-w-[150px] sm:max-w-none">{item.name}</span>
+                    <div className="w-2 h-2 rounded-full bg-[#C3F629]/40 group-hover/item:bg-[#C3F629] transition-colors" />
+                    <span className="text-[11px] sm:text-sm font-bold text-white group-hover/item:text-[#C3F629] transition-colors italic font-display truncate max-w-[150px] sm:max-w-none">{item.name}</span>
                   </div>
                   <div className="flex items-center gap-1 sm:gap-2 opacity-100 sm:opacity-0 group-hover/item:opacity-100 transition-opacity duration-300">
                     <button onClick={() => { setEditingItem(item); setNewItemName(item.name); }}
-                      className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl text-white/40 hover:text-[#CCFF00] hover:bg-white/5 transition-all">
+                      className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl text-white/40 hover:text-[#C3F629] hover:bg-white/5 transition-all">
                       <Edit2 size={14} className="sm:w-[15px] sm:h-[15px]" />
                     </button>
                     <button onClick={() => handleSecureDelete(configTab === 'venues' ? 'venue' : 'batch', item.id, item.name)}

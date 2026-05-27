@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Player, AcademySettings, PlayerEvaluation, AttendanceRecord, Match } from '../types';
 import { Shield, Download, Loader2, Award, X, Camera, RefreshCcw, Edit2, Zap, Target, Timer, Activity } from 'lucide-react';
-import html2canvas from 'html2canvas';
+import * as htmlToImage from 'html-to-image';
 import { jsPDF } from 'jspdf';
 import { GeminiService } from '../services/geminiService';
 import { StorageService } from '../services/storageService';
@@ -202,45 +202,29 @@ export const EvaluationCard: React.FC<EvaluationCardProps> = ({ player, settings
         const isMobile = window.innerWidth < 768;
         const canvasScale = isMobile ? 1 : 2;
 
-        const canvas = await html2canvas(element, {
-            scale: canvasScale,
-            useCORS: true,
-            allowTaint: false,
+        // Temporarily reset styles to avoid clipping
+        const targetElement = document.getElementById('premium-dossier-capture') || element;
+        const prevTransform = targetElement.style.transform;
+        targetElement.style.transform = 'none';
+
+        const imgData = await htmlToImage.toJpeg(targetElement, {
+            quality: 0.95,
             backgroundColor: '#080C28',
-            logging: false,
-            windowWidth: 1600,
-            windowHeight: 1000,
+            pixelRatio: canvasScale,
             width: 1600,
             height: 1000,
-            x: 0,
-            y: 0,
-            onclone: (clonedDoc) => {
-                const clonedElement = clonedDoc.getElementById('premium-dossier-capture');
-                if (clonedElement) {
-                    clonedElement.style.transform = 'none';
-                    clonedElement.style.opacity = '1';
-                    clonedElement.style.display = 'block';
-                    clonedElement.style.visibility = 'visible';
-                    clonedElement.style.position = 'relative';
-                    clonedElement.style.left = '0';
-                    clonedElement.style.top = '0';
-                    clonedElement.style.width = '1600px';
-                    clonedElement.style.height = '1000px';
-                    
-                    // Remove overflow hidden from all ancestors to prevent clipping on mobile
-                    let parent = clonedElement.parentElement;
-                    while (parent && parent !== clonedDoc.body) {
-                        parent.style.overflow = 'visible';
-                        parent.style.overflowX = 'visible';
-                        parent.style.overflowY = 'visible';
-                        parent.style.transform = 'none';
-                        parent = parent.parentElement;
-                    }
-                }
+            style: {
+                transform: 'none',
+                opacity: '1',
+                display: 'block',
+                visibility: 'visible',
+                position: 'relative',
+                left: '0',
+                top: '0'
             }
         });
-
-        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+        
+        targetElement.style.transform = prevTransform;
         const pdf = new jsPDF({
             orientation: 'landscape',
             unit: 'px',
@@ -586,7 +570,11 @@ export const EvaluationCard: React.FC<EvaluationCardProps> = ({ player, settings
                         ) : (evalData.coachRemarks || editedRemarks) ? (
                             <span className="relative">
                                 <span className="text-[#00D4FF] font-black mr-2">/</span>
-                                {evalData.coachRemarks || editedRemarks}
+                                {(evalData.coachRemarks || editedRemarks).includes('<') && (evalData.coachRemarks || editedRemarks).includes('>') ? (
+                                    <span dangerouslySetInnerHTML={{ __html: evalData.coachRemarks || editedRemarks }} />
+                                ) : (
+                                    <span>{evalData.coachRemarks || editedRemarks}</span>
+                                )}
                             </span>
                         ) : (
                             <div className="flex flex-col items-center justify-center h-full gap-3 py-6 opacity-30">
@@ -1042,7 +1030,11 @@ export const EvaluationCard: React.FC<EvaluationCardProps> = ({ player, settings
             ) : (evalData.coachRemarks || editedRemarks) ? (
               <div className="p-3 rounded-xl bg-black/30 border border-white/5 font-sans italic text-white/80 leading-relaxed text-xs">
                 <span className="text-[#00D4FF] font-black font-mono not-italic mr-2">/</span>
-                {evalData.coachRemarks || editedRemarks}
+                {(evalData.coachRemarks || editedRemarks).includes('<') && (evalData.coachRemarks || editedRemarks).includes('>') ? (
+                    <span dangerouslySetInnerHTML={{ __html: evalData.coachRemarks || editedRemarks }} />
+                ) : (
+                    <span>{evalData.coachRemarks || editedRemarks}</span>
+                )}
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-6 opacity-30 gap-2">
