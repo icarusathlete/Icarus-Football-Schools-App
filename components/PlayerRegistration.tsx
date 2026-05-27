@@ -399,7 +399,6 @@ export const PlayerRegistration: React.FC = () => {
         {/* ─── Page Header HUD ────────────────────────────────────────────── */}
         <PageHeader 
           title="ACADEMY ONBOARDING" 
-          subtitle="SYSTEM NODE // ONBOARDING // OPERATIONAL DATASET INTAKE"
           extra={
             <>
               <div className="flex gap-2 bg-black/40 p-1.5 sm:p-2 rounded-2xl border border-white/5 backdrop-blur-xl">
