@@ -274,6 +274,14 @@ interface EvaluationManagerProps {
   onBreadcrumbChange?: (segments: string[]) => void;
 }
 
+const getLocalDateString = () => {
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+};
+
 export const EvaluationManager: React.FC<EvaluationManagerProps> = ({ onBreadcrumbChange }) => {
   const [players, setPlayers] = useState<Player[]>(StorageService.getPlayers());
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
@@ -320,7 +328,7 @@ export const EvaluationManager: React.FC<EvaluationManagerProps> = ({ onBreadcru
     },
     developmentAreas: ['Dribbling', 'Passing'],
     coachName: 'Coach Admin',
-    evaluationDate: new Date().toISOString().split('T')[0],
+    evaluationDate: getLocalDateString(),
     coachRemarks: '',
     actionImageUrl: '',
     coachSignatureUrl: '',
@@ -360,6 +368,8 @@ export const EvaluationManager: React.FC<EvaluationManagerProps> = ({ onBreadcru
     setSelectedPlayerId(player.id);
     onBreadcrumbChange?.([player.fullName.toUpperCase()]);
     
+    const todayStr = getLocalDateString();
+    
     // Check for existing draft
     const draft = StorageService.getDraft(player.id);
     
@@ -369,7 +379,8 @@ export const EvaluationManager: React.FC<EvaluationManagerProps> = ({ onBreadcru
             ...draft,
             metrics: { ...defaultEval.metrics, ...(draft.metrics || {}) },
             timeTrials: { ...defaultEval.timeTrials, ...(draft.timeTrials || {}) },
-            developmentAreas: draft.developmentAreas || defaultEval.developmentAreas
+            developmentAreas: draft.developmentAreas || defaultEval.developmentAreas,
+            evaluationDate: todayStr
         });
     } else if (player.evaluation) {
         setForm({
@@ -378,10 +389,15 @@ export const EvaluationManager: React.FC<EvaluationManagerProps> = ({ onBreadcru
             metrics: { ...defaultEval.metrics, ...(player.evaluation.metrics || {}) },
             timeTrials: { ...defaultEval.timeTrials, ...(player.evaluation.timeTrials || {}) },
             developmentAreas: player.evaluation.developmentAreas || defaultEval.developmentAreas,
-            coachName: player.evaluation.coachName || 'Coach Admin'
+            coachName: player.evaluation.coachName || 'Coach Admin',
+            evaluationDate: todayStr
         });
     } else {
-        setForm({ ...defaultEval, coachName: 'Coach Admin' });
+        setForm({ 
+            ...defaultEval, 
+            coachName: 'Coach Admin',
+            evaluationDate: todayStr
+        });
     }
     
     setIsEditing(true);

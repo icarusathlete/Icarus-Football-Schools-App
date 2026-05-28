@@ -6,6 +6,8 @@ import { Trophy, Star, Calendar, Brain, DollarSign, Clock, Activity, Shield, Che
 import { auth } from '../firebase';
 import { EvaluationCard } from './EvaluationCard';
 import html2canvas from 'html2canvas';
+import * as htmlToImage from 'html-to-image';
+import { jsPDF } from 'jspdf';
 import { 
   ResponsiveContainer, 
   ComposedChart, 
@@ -157,12 +159,68 @@ const getMasteryData = (score: number) => {
         { min: 4500, title: "Master Tactician", icon: Crown, class: "text-brand-primary", bg: "bg-brand-primary/5", border: "border-brand-primary/10" },
         { min: 6000, title: "Immortal Titan", icon: Sparkles, class: "text-orange-500", bg: "bg-orange-500/5", border: "border-orange-500/10" }
     ];
-    
     return [...levels].reverse().find(l => score >= l.min) || levels[0];
+};
+
+const convertImageToBase64 = (url: string): Promise<string> => {
+    return new Promise((resolve) => {
+        if (!url) {
+            resolve('/default-avatar.png');
+            return;
+        }
+        if (url.startsWith('data:')) {
+            resolve(url);
+            return;
+        }
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+            try {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.naturalWidth;
+                canvas.height = img.naturalHeight;
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                    ctx.drawImage(img, 0, 0);
+                    resolve(canvas.toDataURL('image/png'));
+                    return;
+                }
+            } catch (e) {
+                console.error('Canvas conversion failed:', e);
+            }
+            resolve(url);
+        };
+        img.onerror = () => {
+            console.error('Image load failed for base64 conversion:', url);
+            resolve('/default-avatar.png');
+        };
+        img.src = url.includes('?') ? `${url}&cachebust=${Date.now()}` : `${url}?cachebust=${Date.now()}`;
+    });
 };
 
 export const PlayerPortal: React.FC<PlayerPortalProps> = ({ user, initialSection }) => {
     const [player, setPlayer] = useState<Player | null>(null);
+    const [settings, setSettings] = useState<AcademySettings>(StorageService.getSettings());
+    const [playerPhotoBase64, setPlayerPhotoBase64] = useState<string>('');
+    const [academyLogoBase64, setAcademyLogoBase64] = useState<string>('');
+    const [invoiceTemplate, setInvoiceTemplate] = useState<string | null>(localStorage.getItem('icarus_invoice_template'));
+
+    useEffect(() => {
+        if (player?.photoUrl) {
+            convertImageToBase64(player.photoUrl).then(setPlayerPhotoBase64);
+        } else {
+            setPlayerPhotoBase64('/default-avatar.png');
+        }
+    }, [player?.photoUrl]);
+
+    useEffect(() => {
+        if (settings?.logoUrl) {
+            convertImageToBase64(settings.logoUrl).then(setAcademyLogoBase64);
+        } else {
+            setAcademyLogoBase64('');
+        }
+    }, [settings?.logoUrl, player]); // 'player' added to re-trigger if player profile changes
+
     const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
     const [matches, setMatches] = useState<Match[]>([]);
     const [viewMode, setViewMode] = useState<'overview' | 'scout'>('overview');
@@ -174,7 +232,6 @@ export const PlayerPortal: React.FC<PlayerPortalProps> = ({ user, initialSection
     const [drills, setDrills] = useState<Drill[]>([]);
     const [coaches, setCoaches] = useState<User[]>([]);
     const [eventFilter, setEventFilter] = useState<EventType>('training');
-    const [settings, setSettings] = useState<AcademySettings>(StorageService.getSettings());
     const [isAttendanceModalOpen, setAttendanceModalOpen] = useState(false);
     const [selectedAttendanceDetail, setSelectedAttendanceDetail] = useState<{date: string, record?: AttendanceRecord, event?: ScheduleEvent} | null>(null);
     const [viewingSessionPlan, setViewingSessionPlan] = useState<ScheduleEvent | null>(null);
@@ -484,13 +541,47 @@ export const PlayerPortal: React.FC<PlayerPortalProps> = ({ user, initialSection
     };
     const handleDownloadInvoice = async () => {
         if (!invoiceHiddenRef.current || !feeStatus?.invoice) return;
+        const originalScrollPos = window.scrollY;
+        window.scrollTo(0, 0);
+
         try {
-            const canvas = await html2canvas(invoiceHiddenRef.current, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
-            const link = document.createElement('a');
-            link.href = canvas.toDataURL('image/png');
-            link.download = `Invoice_${feeStatus.invoice.invoiceNo}.png`;
-            link.click();
-        } catch (e) { alert('Could not generate invoice download.'); }
+            const canvas = await html2canvas(invoiceHiddenRef.current, {
+                scale: 3, // Higher scale for crisp PDF quality
+                useCORS: true,
+                logging: false,
+                backgroundColor: '#ffffff',
+                windowWidth: 595,
+                windowHeight: 842,
+                width: 595,
+                height: 842,
+                y: 0,
+                x: 0,
+                onclone: (clonedDoc) => {
+                    const el = clonedDoc.getElementById('icarus-invoice-capture-student');
+                    if (el) {
+                        el.style.transform = 'none';
+                        el.style.left = '0';
+                        el.style.marginLeft = '0';
+                        el.style.top = '0';
+                    }
+                }
+            });
+
+            const imgData = canvas.toDataURL('image/png', 1.0);
+            const pdf = new jsPDF({
+                orientation: 'portrait',
+                unit: 'px',
+                format: [595, 842]
+            });
+
+            pdf.addImage(imgData, 'PNG', 0, 0, 595, 842, undefined, 'FAST');
+            pdf.save(`Invoice_${player?.fullName.replace(/\s+/g, '_') || 'ATHLETE'}_${feeStatus.invoice.invoiceNo}.pdf`);
+        } catch (error) {
+            console.error('Invoice Export Error:', error);
+            alert('Could not generate invoice download.');
+        } finally {
+            window.scrollTo(0, originalScrollPos);
+        }
     };
     const handleDownloadIDCard = async () => {
         if (!idCardRef.current) {
@@ -498,25 +589,56 @@ export const PlayerPortal: React.FC<PlayerPortalProps> = ({ user, initialSection
             return;
         }
         try {
-            const canvas = await html2canvas(idCardRef.current, { 
-                scale: 3, 
-                useCORS: true, 
-                backgroundColor: '#080C28', 
-                logging: true, // Enable logging to help debug
-                allowTaint: false, // Usually false when using CORS
-                imageTimeout: 15000,
-                onclone: (clonedDoc) => {
-                    const el = clonedDoc.querySelector('[ref="idCardRef"]');
-                    if (el) (el as HTMLElement).style.display = 'block';
+            // Short delay to ensure browser paints any updated state
+            await new Promise(r => setTimeout(r, 100));
+
+            // Primary capture method: html-to-image
+            const dataUrl = await htmlToImage.toPng(idCardRef.current, {
+                quality: 1.0,
+                pixelRatio: 3,
+                width: 420,
+                height: 680,
+                style: {
+                    display: 'flex',
+                    visibility: 'visible',
+                    position: 'relative',
+                    left: '0',
+                    top: '0',
+                    transform: 'none'
                 }
             });
+
             const link = document.createElement('a');
-            link.href = canvas.toDataURL('image/png', 1.0);
+            link.href = dataUrl;
             link.download = `OFFICIAL_PASS_${player?.fullName.replace(/\s+/g, '_') || 'ATHLETE'}_${player?.memberId || 'ID'}.png`;
             link.click();
-        } catch (e) { 
-            console.error('ID Card Generation Error:', e);
-            alert(`Could not generate ID Card. Error: ${e instanceof Error ? e.message : 'Unknown error'}`); 
+        } catch (error) {
+            console.warn('html-to-image failed, falling back to html2canvas:', error);
+            
+            // Fallback capture method: html2canvas
+            try {
+                const canvas = await html2canvas(idCardRef.current, { 
+                    scale: 3, 
+                    useCORS: true, 
+                    width: 420,
+                    height: 680,
+                    backgroundColor: '#05081E', 
+                    logging: false,
+                    allowTaint: false,
+                    imageTimeout: 10000,
+                    onclone: (clonedDoc) => {
+                        const el = clonedDoc.querySelector('[ref="idCardRef"]');
+                        if (el) (el as HTMLElement).style.display = 'block';
+                    }
+                });
+                const link = document.createElement('a');
+                link.href = canvas.toDataURL('image/png', 1.0);
+                link.download = `OFFICIAL_PASS_${player?.fullName.replace(/\s+/g, '_') || 'ATHLETE'}_${player?.memberId || 'ID'}.png`;
+                link.click();
+            } catch (fallbackError) {
+                console.error('ID Card Generation completely failed:', fallbackError);
+                alert(`Could not generate ID Card. Error: ${fallbackError instanceof Error ? fallbackError.message : 'Unknown error'}`); 
+            }
         }
     };
 
@@ -605,140 +727,377 @@ export const PlayerPortal: React.FC<PlayerPortalProps> = ({ user, initialSection
             <div className="fixed left-[-9999px] top-0">
                 <div ref={idCardRef} 
                     style={{ 
-                        width: '450px', 
-                        height: '650px', 
-                        backgroundColor: '#080C28', 
+                        width: '420px', 
+                        height: '680px', 
+                        backgroundColor: '#05081E', 
+                        backgroundImage: 'linear-gradient(135deg, #05081E 0%, #0B1238 100%)',
                         position: 'relative', 
                         overflow: 'hidden', 
                         display: 'flex', 
                         flexDirection: 'column', 
                         alignItems: 'center', 
                         color: '#FFFFFF', 
-                        border: '8px solid #050A1F', 
-                        borderRadius: '3.5rem'
+                        border: '2px solid rgba(0, 200, 255, 0.25)', 
+                        borderRadius: '2.5rem',
+                        boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)',
+                        fontFamily: 'Inter, sans-serif'
                     }}>
-                    {/* Background Textures */}
+                    
+                    {/* Atmospheric Lighting Blooms */}
+                    <div style={{ position: 'absolute', top: '-100px', right: '-100px', width: '300px', height: '300px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(0, 200, 255, 0.18) 0%, transparent 70%)', pointerEvents: 'none' }} />
+                    <div style={{ position: 'absolute', bottom: '-100px', left: '-100px', width: '300px', height: '300px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(195, 246, 41, 0.15) 0%, transparent 70%)', pointerEvents: 'none' }} />
+                    
+                    {/* Technical Grid Overlay */}
                     <div style={{ 
                         position: 'absolute', 
                         inset: 0, 
-                        opacity: 0.05, 
+                        opacity: 0.03, 
                         pointerEvents: 'none',
-                        backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 20px, rgba(255,255,255,0.05) 20px, rgba(255,255,255,0.05) 21px)' 
-                    }} />
-                    
-                    <div style={{ 
-                        position: 'absolute', 
-                        width: '120%', 
-                        height: '80%', 
-                        bottom: '-10%', 
-                        right: '-10%', 
-                        opacity: 0.08, 
-                        pointerEvents: 'none',
-                        backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'100%25\' height=\'100%25\' viewBox=\'0 0 100 65\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Crect x=\'0\' y=\'0\' width=\'100\' height=\'65\' fill=\'none\' stroke=\'white\' stroke-width=\'0.5\'/%3E%3Cline x1=\'50\' y1=\'0\' x2=\'50\' y2=\'65\' stroke=\'white\' stroke-width=\'0.5\'/%3E%3Ccircle cx=\'50\' cy=\'32.5\' r=\'9.15\' fill=\'none\' stroke=\'white\' stroke-width=\'0.5\'/%3E%3Crect x=\'0\' y=\'13.84\' width=\'16.5\' height=\'37.32\' fill=\'none\' stroke=\'white\' stroke-width=\'0.5\'/%3E%3Crect x=\'83.5\' y=\'13.84\' width=\'16.5\' height=\'37.32\' fill=\'none\' stroke=\'white\' stroke-width=\'0.5\'/%3E%3Crect x=\'0\' y=\'24.84\' width=\'5.5\' height=\'15.32\' fill=\'none\' stroke=\'white\' stroke-width=\'0.5\'/%3E%3Crect x=\'94.5\' y=\'24.84\' width=\'5.5\' height=\'15.32\' fill=\'none\' stroke=\'white\' stroke-width=\'0.5\'/%3E%3C/svg%3E")',
-                        backgroundSize: 'cover',
-                        transform: 'rotate(12deg)'
+                        backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 15px, #FFFFFF 15px, #FFFFFF 16px), repeating-linear-gradient(90deg, transparent, transparent 15px, #FFFFFF 15px, #FFFFFF 16px)' 
                     }} />
 
-                    {/* Lighting Blooms (Simplified for html2canvas) */}
-                    <div style={{ position: 'absolute', top: 0, right: 0, width: '300px', height: '300px', background: 'radial-gradient(circle, rgba(0,200,255,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
-                    <div style={{ position: 'absolute', bottom: 0, left: 0, width: '300px', height: '300px', background: 'radial-gradient(circle, rgba(195,246,41,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
+                    {/* Pro Jersey Number Watermark inside Background */}
+                    <div style={{
+                        position: 'absolute',
+                        top: '55%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        fontSize: '220px',
+                        fontWeight: 900,
+                        fontFamily: 'Oswald, sans-serif',
+                        color: 'rgba(255, 255, 255, 0.02)',
+                        fontStyle: 'italic',
+                        pointerEvents: 'none',
+                        zIndex: 1,
+                        letterSpacing: '-0.05em'
+                    }}>
+                        {player.jerseyNumber || '00'}
+                    </div>
 
-                    {/* Corner Markers */}
-                    <div style={{ position: 'absolute', top: '40px', left: '40px', width: '32px', height: '32px', borderTop: '2px solid rgba(0,200,255,0.3)', borderLeft: '2px solid rgba(0,200,255,0.3)' }} />
-                    <div style={{ position: 'absolute', top: '40px', right: '40px', width: '32px', height: '32px', borderTop: '2px solid rgba(0,200,255,0.3)', borderRight: '2px solid rgba(0,200,255,0.3)' }} />
-                    <div style={{ position: 'absolute', bottom: '40px', left: '40px', width: '32px', height: '32px', borderBottom: '2px solid rgba(0,200,255,0.3)', borderLeft: '2px solid rgba(0,200,255,0.3)' }} />
-                    <div style={{ position: 'absolute', bottom: '40px', right: '40px', width: '32px', height: '32px', borderBottom: '2px solid rgba(0,200,255,0.3)', borderRight: '2px solid rgba(0,200,255,0.3)' }} />
+                    {/* Glowing Accents */}
+                    <div style={{ position: 'absolute', top: '24px', left: '24px', width: '12px', height: '12px', borderTop: '2px solid #00C8FF', borderLeft: '2px solid #00C8FF' }} />
+                    <div style={{ position: 'absolute', top: '24px', right: '24px', width: '12px', height: '12px', borderTop: '2px solid #00C8FF', borderRight: '2px solid #00C8FF' }} />
+                    <div style={{ position: 'absolute', bottom: '24px', left: '24px', width: '12px', height: '12px', borderBottom: '2px solid #00C8FF', borderLeft: '2px solid #00C8FF' }} />
+                    <div style={{ position: 'absolute', bottom: '24px', right: '24px', width: '12px', height: '12px', borderBottom: '2px solid #00C8FF', borderRight: '2px solid #00C8FF' }} />
 
-                    <div style={{ position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%', padding: '32px' }}>
-                        {/* Header */}
-                        <div style={{ marginTop: '16px', marginBottom: '32px', textAlign: 'center', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                            <div style={{ position: 'relative', marginBottom: '16px' }}>
-                                <div style={{ position: 'absolute', inset: '-8px', backgroundColor: 'rgba(0,200,255,0.2)', borderRadius: '9999px' }} />
-                                {settings.logoUrl ? (
-                                    <img src={settings.logoUrl} style={{ position: 'relative', width: '56px', height: '56px', objectFit: 'contain', margin: '0 auto' }} />
-                                ) : (
-                                    <Shield style={{ position: 'relative', width: '56px', height: '56px', color: '#00C8FF', margin: '0 auto' }} />
-                                )}
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%', padding: '36px 28px', boxSizing: 'border-box', justifyContent: 'space-between', zIndex: 10 }}>
+                        
+                        {/* Header: Academy Branding */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', zIndex: 5 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <div style={{
+                                    width: '36px',
+                                    height: '36px',
+                                    borderRadius: '50%',
+                                    border: '1.5px solid rgba(0, 200, 255, 0.3)',
+                                    overflow: 'hidden',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    backgroundColor: '#000000',
+                                    boxShadow: '0 0 10px rgba(0, 200, 255, 0.2)'
+                                }}>
+                                    {academyLogoBase64 ? (
+                                        <img src={academyLogoBase64} style={{ width: '85%', height: '85%', objectFit: 'contain' }} alt="Logo" />
+                                    ) : (
+                                        <Shield style={{ width: '20px', height: '20px', color: '#00C8FF' }} />
+                                    )}
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                    <span style={{ fontSize: '13px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.02em', color: '#FFFFFF', fontFamily: 'Oswald, sans-serif', lineHeight: 1.1 }}>
+                                        {settings.name || 'ICARUS SCHOOLS'}
+                                    </span>
+                                    <span style={{ fontSize: '7px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.15em', marginTop: '1px' }}>
+                                        ATHLETE ACADEMY
+                                    </span>
+                                </div>
                             </div>
-                            <h2 style={{ fontSize: '20px', fontWeight: 900, fontStyle: 'italic', letterSpacing: '-0.05em', textTransform: 'uppercase', lineHeight: 1, color: '#FFFFFF' }}>{settings.name}</h2>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
-                                <div style={{ width: '32px', height: '1px', backgroundColor: 'rgba(0,200,255,0.3)' }} />
-                                <p style={{ fontSize: '8px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.4em', color: '#C3F629' }}>OFFICIAL PLAYER PASS</p>
-                                <div style={{ width: '32px', height: '1px', backgroundColor: 'rgba(0,200,255,0.3)' }} />
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'end' }}>
+                                <span style={{ fontSize: '7px', fontWeight: 900, color: '#C3F629', textTransform: 'uppercase', letterSpacing: '0.15em', fontFamily: 'Orbitron, sans-serif', padding: '3px 8px', borderRadius: '4px', backgroundColor: 'rgba(195,246,41,0.08)', border: '1px solid rgba(195,246,41,0.2)' }}>
+                                    OFFICIAL PASS
+                                </span>
                             </div>
                         </div>
-                        
-                        {/* Profile Image */}
-                        <div style={{ position: 'relative', marginBottom: '40px' }}>
-                            <div style={{ position: 'absolute', inset: '-16px', backgroundColor: 'rgba(0,200,255,0.2)', borderRadius: '9999px', opacity: 0.5 }} />
-                            <div style={{ 
-                                position: 'relative', 
-                                width: '176px', 
-                                height: '176px', 
-                                borderRadius: '9999px', 
-                                padding: '4px', 
-                                background: 'linear-gradient(to bottom right, #00C8FF, #C3F629)',
-                                overflow: 'hidden',
-                                border: '2px solid rgba(255,255,255,0.1)'
+
+                        {/* Profile Image & Role */}
+                        <div style={{ position: 'relative', marginTop: '14px', zIndex: 5 }}>
+                            {/* Glow behind Avatar */}
+                            <div style={{ position: 'absolute', inset: '-14px', background: 'radial-gradient(circle, rgba(0, 200, 255, 0.3) 0%, transparent 70%)', borderRadius: '50%', filter: 'blur(6px)' }} />
+                            
+                            {/* Inner/Outer Border Rings */}
+                            <div style={{
+                                position: 'relative',
+                                width: '150px',
+                                height: '150px',
+                                borderRadius: '50%',
+                                padding: '3px',
+                                background: 'linear-gradient(135deg, #00C8FF 0%, #C3F629 100%)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                boxShadow: '0 12px 30px rgba(0,0,0,0.6)'
                             }}>
-                                <img src={player.photoUrl} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '9999px' }} />
+                                <div style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    borderRadius: '50%',
+                                    overflow: 'hidden',
+                                    backgroundColor: '#05081E',
+                                    border: '3px solid #05081E'
+                                }}>
+                                    <img 
+                                        src={playerPhotoBase64 || '/default-avatar.png'} 
+                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                                        alt="Profile" 
+                                    />
+                                </div>
                             </div>
-                            <div style={{ 
-                                position: 'absolute', 
-                                bottom: '-8px', 
-                                right: '-8px', 
-                                backgroundColor: '#C3F629', 
-                                color: '#080C28', 
-                                padding: '6px 16px', 
-                                borderRadius: '12px', 
-                                fontSize: '10px', 
+
+                            {/* Position Pill Overlay */}
+                            <div style={{
+                                position: 'absolute',
+                                bottom: '-8px',
+                                left: '50%',
+                                transform: 'translateX(-50%)',
+                                backgroundColor: '#C3F629',
+                                color: '#05081E',
+                                padding: '5px 16px',
+                                borderRadius: '9999px',
+                                fontSize: '9px',
+                                fontWeight: 900,
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.12em',
+                                fontStyle: 'italic',
+                                border: '2.5px solid #05081E',
+                                boxShadow: '0 6px 15px rgba(0,0,0,0.4)',
+                                whiteSpace: 'nowrap',
+                                fontFamily: 'Montserrat, sans-serif'
+                            }}>
+                                {player.position || 'ATHLETE'}
+                            </div>
+                        </div>
+
+                        {/* Player Identification */}
+                        <div style={{ textAlign: 'center', marginTop: '16px', width: '100%', zIndex: 5 }}>
+                            <span style={{ fontSize: '8px', color: 'rgba(0, 200, 255, 0.6)', textTransform: 'uppercase', letterSpacing: '0.35em', fontFamily: 'Orbitron, sans-serif', display: 'block', marginBottom: '6px' }}>
+                                ATHLETE IDENTITY
+                            </span>
+                            <h1 style={{ 
+                                fontSize: '34px', 
                                 fontWeight: 900, 
                                 textTransform: 'uppercase', 
-                                letterSpacing: '0.1em', 
-                                fontStyle: 'italic',
-                                border: '1px solid rgba(255,255,255,0.2)'
+                                letterSpacing: '-0.02em', 
+                                lineHeight: 1.0, 
+                                color: '#FFFFFF', 
+                                fontStyle: 'italic', 
+                                fontFamily: 'Oswald, sans-serif',
+                                margin: '0 auto',
+                                maxWidth: '340px'
                             }}>
-                                {player.position}
-                            </div>
-                        </div>
-
-                        {/* Identity */}
-                        <div style={{ textAlign: 'center', marginBottom: 'auto', width: '100%' }}>
-                            <h1 style={{ fontSize: '40px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '-0.05em', lineHeight: 1, color: '#FFFFFF', fontStyle: 'italic', fontFamily: 'Oswald, sans-serif' }}>
-                                {player.fullName.split(' ')[0]}<br/>
-                                <span style={{ color: '#00C8FF', textShadow: '0 0 10px rgba(0,200,255,0.4)' }}>
-                                    {player.fullName.split(' ').slice(1).join(' ')}
-                                </span>
+                                {player.fullName.split(' ')[0]}
+                                {player.fullName.split(' ').length > 1 && (
+                                    <span style={{ display: 'block', color: '#00C8FF', textShadow: '0 0 15px rgba(0,200,255,0.4)', marginTop: '2px' }}>
+                                        {player.fullName.split(' ').slice(1).join(' ')}
+                                    </span>
+                                )}
                             </h1>
-                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '12px', padding: '4px 16px', borderRadius: '9999px', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', marginTop: '16px' }}>
-                                <span style={{ width: '6px', height: '6px', borderRadius: '9999px', backgroundColor: '#C3F629' }} />
-                                <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)', fontFamily: 'monospace', fontWeight: 900, fontStyle: 'italic', letterSpacing: '0.1em' }}>{player.memberId}</p>
+                            
+                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '16px', marginTop: '14px' }}>
+                                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 12px', borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                                    <span style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: '#C3F629' }} />
+                                    <span style={{ fontSize: '8.5px', color: 'rgba(255,255,255,0.6)', fontFamily: 'Orbitron, sans-serif', fontWeight: 600, letterSpacing: '0.08em' }}>
+                                        {player.memberId || 'ID UNKNOWN'}
+                                    </span>
+                                </div>
+                                {player.jerseyNumber && (
+                                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 12px', borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                                        <span style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: '#00C8FF' }} />
+                                        <span style={{ fontSize: '8.5px', color: 'rgba(255,255,255,0.6)', fontFamily: 'Orbitron, sans-serif', fontWeight: 600, letterSpacing: '0.08em' }}>
+                                            SQUAD #{player.jerseyNumber}
+                                        </span>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
-                        {/* Tactical Data Grid */}
-                        <div style={{ width: '100%', display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '16px', marginTop: '32px' }}>
-                            <div style={{ padding: '16px', borderRadius: '16px', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                <p style={{ fontSize: '8px', color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase', fontWeight: 900, letterSpacing: '0.1em', marginBottom: '4px' }}>BATCH</p>
-                                <p style={{ fontSize: '14px', fontWeight: 900, color: '#FFFFFF', fontStyle: 'italic', letterSpacing: '-0.025em' }}>{player.batch}</p>
+                        {/* Tactical Detail 2x2 Grid (Immune to bottom clipping) */}
+                        <div style={{ 
+                            display: 'grid', 
+                            gridTemplateColumns: '1fr 1fr', 
+                            width: '100%', 
+                            gap: '10px', 
+                            marginTop: '18px',
+                            zIndex: 5
+                        }}>
+                            {/* Batch Panel */}
+                            <div style={{ padding: '8px 12px', borderRadius: '10px', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                                <span style={{ fontSize: '6.5px', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.12em', marginBottom: '2px', fontFamily: 'Montserrat, sans-serif' }}>BATCH</span>
+                                <span style={{ fontSize: '11px', fontWeight: 800, color: '#FFFFFF', fontStyle: 'italic', fontFamily: 'Oswald, sans-serif', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%', lineHeight: '1.2' }}>
+                                    {player.batch || 'GENERAL'}
+                                </span>
                             </div>
-                            <div style={{ padding: '16px', borderRadius: '16px', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                <p style={{ fontSize: '8px', color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase', fontWeight: 900, letterSpacing: '0.1em', marginBottom: '4px' }}>VENUE</p>
-                                <p style={{ fontSize: '14px', fontWeight: 900, color: '#FFFFFF', fontStyle: 'italic', letterSpacing: '-0.025em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%', textAlign: 'center' }}>{player.venue || 'CENTRAL'}</p>
+
+                            {/* Venue Panel */}
+                            <div style={{ padding: '8px 12px', borderRadius: '10px', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                                <span style={{ fontSize: '6.5px', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.12em', marginBottom: '2px', fontFamily: 'Montserrat, sans-serif' }}>VENUE</span>
+                                <span style={{ fontSize: '11px', fontWeight: 800, color: '#FFFFFF', fontStyle: 'italic', fontFamily: 'Oswald, sans-serif', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%', lineHeight: '1.2' }}>
+                                    {player.venue || 'CENTRAL'}
+                                </span>
+                            </div>
+
+                            {/* DOB Panel */}
+                            <div style={{ padding: '8px 12px', borderRadius: '10px', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                                <span style={{ fontSize: '6.5px', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.12em', marginBottom: '2px', fontFamily: 'Montserrat, sans-serif' }}>DATE OF BIRTH</span>
+                                <span style={{ fontSize: '11px', fontWeight: 800, color: '#FFFFFF', fontStyle: 'italic', fontFamily: 'Oswald, sans-serif', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%', lineHeight: '1.2' }}>
+                                    {player.dateOfBirth ? new Date(player.dateOfBirth).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase() : 'U-12'}
+                                </span>
+                            </div>
+
+                            {/* Program Panel */}
+                            <div style={{ padding: '8px 12px', borderRadius: '10px', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                                <span style={{ fontSize: '6.5px', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.12em', marginBottom: '2px', fontFamily: 'Montserrat, sans-serif' }}>PROGRAM</span>
+                                <span style={{ fontSize: '11px', fontWeight: 800, color: '#C3F629', fontStyle: 'italic', fontFamily: 'Oswald, sans-serif', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%', lineHeight: '1.2' }}>
+                                    {player.program || 'PRO TRAINING'}
+                                </span>
                             </div>
                         </div>
-                        
-                        {/* Footer */}
-                        <div style={{ marginTop: '32px', display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
-                            <div style={{ height: '1px', width: '48px', backgroundColor: 'rgba(255,255,255,0.1)', marginBottom: '16px' }} />
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', fontSize: '7px', fontWeight: 900, color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase', letterSpacing: '0.5em', fontStyle: 'italic' }}>
-                                <span>ICARUS ELITE SYSTEM</span>
-                                <div style={{ width: '4px', height: '4px', borderRadius: '9999px', backgroundColor: 'rgba(0,200,255,0.4)' }} />
-                                <span>v2.0 AUTHENTICATED</span>
+
+                        {/* Visual Barcode & Footer Authentication */}
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', marginTop: '12px', zIndex: 5 }}>
+                            {/* Beautiful pure-CSS technical barcode */}
+                            <div style={{ display: 'flex', gap: '2px', alignItems: 'center', height: '22px', opacity: 0.2, justifyContent: 'center', width: '180px', marginBottom: '10px' }}>
+                                {[2, 4, 1, 3, 2, 5, 1, 3, 2, 4, 1, 2, 5, 2, 1, 3, 4, 1, 2].map((w, i) => (
+                                    <div key={i} style={{ width: `${w}px`, height: '100%', backgroundColor: '#FFFFFF' }} />
+                                ))}
+                            </div>
+                            
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '6.5px', fontWeight: 900, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: '0.25em', fontFamily: 'Orbitron, sans-serif' }}>
+                                <span>SECURE ACCESS</span>
+                                <div style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: '#C3F629' }} />
+                                <span>SYSTEM v4.0</span>
                             </div>
                         </div>
+
                     </div>
                 </div>
+
+                {/* Premium Invoice Receipt Generator (Hidden) */}
+                {feeStatus?.invoice && (
+                    <div
+                        ref={invoiceHiddenRef}
+                        id="icarus-invoice-capture-student"
+                        style={{ 
+                            position: 'relative', 
+                            width: '595px', 
+                            height: '842px', 
+                            flexShrink: 0, 
+                            overflow: 'hidden',
+                            backgroundColor: '#ffffff'
+                        }}
+                    >
+                        {/* ICARUS branded PNG background */}
+                        <img
+                            src={invoiceTemplate || "/icarus-invoice.png?v=5"}
+                            alt="Invoice Template"
+                            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'fill' }}
+                            crossOrigin="anonymous"
+                            onError={(e) => {
+                                (e.currentTarget as HTMLImageElement).src = 'icarus-invoice.png';
+                            }}
+                        />
+
+                        {/* Absolute-positioned data overlay (Identical Admin Calibration) */}
+                        <div style={{ position: 'absolute', inset: 0, fontFamily: 'Arial, Helvetica, sans-serif', fontSize: '10.5px', color: '#111', pointerEvents: 'none', zIndex: 10 }}>
+
+                            {/* ── HEADER BOX (Top Right) ────────────────── */}
+                            <span style={{ position: 'absolute', top: '133px', left: '412px', fontWeight: 800, color: '#111' }}>
+                                {feeStatus.invoice.invoiceNo.replace('INV-', '')}
+                            </span>
+
+                            <span style={{ position: 'absolute', top: '133px', left: '504px', fontWeight: 800, color: '#111' }}>
+                                {feeStatus.invoice.date ? new Date(feeStatus.invoice.date).toLocaleDateString('en-GB') : ''}
+                            </span>
+
+                            {/* BILLED TO section - Exact Admin Data Mapping */}
+                            <span style={{ position: 'absolute', top: '220px', left: '120px', fontWeight: 700 }}>
+                                {player.parentName || ''}
+                            </span>
+                            <span style={{ position: 'absolute', top: '220px', left: '331px', fontWeight: 700 }}>
+                                {player.email || ''}
+                            </span>
+
+                            <span style={{ position: 'absolute', top: '245px', left: '120px', fontWeight: 700 }}>
+                                {player.fullName || ''}
+                            </span>
+                            <span style={{ position: 'absolute', top: '245px', left: '331px', fontWeight: 700, maxWidth: '240px', lineHeight: '1.2' }}>
+                                {player.address || ''}
+                            </span>
+
+                            <span style={{ position: 'absolute', top: '271px', left: '120px', fontWeight: 700 }}>
+                                {player.contactNumber?.startsWith('+') 
+                                    ? player.contactNumber 
+                                    : player.contactNumber ? `+91 ${player.contactNumber}` : ''}
+                            </span>
+                            <span style={{ position: 'absolute', top: '271px', left: '331px', fontWeight: 700 }}>
+                                {player.position ? player.position : ''}
+                            </span>
+
+                            {/* ── PROGRAM DETAILS SECTION ──────────────── */}
+                            <span style={{ position: 'absolute', top: '354px', left: '125px', fontWeight: 700 }}>
+                                {player.program || 'Monthly Elite Training'}
+                            </span>
+                            <span style={{ position: 'absolute', top: '354px', left: '335px', fontWeight: 700 }}>
+                                Mon – Fri
+                            </span>
+
+                            <span style={{ position: 'absolute', top: '380px', left: '125px', fontWeight: 700, maxWidth: '210px' }}>
+                                {player.venue || 'Gaur City, Noida'}
+                            </span>
+                            <span style={{ position: 'absolute', top: '380px', left: '335px', fontWeight: 700 }}>
+                                Abhishek Begal
+                            </span>
+
+                            {/* ── PAYMENT TABLE ───────────────────────── */}
+                            <div style={{ position: 'absolute', top: '490px', left: '425px', width: '120px', textAlign: 'left', fontWeight: 700 }}>
+                                ₹ {taxes.base}
+                            </div>
+                            <div style={{ position: 'absolute', top: '516px', left: '425px', width: '120px', textAlign: 'left', fontWeight: 700 }}>
+                                ₹ {taxes.cgst}
+                            </div>
+                            <div style={{ position: 'absolute', top: '542px', left: '425px', width: '120px', textAlign: 'left', fontWeight: 700 }}>
+                                ₹ {taxes.sgst}
+                            </div>
+                            {/* FINAL TOTAL — flush in text row */}
+                            <div style={{ position: 'absolute', top: '568px', left: '425px', width: '120px', textAlign: 'left', fontWeight: 850, color: '#fff' }}>
+                                ₹ {taxes.total}
+                            </div>
+                            
+                            {/* ── FOOTER BOX (Metadata) ────────────────── */}
+                            <span style={{ position: 'absolute', top: '604px', left: '95px', fontWeight: 700 }}>
+                                {feeStatus.invoice.paymentMode}
+                            </span>
+                            <span style={{ position: 'absolute', top: '604px', left: '275px', fontWeight: 700 }}>
+                                {feeStatus.invoice.date ? new Date(feeStatus.invoice.date).toLocaleDateString('en-GB') : ''}
+                            </span>
+                            <span style={{ position: 'absolute', top: '604px', left: '445px', fontWeight: 700 }}>
+                                {feeStatus.invoice.validTill ? new Date(feeStatus.invoice.validTill).toLocaleDateString('en-GB') : ''}
+                            </span>
+
+                            {/* AMOUNT IN WORDS */}
+                            <span style={{ position: 'absolute', top: '639px', left: '155px', fontWeight: 700, color: '#1a365d' }}>
+                                {numberToWords(feeStatus.invoice.amount)}
+                            </span>
+
+                            {/* AUTHORIZED SIGNATORY SECTION */}
+                            <div style={{ position: 'absolute', top: '754px', left: '135px', textAlign: 'left' }}>
+                                <div style={{ fontWeight: 800, fontSize: '11px', color: '#111', textDecoration: 'underline' }}>
+                                    ABHISHEK BEGAL
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Navigation HUD ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */}
@@ -1778,54 +2137,6 @@ export const PlayerPortal: React.FC<PlayerPortalProps> = ({ user, initialSection
                                 </div>
                             )}
                         </div>
-                    </div>
-                </div>
-            )}
-{/* Hidden invoice template for download */}
-            {feeStatus?.invoice && (
-                <div className="fixed left-[-9999px] top-0">
-                    <div ref={invoiceHiddenRef} className="bg-white w-[800px] min-h-[1000px] text-brand-950 p-12">
-                         <div className="flex justify-between items-start border-b-4 border-brand-950 pb-12 mb-12">
-                             <div className="flex items-center gap-6">
-                                 {settings.logoUrl ? <img src={settings.logoUrl} className="h-20 object-contain" /> : <Shield className="h-20 w-20" />}
-                                 <div>
-                                     <h1 className="text-4xl font-black uppercase tracking-tighter italic leading-none">{settings.name}</h1>
-                                     <p className="text-sm font-black uppercase tracking-widest">Official Receipt</p>
-                                 </div>
-                             </div>
-                             <div className="text-right font-black uppercase italic italic text-xs tracking-widest text-brand-300">
-                                 <p>Invoice #: {feeStatus.invoice.invoiceNo}</p>
-                                 <p>Date: {new Date(feeStatus.invoice.date).toLocaleDateString()}</p>
-                             </div>
-                         </div>
-                         <div className="mb-12">
-                             <h3 className="text-xl font-black uppercase italic mb-4">Member Details</h3>
-                             <div className="grid grid-cols-2 gap-8 text-sm font-black uppercase italic tracking-widest text-brand-300">
-                                 <div><p className="opacity-50 font-bold">NAME</p><p className="text-brand-950">{player.fullName}</p></div>
-                                 <div><p className="opacity-50 font-bold">IDENTIFIER</p><p className="text-brand-950">{player.memberId}</p></div>
-                                 <div><p className="opacity-50 font-bold">PROGRAM</p><p className="text-brand-950">Academy Training</p></div>
-                                 <div><p className="opacity-50 font-bold">VENUE</p><p className="text-brand-950">{player.venue}</p></div>
-                             </div>
-                         </div>
-                         <div className="border-2 border-brand-950 rounded-3xl overflow-hidden mb-12">
-                             <table className="w-full text-left font-black uppercase italic">
-                                 <thead className="bg-brand-950 text-white">
-                                     <tr><th className="p-6">Description</th><th className="p-6 text-right">Amount</th></tr>
-                                 </thead>
-                                 <tbody className="text-sm">
-                                     <tr className="border-b border-brand-100"><td className="p-6">Service Fee (Base)</td><td className="p-6 text-right">ÃÂ¢ÃÂÃÂ¹ {taxes.base}</td></tr>
-                                     <tr className="border-b border-brand-100"><td className="p-6">Tax Element</td><td className="p-6 text-right">ÃÂ¢ÃÂÃÂ¹ {taxes.cgst + taxes.sgst}</td></tr>
-                                     <tr className="bg-brand-50"><td className="p-6 text-lg font-black italic">Total Settled</td><td className="p-6 text-2xl font-black italic text-right">ÃÂ¢ÃÂÃÂ¹ {taxes.total}</td></tr>
-                                 </tbody>
-                             </table>
-                         </div>
-                         <div className="pt-20 border-t border-brand-100 flex justify-between items-end">
-                             <div className="text-[10px] font-black uppercase italic tracking-[0.3em] text-brand-300">Automated verification record. No physical signature required.</div>
-                             <div className="text-right">
-                                 <div className="text-2xl font-black italic text-brand-500 mb-2">{settings.name}</div>
-                                 <div className="text-[8px] font-black uppercase tracking-widest text-brand-300">Management Authorization</div>
-                             </div>
-                         </div>
                     </div>
                 </div>
             )}

@@ -11,6 +11,53 @@ interface NoticeBoardProps {
     role: Role;
 }
 
+const convertImageToBase64 = (url: string, fallback = ''): Promise<string> => {
+    return new Promise((resolve) => {
+        if (!url) {
+            resolve(fallback);
+            return;
+        }
+        if (url.startsWith('data:')) {
+            if (url.startsWith('data:image/svg+xml') && !url.includes(';base64')) {
+                try {
+                    const svgContent = url.split(',').slice(1).join(',');
+                    const decoded = decodeURIComponent(svgContent);
+                    const base64 = btoa(unescape(encodeURIComponent(decoded)));
+                    resolve(`data:image/svg+xml;base64,${base64}`);
+                    return;
+                } catch (e) {
+                    console.error('Failed to convert SVG to base64:', e);
+                }
+            }
+            resolve(url);
+            return;
+        }
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+            try {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.naturalWidth;
+                canvas.height = img.naturalHeight;
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                    ctx.drawImage(img, 0, 0);
+                    resolve(canvas.toDataURL('image/png'));
+                    return;
+                }
+            } catch (e) {
+                console.error('Canvas conversion failed:', e);
+            }
+            resolve(url);
+        };
+        img.onerror = () => {
+            console.error('Image load failed for base64 conversion:', url);
+            resolve(url); // fallback to raw URL if conversion fails
+        };
+        img.src = url.includes('?') ? `${url}&cachebust=${Date.now()}` : `${url}?cachebust=${Date.now()}`;
+    });
+};
+
 export const NoticeBoard: React.FC<NoticeBoardProps> = ({ role }) => {
     const [notices, setNotices] = useState<Announcement[]>([]);
     const [showForm, setShowForm] = useState(false);
@@ -26,6 +73,10 @@ export const NoticeBoard: React.FC<NoticeBoardProps> = ({ role }) => {
     });
     const [settings, setSettings] = useState<AcademySettings>(StorageService.getSettings());
     const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
+    const [logoBase64, setLogoBase64] = useState<string>('');
+    const [qrBase64, setQrBase64] = useState<string>('');
+    const [brochureImageBase64, setBrochureImageBase64] = useState<string>('');
 
     // Delete State
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -101,32 +152,62 @@ export const NoticeBoard: React.FC<NoticeBoardProps> = ({ role }) => {
 
     // Trigger the download process
     const initiateDownload = async (notice: Announcement) => {
-        setBrochureData(notice);
         setDownloadingId(notice.id);
 
-        // Wait for React to render the brochure template
-        setTimeout(async () => {
-            if (brochureRef.current) {
-                try {
-                    const canvas = await html2canvas(brochureRef.current, {
-                        scale: 2, // High resolution
-                        useCORS: true,
-                        backgroundColor: '#ffffff'
-                    });
+        try {
+            // Convert logo, qr and flyer image to base64 in parallel for speed!
+            const [logoB64, qrB64, imageB64] = await Promise.all([
+                convertImageToBase64(settings.logoUrl, ''),
+                convertImageToBase64(notice.qrCodeUrl, ''),
+                convertImageToBase64(notice.imageUrl, '')
+            ]);
 
-                    const link = document.createElement('a');
-                    link.download = `Brochure_${notice.title.replace(/\s+/g, '_')}.png`;
-                    link.href = canvas.toDataURL('image/png');
-                    link.click();
-                } catch (err) {
-                    console.error("Brochure generation failed", err);
-                    alert("Could not generate brochure.");
-                } finally {
+            setLogoBase64(logoB64);
+            setQrBase64(qrB64);
+            setBrochureImageBase64(imageB64);
+
+            // Trigger off-screen brochure template rendering with base64 data
+            const base64Notice = {
+                ...notice,
+                imageUrl: imageB64,
+                qrCodeUrl: qrB64
+            };
+            setBrochureData(base64Notice);
+
+            // Wait for React to render the brochure template
+            setTimeout(async () => {
+                if (brochureRef.current) {
+                    try {
+                        const canvas = await html2canvas(brochureRef.current, {
+                            scale: 2, // High resolution
+                            useCORS: true,
+                            backgroundColor: '#ffffff'
+                        });
+
+                        const link = document.createElement('a');
+                        link.download = `Brochure_${notice.title.replace(/\s+/g, '_')}.png`;
+                        link.href = canvas.toDataURL('image/png');
+                        link.click();
+                    } catch (err) {
+                        console.error("Brochure generation failed", err);
+                        alert("Could not generate brochure.");
+                    } finally {
+                        setDownloadingId(null);
+                        setBrochureData(null);
+                        setLogoBase64('');
+                        setQrBase64('');
+                        setBrochureImageBase64('');
+                    }
+                } else {
                     setDownloadingId(null);
                     setBrochureData(null);
                 }
-            }
-        }, 500);
+            }, 500);
+        } catch (error) {
+            console.error("Error preloading brochure assets:", error);
+            alert("Could not generate brochure.");
+            setDownloadingId(null);
+        }
     };
 
     return (
@@ -146,12 +227,13 @@ export const NoticeBoard: React.FC<NoticeBoardProps> = ({ role }) => {
                                     src={brochureData.imageUrl}
                                     className="w-full h-full object-cover"
                                     alt="Full Poster"
+                                    crossOrigin="anonymous"
                                 />
 
                                 {/* Branding Overlay (Top Right) */}
                                 <div className="absolute top-8 right-8 bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-2xl shadow-xl flex items-center gap-3">
-                                    {settings.logoUrl ? (
-                                        <img src={settings.logoUrl} className="w-12 h-12 rounded-full object-contain" />
+                                    {logoBase64 ? (
+                                        <img src={logoBase64} className="w-12 h-12 rounded-full object-contain" crossOrigin="anonymous" />
                                     ) : (
                                         <Shield className="w-12 h-12 text-white" />
                                     )}
@@ -162,9 +244,9 @@ export const NoticeBoard: React.FC<NoticeBoardProps> = ({ role }) => {
                                 </div>
 
                                 {/* QR Code Overlay (Bottom Right) */}
-                                {brochureData.qrCodeUrl && (
+                                {qrBase64 && (
                                     <div className="absolute bottom-8 right-8 bg-white p-3 rounded-2xl shadow-2xl border-4 border-white/20 backdrop-blur-sm">
-                                        <img src={brochureData.qrCodeUrl} className="w-32 h-32 object-contain" />
+                                        <img src={qrBase64} className="w-32 h-32 object-contain" crossOrigin="anonymous" />
                                         <p className="text-center text-xs font-bold text-gray-900 mt-2 uppercase tracking-wide">Scan Me</p>
                                     </div>
                                 )}
@@ -179,8 +261,8 @@ export const NoticeBoard: React.FC<NoticeBoardProps> = ({ role }) => {
                                     <div className="relative z-10 h-full flex flex-col justify-center px-16">
                                         <div className="flex items-center gap-4 mb-4">
                                             <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20">
-                                                {settings.logoUrl ? (
-                                                    <img src={settings.logoUrl} className="w-10 h-10 rounded-full object-contain" />
+                                                {logoBase64 ? (
+                                                    <img src={logoBase64} className="w-10 h-10 rounded-full object-contain" crossOrigin="anonymous" />
                                                 ) : (
                                                     <Shield className="w-10 h-10 text-brand-500" />
                                                 )}
@@ -224,8 +306,8 @@ export const NoticeBoard: React.FC<NoticeBoardProps> = ({ role }) => {
                                         </div>
                                         <div className="text-right">
                                             <div className="bg-white p-2 rounded-xl shadow-sm border border-gray-200 inline-block">
-                                                {brochureData.qrCodeUrl ? (
-                                                    <img src={brochureData.qrCodeUrl} className="w-24 h-24 object-contain" />
+                                                {qrBase64 ? (
+                                                    <img src={qrBase64} className="w-24 h-24 object-contain" crossOrigin="anonymous" />
                                                 ) : (
                                                     <div className="w-24 h-24 bg-brand-100 flex items-center justify-center text-brand-300">
                                                         <Share2 size={32} />
