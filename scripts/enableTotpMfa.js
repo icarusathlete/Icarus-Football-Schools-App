@@ -1,12 +1,22 @@
 const admin = require('firebase-admin');
 
+const fs = require('fs');
+const path = require('path');
+
 // Initialize Firebase Admin SDK
-// This automatically picks up credentials from your environment (ADC),
-// or you can configure a service account credential here.
 if (admin.apps.length === 0) {
-  admin.initializeApp({
-    credential: admin.credential.applicationDefault()
-  });
+  const serviceAccountPath = path.join(__dirname, '../service-account.json');
+  if (fs.existsSync(serviceAccountPath)) {
+    console.log("🔑 Using service-account.json credentials file found in project root...");
+    admin.initializeApp({
+      credential: admin.credential.cert(require(serviceAccountPath))
+    });
+  } else {
+    console.log("ℹ️ Checking Application Default Credentials (ADC)...");
+    admin.initializeApp({
+      credential: admin.credential.applicationDefault()
+    });
+  }
 }
 
 const auth = admin.auth();
