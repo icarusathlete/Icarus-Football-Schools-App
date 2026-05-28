@@ -226,6 +226,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange
       tools.push(management[3]); // Kit & Equipment
       tools.push(management[4]); // Finance
       tools.push(management[5]); // Access
+      tools.push(management[6]); // School Branding
     }
     sections.push({ id: 'tools', title: 'MANAGEMENT', items: tools });
 
