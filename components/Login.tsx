@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Trophy, ArrowRight, AlertTriangle, Shield, Database, Sparkles, Zap } from 'lucide-react';
+import { Trophy, ArrowRight, AlertTriangle, Shield, Database, Sparkles, Zap, Loader2, UserCheck, X } from 'lucide-react';
 import { User, AcademySettings } from '../types';
 import { loginWithGoogle, db } from '../firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { handleFirestoreError, OperationType, StorageService } from '../services/storageService';
+import { getMultiFactorResolver, TotpMultiFactorGenerator } from 'firebase/auth';
+import { auth } from '../firebase';
 
 interface LoginProps {
     onLogin: (user: User) => void;
@@ -13,6 +15,14 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [settings, setSettings] = useState<AcademySettings>(StorageService.getSettings());
+
+    // TOTP MFA login challenge state
+    const [showMfaChallenge, setShowMfaChallenge] = useState(false);
+    const [mfaResolver, setMfaResolver] = useState<any | null>(null);
+    const [totpHint, setTotpHint] = useState<any | null>(null);
+    const [mfaCode, setMfaCode] = useState('');
+    const [mfaError, setMfaError] = useState('');
+    const [isVerifyingMfa, setIsVerifyingMfa] = useState(false);
 
     useEffect(() => {
         // Attempt to fetch latest settings from Firestore for public branding
@@ -74,9 +84,92 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
             onLogin(appUser);
         } catch (err: any) {
             console.error("Login error:", err);
-            setError(err.message || 'Failed to sign in with Google.');
+            if (err.code === 'auth/multi-factor-auth-required') {
+                try {
+                    const resolver = getMultiFactorResolver(auth, err);
+                    const hint = resolver.hints.find(h => h.factorId === 'totp');
+                    if (hint) {
+                        setMfaResolver(resolver);
+                        setTotpHint(hint);
+                        setShowMfaChallenge(true);
+                    } else {
+                        setError("Multi-factor authentication is required, but no TOTP authentication method was found.");
+                    }
+                } catch (resErr: any) {
+                    console.error("Failed to extract MFA resolver:", resErr);
+                    setError("Failed to initialize 2FA verification challenge.");
+                }
+            } else {
+                setError(err.message || 'Failed to sign in with Google.');
+            }
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleResolveMfa = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!mfaResolver || !totpHint) return;
+        
+        setMfaError('');
+        setIsVerifyingMfa(true);
+        try {
+            if (mfaCode.trim().length !== 6) {
+                throw new Error("Verification code must be exactly 6 digits.");
+            }
+            
+            // 1. Create assertion
+            const assertion = TotpMultiFactorGenerator.assertionForSignIn(totpHint.uid, mfaCode.trim());
+            
+            // 2. Resolve sign-in
+            const userCredential = await mfaResolver.resolveSignIn(assertion);
+            const firebaseUser = userCredential.user;
+            
+            // 3. Complete dashboard sign-in (same as normal Google success)
+            const userDocRef = doc(db, 'users', firebaseUser.uid);
+            const userDoc = await getDoc(userDocRef);
+            
+            let appUser: User;
+            
+            if (userDoc.exists()) {
+                appUser = { id: userDoc.id, ...userDoc.data() } as User;
+            } else {
+                const isDefaultAdmin = firebaseUser.email === 'negidevender19@gmail.com' && firebaseUser.emailVerified;
+                
+                appUser = {
+                    id: firebaseUser.uid,
+                    username: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
+                    password: '',
+                    role: isDefaultAdmin ? 'admin' : 'pending',
+                    photoUrl: firebaseUser.photoURL || undefined,
+                    email: firebaseUser.email || undefined,
+                };
+                
+                const userData: any = {
+                    username: appUser.username,
+                    role: appUser.role,
+                    email: firebaseUser.email,
+                };
+                if (appUser.photoUrl) userData.photoUrl = appUser.photoUrl;
+                
+                try {
+                    await setDoc(userDocRef, userData);
+                } catch (error) {
+                    handleFirestoreError(error, OperationType.WRITE, `users/${firebaseUser.uid}`);
+                }
+            }
+            
+            // Complete Login!
+            setShowMfaChallenge(false);
+            setMfaResolver(null);
+            setTotpHint(null);
+            setMfaCode('');
+            onLogin(appUser);
+        } catch (err: any) {
+            console.error("Failed to verify TOTP code:", err);
+            setMfaError(err.message || "Invalid authentication code. Please check your authenticator and try again.");
+        } finally {
+            setIsVerifyingMfa(false);
         }
     };
 
@@ -205,6 +298,97 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     <div className="w-24 h-[1px] bg-gradient-to-l from-transparent to-white" />
                 </div>
             </footer>
+
+            {/* 2-Factor Authentication (TOTP MFA) Sign-In Challenge Overlay */}
+            {showMfaChallenge && (
+                <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-brand-950/80 backdrop-blur-xl animate-in fade-in duration-300">
+                    <div className="bg-brand-900 rounded-t-[3rem] sm:rounded-[3rem] shadow-[0_0_100px_rgba(0,0,0,0.5)] w-full max-w-md overflow-hidden animate-in slide-in-from-bottom sm:zoom-in-95 duration-300 border border-white/10 flex flex-col max-h-[95vh] sm:max-h-[90vh]">
+                        
+                        <div className="px-10 py-8 border-b border-white/5 flex justify-between items-center relative bg-brand-secondary">
+                            <h3 className="font-black text-2xl text-white italic uppercase tracking-tight">Identity <span className="text-brand-primary">Verification</span></h3>
+                            <button 
+                                onClick={() => {
+                                    setShowMfaChallenge(false);
+                                    setMfaResolver(null);
+                                    setTotpHint(null);
+                                    setMfaCode('');
+                                    setMfaError('');
+                                }} 
+                                className="p-3 hover:bg-white/10 rounded-full text-white/40 transition-colors cursor-pointer"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleResolveMfa} className="p-8 space-y-6 flex-1 overflow-y-auto custom-scrollbar text-center">
+                            
+                            <div className="w-16 h-16 bg-brand-primary/10 border border-brand-primary/20 rounded-[1.25rem] flex items-center justify-center mx-auto text-brand-primary shadow-lg animate-pulse">
+                                <Shield size={28} />
+                            </div>
+
+                            <div className="space-y-2">
+                                <span className="text-[8px] font-black text-brand-primary uppercase tracking-[0.2em] bg-brand-primary/10 px-3 py-1 rounded-full border border-brand-primary/20">
+                                    Multi-Factor authentication required
+                                </span>
+                                <h4 className="text-sm font-black text-white uppercase italic tracking-tighter leading-none pt-2">
+                                    Enter 2FA Security Pass Code
+                                </h4>
+                                <p className="text-[10px] text-white/40 leading-relaxed font-medium">
+                                    Your account is protected by 2-Factor Authentication. Please enter the 6-digit verification code from your authenticator app below to authorize your session.
+                                </p>
+                            </div>
+
+                            {mfaError && (
+                                <div className="p-4 bg-red-500/10 border border-red-500/20 text-red-500 text-[11px] font-bold rounded-2xl text-left leading-relaxed animate-in fade-in">
+                                    {mfaError}
+                                </div>
+                            )}
+
+                            <div className="space-y-4">
+                                <input 
+                                    type="text" 
+                                    maxLength={6}
+                                    placeholder="000 000"
+                                    value={mfaCode}
+                                    onChange={e => setMfaCode(e.target.value.replace(/\D/g, ''))}
+                                    className="w-full text-center p-4 bg-brand-950 border border-white/10 rounded-xl outline-none focus:ring-4 focus:ring-brand-500/10 focus:border-brand-primary font-mono text-xl font-bold tracking-[0.5em] text-white shadow-inner uppercase placeholder:text-white/5"
+                                    required
+                                    autoFocus
+                                />
+                                
+                                <div className="text-[8px] font-black text-white/20 uppercase tracking-widest leading-none text-center">
+                                    Tip: Ensure your device's date & time settings are set to automatic.
+                                </div>
+                            </div>
+
+                            <div className="pt-6 flex gap-4 border-t border-white/5">
+                                <button 
+                                    type="button"
+                                    onClick={() => {
+                                        setShowMfaChallenge(false);
+                                        setMfaResolver(null);
+                                        setTotpHint(null);
+                                        setMfaCode('');
+                                        setMfaError('');
+                                    }}
+                                    className="flex-1 py-4 text-white/30 hover:text-white font-black rounded-xl transition-all text-[9px] uppercase tracking-widest italic cursor-pointer"
+                                >
+                                    Cancel
+                                </button>
+                                <button 
+                                    type="submit"
+                                    disabled={isVerifyingMfa || mfaCode.trim().length !== 6}
+                                    className="flex-[2] py-4 bg-brand-primary text-brand-950 disabled:bg-white/5 disabled:text-white/20 font-black rounded-xl shadow-xl hover:scale-[1.02] active:scale-95 transition-all text-[9px] uppercase tracking-[0.2em] italic flex items-center justify-center gap-2 cursor-pointer"
+                                >
+                                    {isVerifyingMfa ? <Loader2 size={12} className="animate-spin text-brand-950" /> : <UserCheck size={14} />}
+                                    Verify Pass Code
+                                </button>
+                            </div>
+
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

@@ -4,6 +4,7 @@ import { GeminiService } from '../services/geminiService';
 import { Player, AttendanceRecord, AttendanceStatus, User, Match, ScheduleEvent, FeeRecord, AcademySettings, EventType, Drill, Certificate, CoachMessage, WeeklyTip } from '../types';
 import { Trophy, Star, Calendar, Brain, DollarSign, Clock, Activity, Shield, CheckCircle2, XCircle, MapPin, Coffee, Zap, PartyPopper, PlayCircle, Download, Phone, Mail, Globe, X, Shirt, Wand2, Sparkles, Target, ArrowRight, UserCheck, ClipboardList, ChevronDown, ChevronUp, ChevronRight, Dumbbell, Play, Youtube, Loader2, Users, Command, Receipt, Medal, Crown, Award, Flame, TrendingUp } from 'lucide-react';
 import { auth } from '../firebase';
+import { multiFactor, TotpMultiFactorGenerator } from 'firebase/auth';
 import { EvaluationCard } from './EvaluationCard';
 import html2canvas from 'html2canvas';
 import * as htmlToImage from 'html-to-image';
@@ -204,6 +205,119 @@ export const PlayerPortal: React.FC<PlayerPortalProps> = ({ user, initialSection
     const [playerPhotoBase64, setPlayerPhotoBase64] = useState<string>('');
     const [academyLogoBase64, setAcademyLogoBase64] = useState<string>('');
     const [invoiceTemplate, setInvoiceTemplate] = useState<string | null>(localStorage.getItem('icarus_invoice_template'));
+
+    // MFA Enrollment State
+    const [isMfaEnrolled, setIsMfaEnrolled] = useState(false);
+    const [showMfaEnrollModal, setShowMfaEnrollModal] = useState(false);
+    const [mfaSecret, setMfaSecret] = useState<any | null>(null);
+    const [mfaSecretKey, setMfaSecretKey] = useState('');
+    const [mfaQrUrl, setMfaQrUrl] = useState('');
+    const [mfaVerifyCode, setMfaVerifyCode] = useState('');
+    const [mfaError, setMfaError] = useState('');
+    const [mfaSuccessMsg, setMfaSuccessMsg] = useState('');
+    const [isEnrolling, setIsEnrolling] = useState(false);
+
+    useEffect(() => {
+        if (auth.currentUser) {
+            const enrolled = multiFactor(auth.currentUser).enrolledFactors.length > 0;
+            setIsMfaEnrolled(enrolled);
+        }
+    }, [user, player]);
+
+    const handleStartMfaEnrollment = async () => {
+        setMfaError('');
+        setMfaSuccessMsg('');
+        setIsEnrolling(true);
+        try {
+            const firebaseUser = auth.currentUser;
+            if (!firebaseUser) throw new Error("No active authenticated session.");
+            
+            // 1. Start enrollment session
+            const session = await multiFactor(firebaseUser).getSession();
+            
+            // 2. Generate secret
+            const secret = await TotpMultiFactorGenerator.generateSecret(session);
+            setMfaSecret(secret);
+            setMfaSecretKey(secret.secretKey);
+            
+            // 3. Generate QR code URL
+            const email = firebaseUser.email || user.username || 'user';
+            const qrUrl = secret.generateQrCodeUrl(email, settings.name || 'Icarus Football Academy');
+            setMfaQrUrl(qrUrl);
+            
+            setShowMfaEnrollModal(true);
+        } catch (err: any) {
+            console.error("MFA enrollment initiation failed:", err);
+            setMfaError(err.message || "Failed to initialize 2FA enrollment.");
+        } finally {
+            setIsEnrolling(false);
+        }
+    };
+
+    const handleConfirmMfaEnrollment = async () => {
+        setMfaError('');
+        setIsEnrolling(true);
+        try {
+            const firebaseUser = auth.currentUser;
+            if (!firebaseUser || !mfaSecret) throw new Error("Missing active enrollment session.");
+            
+            if (mfaVerifyCode.trim().length !== 6) {
+                throw new Error("Verification code must be exactly 6 digits.");
+            }
+            
+            // 1. Create enrollment assertion
+            const assertion = TotpMultiFactorGenerator.assertionForEnrollment(mfaSecret, mfaVerifyCode.trim());
+            
+            // 2. Complete enrollment
+            await multiFactor(firebaseUser).enroll(assertion, "My Authenticator App");
+            
+            setIsMfaEnrolled(true);
+            setMfaSuccessMsg("2-Factor Authentication successfully enrolled!");
+            setTimeout(() => {
+                setShowMfaEnrollModal(false);
+                setMfaSecret(null);
+                setMfaQrUrl('');
+                setMfaSecretKey('');
+                setMfaVerifyCode('');
+                setMfaSuccessMsg('');
+            }, 2500);
+        } catch (err: any) {
+            console.error("MFA enrollment confirmation failed:", err);
+            setMfaError(err.message || "Invalid verification code. Please try again.");
+        } finally {
+            setIsEnrolling(false);
+        }
+    };
+
+    const handleDisableMfa = async () => {
+        if (!confirm("Are you sure you want to disable 2-Factor Authentication? Your account will be less secure.")) return;
+        
+        setMfaError('');
+        try {
+            const firebaseUser = auth.currentUser;
+            if (!firebaseUser) throw new Error("No active authenticated session.");
+            
+            const mfaUser = multiFactor(firebaseUser);
+            const enrolled = mfaUser.enrolledFactors;
+            
+            // Find the TOTP factor to un-enroll
+            const totpFactor = enrolled.find(f => f.factorId === 'totp');
+            if (totpFactor) {
+                await mfaUser.unenroll(totpFactor);
+                setIsMfaEnrolled(false);
+                alert("2-Factor Authentication has been disabled.");
+            } else if (enrolled.length > 0) {
+                await mfaUser.unenroll(enrolled[0]);
+                setIsMfaEnrolled(false);
+                alert("2-Factor Authentication has been disabled.");
+            } else {
+                alert("No active 2FA factors found.");
+            }
+        } catch (err: any) {
+            console.error("Failed to disable MFA:", err);
+            alert(err.message || "Failed to disable 2-Factor Authentication.");
+        }
+    };
 
     useEffect(() => {
         if (player?.photoUrl) {
@@ -2136,6 +2250,54 @@ export const PlayerPortal: React.FC<PlayerPortalProps> = ({ user, initialSection
                                     </div>
                                 </div>
                             )}
+
+                            {/* Time-Based One-Time Password (TOTP) MFA Security Widget */}
+                            <div className="glass-card rounded-2xl p-5 border border-white/5 shadow-xl relative overflow-hidden group mt-8">
+                                <div className="absolute top-0 right-0 p-4 opacity-[0.02] group-hover:scale-110 transition-transform duration-1000 rotate-12">
+                                    <Shield size={80} className="text-white" />
+                                </div>
+                                <h4 className="text-[9px] font-black text-brand-primary uppercase tracking-[0.4em] mb-4 italic">Security Credentials</h4>
+                                
+                                <div className="flex items-center gap-4 mb-4">
+                                    <div className={`p-3 rounded-2xl border shadow-lg transition-all duration-500 group-hover:rotate-6 ${isMfaEnrolled ? 'bg-brand-primary/10 text-brand-primary border-brand-primary/20' : 'bg-white/5 text-white/40 border-white/10'}`}>
+                                        <Shield size={18} className={isMfaEnrolled ? 'animate-pulse' : ''} />
+                                    </div>
+                                    <div className="text-left">
+                                        <div className="text-[8px] font-black text-white/20 uppercase tracking-widest leading-none">2-FACTOR PROTECTION</div>
+                                        <div className="text-xl font-black text-white italic uppercase tracking-tighter leading-none">
+                                            {isMfaEnrolled ? 'SECURED (TOTP)' : 'UNPROTECTED'}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <p className="text-[10px] text-white/40 leading-relaxed font-medium mb-4 text-left">
+                                    {isMfaEnrolled 
+                                        ? 'Your account is secured with Time-Based One-Time Passwords (MFA). Sign-ins require a verified authentication pass code.'
+                                        : 'Protect your athlete dashboard and scouting records from unauthorized access. Enable TOTP verification to secure your portal.'
+                                    }
+                                </p>
+
+                                <div className="pt-3 border-t border-white/5">
+                                    {isMfaEnrolled ? (
+                                        <button 
+                                            onClick={handleDisableMfa}
+                                            className="w-full py-3 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl border border-red-500/20 text-[9px] font-black uppercase tracking-[0.2em] italic transition-all flex items-center justify-center gap-2 cursor-pointer"
+                                        >
+                                            Disable 2-Factor Authentication
+                                        </button>
+                                    ) : (
+                                        <button 
+                                            onClick={handleStartMfaEnrollment}
+                                            disabled={isEnrolling}
+                                            className="w-full py-3 bg-brand-primary text-brand-950 hover:scale-[1.02] active:scale-[0.98] rounded-xl text-[9px] font-black uppercase tracking-[0.2em] italic transition-all flex items-center justify-center gap-2 shadow-lg shadow-brand-primary/10 cursor-pointer"
+                                        >
+                                            {isEnrolling ? <Loader2 size={12} className="animate-spin text-brand-950" /> : <Zap size={12} />}
+                                            Activate 2FA Security
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+
                         </div>
                     </div>
                 </div>
@@ -2313,6 +2475,115 @@ export const PlayerPortal: React.FC<PlayerPortalProps> = ({ user, initialSection
                                     ))}
                                 </div>
                             )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* 2-Factor Authentication (TOTP MFA) Enrollment Modal */}
+            {showMfaEnrollModal && (
+                <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-brand-950/80 backdrop-blur-xl animate-in fade-in duration-300">
+                    <div className="bg-brand-900 rounded-t-[3rem] sm:rounded-[3rem] shadow-[0_0_100px_rgba(0,0,0,0.5)] w-full max-w-md overflow-hidden animate-in slide-in-from-bottom sm:zoom-in-95 duration-300 border border-white/10 flex flex-col max-h-[95vh] sm:max-h-[90vh]">
+                        
+                        <div className="px-10 py-8 border-b border-white/5 flex justify-between items-center relative bg-brand-secondary">
+                            <h3 className="font-black text-2xl text-white italic uppercase tracking-tight">Activate <span className="text-brand-primary">2FA Protection</span></h3>
+                            <button 
+                                onClick={() => {
+                                    setShowMfaEnrollModal(false);
+                                    setMfaSecret(null);
+                                    setMfaQrUrl('');
+                                    setMfaSecretKey('');
+                                    setMfaVerifyCode('');
+                                    setMfaError('');
+                                }} 
+                                className="p-3 hover:bg-white/10 rounded-full text-white/40 transition-colors cursor-pointer"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <div className="p-8 space-y-6 flex-1 overflow-y-auto custom-scrollbar text-center">
+                            
+                            {mfaError && (
+                                <div className="p-4 bg-red-500/10 border border-red-500/20 text-red-500 text-[11px] font-bold rounded-2xl text-left leading-relaxed">
+                                    {mfaError}
+                                </div>
+                            )}
+
+                            {mfaSuccessMsg && (
+                                <div className="p-4 bg-brand-accent/15 border border-brand-accent/30 text-brand-accent text-[11px] font-black uppercase tracking-widest rounded-2xl flex items-center gap-3 justify-center animate-in zoom-in duration-300">
+                                    <CheckCircle2 size={16} />
+                                    <span>{mfaSuccessMsg}</span>
+                                </div>
+                            )}
+
+                            {!mfaSuccessMsg && (
+                                <div className="space-y-6">
+                                    <div className="space-y-2">
+                                        <div className="text-[9px] font-black text-brand-primary uppercase tracking-[0.25em] italic">Step 1: Scan QR Code</div>
+                                        <p className="text-[10px] text-white/40 leading-relaxed font-medium">Scan this QR code with Google Authenticator, Microsoft Authenticator, Apple Passwords, or Authy to configure your secure generator.</p>
+                                    </div>
+
+                                    {mfaQrUrl && (
+                                        <div className="relative inline-block group">
+                                            <div className="absolute inset-0 bg-brand-primary/10 rounded-3xl blur-xl group-hover:bg-brand-primary/20 transition-all duration-700 pointer-events-none" />
+                                            <img 
+                                                src={`https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=${encodeURIComponent(mfaQrUrl)}&choe=UTF-8`} 
+                                                className="w-44 h-44 mx-auto bg-white p-3 rounded-[2rem] shadow-2xl relative z-10 border-4 border-white/10" 
+                                                alt="MFA QR Code" 
+                                            />
+                                        </div>
+                                    )}
+
+                                    <div className="space-y-2 pt-2">
+                                        <div className="text-[8px] font-black text-white/20 uppercase tracking-widest leading-none">Can't scan? Use manual secret key:</div>
+                                        <div className="p-3 bg-brand-950 border border-white/5 rounded-xl text-xs font-mono font-bold tracking-widest text-brand-primary break-all select-all shadow-inner">
+                                            {mfaSecretKey}
+                                        </div>
+                                    </div>
+
+                                    <div className="h-[1px] bg-white/5 w-full my-6" />
+
+                                    <div className="space-y-4">
+                                        <div className="text-[9px] font-black text-brand-primary uppercase tracking-[0.25em] italic">Step 2: Confirm Code</div>
+                                        <p className="text-[10px] text-white/40 leading-relaxed font-medium">Input the 6-digit confirmation code generated by your authenticator app below to complete enrollment.</p>
+                                        
+                                        <input 
+                                            type="text" 
+                                            maxLength={6}
+                                            placeholder="000 000"
+                                            value={mfaVerifyCode}
+                                            onChange={e => setMfaVerifyCode(e.target.value.replace(/\D/g, ''))}
+                                            className="w-full text-center p-4 bg-brand-950 border border-white/10 rounded-xl outline-none focus:ring-4 focus:ring-brand-500/10 focus:border-brand-primary font-mono text-xl font-bold tracking-[0.5em] text-white shadow-inner uppercase placeholder:text-white/5"
+                                        />
+                                    </div>
+
+                                    <div className="pt-4 flex gap-4 border-t border-white/5">
+                                        <button 
+                                            onClick={() => {
+                                                setShowMfaEnrollModal(false);
+                                                setMfaSecret(null);
+                                                setMfaQrUrl('');
+                                                setMfaSecretKey('');
+                                                setMfaVerifyCode('');
+                                                setMfaError('');
+                                            }}
+                                            className="flex-1 py-4 text-white/30 hover:text-white font-black rounded-xl transition-all text-[9px] uppercase tracking-widest italic cursor-pointer"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button 
+                                            onClick={handleConfirmMfaEnrollment}
+                                            disabled={isEnrolling || mfaVerifyCode.trim().length !== 6}
+                                            className="flex-[2] py-4 bg-brand-primary text-brand-950 disabled:bg-white/5 disabled:text-white/20 font-black rounded-xl shadow-xl hover:scale-[1.02] active:scale-95 transition-all text-[9px] uppercase tracking-[0.2em] italic flex items-center justify-center gap-2 cursor-pointer"
+                                        >
+                                            {isEnrolling ? <Loader2 size={12} className="animate-spin text-brand-950" /> : <UserCheck size={14} />}
+                                            Activate Security Pass
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
                         </div>
                     </div>
                 </div>
