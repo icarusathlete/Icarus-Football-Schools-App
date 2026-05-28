@@ -279,9 +279,15 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange
             )}
           </div>
           <div className="w-full">
-            <h1 className="text-[9px] font-black tracking-widest leading-tight uppercase text-white drop-shadow-sm" 
-                style={{ letterSpacing: '0.12em' }}>
-              {settings.name}
+            <h1 className="text-[10px] font-black italic uppercase text-white tracking-wider leading-tight drop-shadow-sm">
+              {settings.name.split(' ').map((word, i, arr) => (
+                <React.Fragment key={i}>
+                  <span className={i === arr.length - 1 ? 'text-brand-primary' : ''}>
+                    {word}
+                  </span>
+                  {i < arr.length - 1 && ' '}
+                </React.Fragment>
+              ))}
             </h1>
             <div className="mt-2 inline-flex items-center gap-1.5 bg-white/5 px-2.5 py-0.5 rounded-full border border-white/5 shadow-inner">
               <span className="w-1 h-1 rounded-full bg-brand-primary animate-pulse shadow-[0_0_8px_var(--brand-primary)]" />
@@ -334,9 +340,15 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange
                 )}
             </div>
             <div className="overflow-hidden flex-1">
-                <span className="font-black text-white tracking-widest uppercase text-xs block leading-none truncate" 
-                      style={{ letterSpacing: '0.1em' }}>
-                    {settings.name}
+                <span className="font-black italic uppercase text-xs block leading-none truncate">
+                  {settings.name.split(' ').map((word, i, arr) => (
+                    <React.Fragment key={i}>
+                      <span className={i === arr.length - 1 ? 'text-brand-primary' : ''}>
+                        {word}
+                      </span>
+                      {i < arr.length - 1 && ' '}
+                    </React.Fragment>
+                  ))}
                 </span>
                 <span className="text-[8px] font-black text-white/40 uppercase tracking-[0.2em] mt-1.5 block truncate">Official Portal</span>
             </div>
