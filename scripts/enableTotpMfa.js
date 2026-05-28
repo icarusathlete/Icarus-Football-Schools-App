@@ -31,11 +31,15 @@ async function enableTotpMfa() {
 
     console.log("🚀 Enabling TOTP Multi-Factor Authentication at the project level...");
     
-    // Update config to enable TOTP MFA
+    // Update config to enable TOTP MFA according to official Firebase Admin guidelines
     const updatedConfig = await projectConfigManager.updateProjectConfig({
       multiFactorConfig: {
-        state: 'ENABLED',
-        factorIds: ['totp'] // Restricts allowed second factors to TOTP only
+        providerConfigs: [{
+          state: 'ENABLED',
+          totpProviderConfig: {
+            adjacentIntervals: 5 // Acceptable time window drift tolerance (default is 5)
+          }
+        }]
       }
     });
 
