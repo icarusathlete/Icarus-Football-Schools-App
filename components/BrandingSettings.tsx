@@ -640,7 +640,7 @@ export const BrandingSettings: React.FC = () => {
                     <div className="relative inline-block group">
                       <div className="absolute inset-0 bg-brand-primary/10 rounded-3xl blur-xl group-hover:bg-brand-primary/20 transition-all duration-700 pointer-events-none" />
                       <img 
-                        src={`https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=${encodeURIComponent(mfaQrUrl)}&choe=UTF-8`} 
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(mfaQrUrl)}`} 
                         className="w-44 h-44 mx-auto bg-white p-3 rounded-[2rem] shadow-2xl relative z-10 border-4 border-white/10" 
                         alt="MFA QR Code" 
                       />
