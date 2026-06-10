@@ -579,7 +579,7 @@ export const EvaluationCard: React.FC<EvaluationCardProps> = ({ player, settings
                         ) : (
                             <div className="flex flex-col items-center justify-center h-full gap-3 py-6 opacity-30">
                                 <Activity size={32} />
-                                <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Awaiting tactical debrief...</span>
+                                <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Awaiting coach's assessment...</span>
                             </div>
                         )}
                     </div>
@@ -801,7 +801,7 @@ export const EvaluationCard: React.FC<EvaluationCardProps> = ({ player, settings
 
               {/* Name and Rating Tier */}
               <div className="flex flex-col">
-                <span className="text-xs text-white/40 uppercase tracking-widest font-mono">PLAYER DOSSIER</span>
+                <span className="text-xs text-white/40 uppercase tracking-widest font-mono">PLAYER PROFILE</span>
                 <h3 className="text-xl font-black uppercase tracking-wide text-white leading-tight font-heading">
                   {player.fullName}
                 </h3>
@@ -977,7 +977,7 @@ export const EvaluationCard: React.FC<EvaluationCardProps> = ({ player, settings
           </div>
         </div>
 
-        {/* 4. COACH DEBRIEF ASSESSMENT */}
+        {/* 4. COACH ASSESSMENT */}
         <div className={`relative rounded-2xl border transition-all duration-300 p-5 shadow-2xl overflow-hidden ${
           isEditingRemarks 
             ? 'border-[#00D4FF]/40 ring-1 ring-[#00D4FF]/20 bg-gradient-to-br from-[#0c1b48]/95 to-[#04091a]/98' 
@@ -1039,7 +1039,7 @@ export const EvaluationCard: React.FC<EvaluationCardProps> = ({ player, settings
             ) : (
               <div className="flex flex-col items-center justify-center py-6 opacity-30 gap-2">
                 <Activity size={24} />
-                <span className="text-[8px] font-black tracking-widest uppercase font-mono">AWAITING TACTICAL DEBRIEF...</span>
+                <span className="text-[8px] font-black tracking-widest uppercase font-mono">AWAITING COACH ASSESSMENT...</span>
               </div>
             )}
           </div>

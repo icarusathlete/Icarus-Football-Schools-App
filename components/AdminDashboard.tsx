@@ -82,7 +82,7 @@ const CentreCard: React.FC<{ stat: CentreStat; onClick: () => void }> = ({ stat,
       <div className="flex items-baseline gap-2 mb-4">
         <span className="text-6xl font-black italic text-white leading-none tracking-tighter">{stat.players}</span>
         <div className="flex flex-col">
-          <span className="text-[9px] font-black uppercase italic text-[#CCFF00]/60 -mb-1">Fleet</span>
+          <span className="text-[9px] font-black uppercase italic text-[#CCFF00]/60 -mb-1">Active</span>
           <span className="text-[9px] font-black uppercase italic text-white/20">Athletes</span>
         </div>
       </div>
@@ -90,7 +90,7 @@ const CentreCard: React.FC<{ stat: CentreStat; onClick: () => void }> = ({ stat,
       {/* Attendance bar */}
       <div className="space-y-2 mb-5">
         <div className="flex justify-between text-[9px] font-black italic text-white/40 uppercase tracking-wider">
-          <span>Daily Payload</span>
+          <span>Daily Attendance</span>
           <span className="text-[#CCFF00]">{stat.presentToday} / {stat.players}</span>
         </div>
         <div className="h-[4px] bg-white/[0.05] rounded-full overflow-hidden p-[1px]">

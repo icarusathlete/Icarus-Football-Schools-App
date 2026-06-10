@@ -671,8 +671,8 @@ export const EvaluationManager: React.FC<EvaluationManagerProps> = ({ onBreadcru
                         <div className="inline-flex items-center justify-center w-24 h-24 rounded-[2.5rem] bg-white/5 mb-8">
                             <Activity size={48} className="text-white/10" />
                         </div>
-                        <h3 className="text-3xl font-black text-white/10 uppercase tracking-[0.4em] italic leading-tight">NO SIGNAL <br/> RETRIEVED</h3>
-                        <p className="text-[11px] font-black text-white/20 uppercase tracking-[0.5em] mt-6 italic">RECALIBRATE SEARCH PARAMETERS</p>
+                        <h3 className="text-3xl font-black text-white/10 uppercase tracking-[0.4em] italic leading-tight">NO PLAYERS <br/> FOUND</h3>
+                        <p className="text-[11px] font-black text-white/20 uppercase tracking-[0.5em] mt-6 italic">TRY ADJUSTING YOUR SEARCH</p>
                     </div>
                 )}
             </div>

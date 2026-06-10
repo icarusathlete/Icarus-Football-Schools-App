@@ -94,11 +94,11 @@ export const KitInventory: React.FC = () => {
             {/* Header Section */}
             <PageHeader 
                 title="KIT & EQUIPMENT"
-                subtitle="High-fidelity logistics management and academy asset tracking"
+                subtitle="Manage academy kits, gear, and equipment stock."
                 extra={
                     <div className="flex items-center gap-4 px-4 py-2">
                         <div className="flex flex-col items-end">
-                            <p className="text-[10px] font-black text-white/40 uppercase tracking-widest italic mb-1">ACADEMY_ASSET_VALUE</p>
+                            <p className="text-[10px] font-black text-white/40 uppercase tracking-widest italic mb-1">TOTAL_KIT_VALUE</p>
                             <div className="flex items-baseline gap-2">
                                 <span className="text-2xl font-black text-brand-accent italic tracking-tighter">
                                     ${inventory.reduce((acc, item) => acc + (item.quantity * (item.unitCost || 0)), 0).toLocaleString()}
@@ -115,7 +115,7 @@ export const KitInventory: React.FC = () => {
                     { label: 'Total Players', value: players.length, icon: <Users size={18} />, color: '#60a5fa' },
                     { label: 'Kits Issued', value: totalKitsIssued, icon: <CheckCircle2 size={18} />, color: '#C3F629' },
                     { label: 'Low Stock Alerts', value: lowStockCount, icon: <AlertCircle size={18} />, color: '#ef4444', pulse: lowStockCount > 0 },
-                    { label: 'Total Assets', value: totalEquipment, icon: <Package size={18} />, color: '#00C8FF' }
+                    { label: 'Total Items', value: totalEquipment, icon: <Package size={18} />, color: '#00C8FF' }
                 ].map((k, i) => (
                     <div key={i} className={`glass-card p-8 rounded-[2.5rem] group hover:bg-white/10 hover:border-white/30 transition-all duration-500 shadow-xl relative overflow-hidden ${k.pulse && k.label === 'Low Stock Alerts' ? 'border-red-500/30' : ''}`}>
                         {k.pulse && (k.label === 'Low Stock Alerts' ? <div className="red-light-bar" /> : <div className="green-light-bar" />)}
@@ -140,7 +140,7 @@ export const KitInventory: React.FC = () => {
                         className={`flex items-center gap-3 px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'kit' ? 'bg-brand-500 text-brand-950 shadow-lg shadow-brand-500/20' : 'text-white/40 hover:text-white'}`}
                     >
                         <Shirt size={14} />
-                        PLAYER_KIT
+                        PLAYER_KITS
                     </button>
                     <button 
                         onClick={() => { setActiveTab('equipment'); setSearchTerm(''); }}
@@ -156,7 +156,7 @@ export const KitInventory: React.FC = () => {
                         <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-brand-500/40 group-focus-within:text-brand-accent transition-colors" size={16} />
                         <input 
                             type="text" 
-                            placeholder={`SEARCH_${activeTab === 'kit' ? 'ATHLETES' : 'ASSETS'}_...`}
+                            placeholder={`SEARCH_${activeTab === 'kit' ? 'PLAYERS' : 'ITEMS'}_...`}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="w-full bg-brand-500/5 border border-brand-500/10 rounded-2xl py-4 pl-14 pr-6 text-[10px] font-black text-white placeholder:text-white/20 focus:outline-none focus:border-brand-accent/40 transition-all italic uppercase tracking-widest"
@@ -216,7 +216,7 @@ export const KitInventory: React.FC = () => {
                                 <div className="bg-black/40 rounded-2xl p-4 border border-white/5 group-hover:border-white/10 transition-colors">
                                     <div className="flex items-center gap-2 mb-2 opacity-40">
                                         <Ruler size={10} className="text-cyan-400" />
-                                        <span className="text-[8px] font-black text-white uppercase tracking-widest">KIT_SIZE</span>
+                                        <span className="text-[8px] font-black text-white uppercase tracking-widest">SIZE</span>
                                     </div>
                                     <p className="text-2xl font-black text-white italic tracking-tighter">{player.kitSize || '--'}</p>
                                 </div>
@@ -225,7 +225,7 @@ export const KitInventory: React.FC = () => {
                             <div className="flex items-center justify-between">
                                 <div className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all ${player.kitIssued ? 'bg-brand-accent/10 border-brand-accent/20 text-brand-accent' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
                                     {player.kitIssued ? <PackageCheck size={12} /> : <AlertCircle size={12} />}
-                                    <span className="text-[9px] font-black uppercase tracking-widest italic">{player.kitIssued ? 'KIT_ISSUED' : 'PENDING_STOCK'}</span>
+                                    <span className="text-[9px] font-black uppercase tracking-widest italic">{player.kitIssued ? 'ISSUED' : 'PENDING'}</span>
                                 </div>
                                 <button 
                                     onClick={() => setEditingPlayer(player)}
@@ -242,12 +242,12 @@ export const KitInventory: React.FC = () => {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="border-b border-white/5 bg-white/5">
-                                <th className="p-8 text-[9px] font-black text-white/30 uppercase tracking-[0.3em] italic">EQUIPMENT_ASSET</th>
+                                <th className="p-8 text-[9px] font-black text-white/30 uppercase tracking-[0.3em] italic">EQUIPMENT ITEM</th>
                                 <th className="p-8 text-[9px] font-black text-white/30 uppercase tracking-[0.3em] italic">QUANTITY</th>
-                                <th className="p-8 text-[9px] font-black text-white/30 uppercase tracking-[0.3em] italic">UNIT_VALUE</th>
-                                <th className="p-8 text-[9px] font-black text-white/30 uppercase tracking-[0.3em] italic">CONDITION_LEVEL</th>
-                                <th className="p-8 text-[9px] font-black text-white/30 uppercase tracking-[0.3em] italic">LAST_INSPECTED</th>
-                                <th className="p-8 text-[9px] font-black text-white/30 uppercase tracking-[0.3em] italic text-right">CONTROLS</th>
+                                <th className="p-8 text-[9px] font-black text-white/30 uppercase tracking-[0.3em] italic">UNIT COST</th>
+                                <th className="p-8 text-[9px] font-black text-white/30 uppercase tracking-[0.3em] italic">CONDITION</th>
+                                <th className="p-8 text-[9px] font-black text-white/30 uppercase tracking-[0.3em] italic">LAST CHECKED</th>
+                                <th className="p-8 text-[9px] font-black text-white/30 uppercase tracking-[0.3em] italic text-right">ACTIONS</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5">
@@ -322,7 +322,7 @@ export const KitInventory: React.FC = () => {
                                     <td colSpan={6} className="p-32 text-center">
                                         <div className="flex flex-col items-center opacity-10">
                                             <Package size={80} className="mb-6" />
-                                            <p className="text-xl font-black uppercase tracking-[0.5em] italic text-white">NO_ASSETS_FOUND</p>
+                                            <p className="text-xl font-black uppercase tracking-[0.5em] italic text-white">NO_ITEMS_FOUND</p>
                                         </div>
                                     </td>
                                 </tr>
@@ -423,7 +423,7 @@ export const KitInventory: React.FC = () => {
                                     <>Edit <span className="text-brand-500">Equipment</span></>
                                 )}
                             </h3>
-                            <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest mt-2">Manage Academy Assets</p>
+                            <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest mt-2">Manage Academy Equipment</p>
                         </div>
                         
                         <div className="p-8 space-y-5">
@@ -519,7 +519,7 @@ export const KitInventory: React.FC = () => {
                                 className="flex-1 py-4 px-6 bg-brand-500 text-brand-950 rounded-2xl text-[10px] font-black uppercase tracking-[0.25em] shadow-lg shadow-brand-500/20 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2"
                             >
                                 <Save size={14} />
-                                {isAddingItem ? 'Create Asset' : 'Save Changes'}
+                                {isAddingItem ? 'Create Item' : 'Save Changes'}
                             </button>
                         </div>
                     </div>
@@ -531,7 +531,7 @@ export const KitInventory: React.FC = () => {
                     isOpen={!!confirmDelete}
                     title="Delete Equipment"
                     message={`Are you sure you want to remove ${confirmDelete.name}? This action cannot be undone.`}
-                    confirmText="Delete Asset"
+                    confirmText="Delete Item"
                     onConfirm={() => handleDeleteItem(confirmDelete.id)}
                     onCancel={() => setConfirmDelete(null)}
                     type="danger"

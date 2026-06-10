@@ -240,23 +240,23 @@ export const CoachAttendance: React.FC = () => {
             <div className="bg-white/5 backdrop-blur-xl p-5 rounded-2xl border border-white/10 text-center min-w-[110px] transition-all hover:bg-white/10 hover:border-brand-500/30 group/stat">
               <p className="text-[9px] font-black text-brand-300 uppercase tracking-widest mb-2 opacity-60">Present</p>
               <p className="text-3xl font-black text-emerald-400 italic leading-none group-hover:scale-110 transition-transform">{stats.present}</p>
-              <p className="text-[8px] text-white/30 font-black mt-2">ACTIVE SQUAD</p>
+              <p className="text-[8px] text-white/30 font-black mt-2">PRESENT</p>
             </div>
             
             <div className="bg-white/5 backdrop-blur-xl p-5 rounded-2xl border border-white/10 text-center min-w-[110px] transition-all hover:bg-white/10 hover:border-red-500/30 group/stat">
               <p className="text-[9px] font-black text-brand-300 uppercase tracking-widest mb-2 opacity-60">Absent</p>
               <p className="text-3xl font-black text-red-400 italic leading-none group-hover:scale-110 transition-transform">{stats.absent}</p>
-              <p className="text-[8px] text-white/30 font-black mt-2">FLAGGED</p>
+              <p className="text-[8px] text-white/30 font-black mt-2">ABSENT</p>
             </div>
 
             <div className="bg-white/5 backdrop-blur-xl p-5 rounded-2xl border border-white/10 text-center min-w-[110px] transition-all hover:bg-white/10 hover:border-brand-400/30 group/stat relative overflow-hidden">
               <div className="absolute top-0 right-0 w-8 h-8 bg-brand-500/10 blur-xl" />
-              <p className="text-[9px] font-black text-brand-300 uppercase tracking-widest mb-2 opacity-60">Tactical %</p>
+              <p className="text-[9px] font-black text-brand-300 uppercase tracking-widest mb-2 opacity-60">Attendance Rate</p>
               <div className="flex items-baseline justify-center gap-0.5">
                   <p className="text-3xl font-black text-brand-400 italic leading-none group-hover:scale-110 transition-transform">{presentPct}</p>
                   <span className="text-sm font-black text-brand-300/40 italic">%</span>
               </div>
-              <p className="text-[8px] text-white/30 font-black mt-2">EFFICIENCY</p>
+              <p className="text-[8px] text-white/30 font-black mt-2">RATE</p>
             </div>
 
             {isFinalized && (
@@ -290,7 +290,7 @@ export const CoachAttendance: React.FC = () => {
       ═══════════════════════════════ */}
       <div className="flex items-center gap-3 px-4">
         <Filter size={16} className="text-brand-400" />
-        <h2 className="text-[10px] font-black text-white/40 uppercase italic tracking-[0.3em]">Session Configuration</h2>
+        <h2 className="text-[10px] font-black text-white/40 uppercase italic tracking-[0.3em]">Session Details</h2>
         <div className="h-px flex-1 bg-white/10" />
       </div>
 
@@ -412,9 +412,9 @@ export const CoachAttendance: React.FC = () => {
             <Users size={48} className="relative z-10" />
           </div>
           <div className="space-y-4 relative z-10">
-            <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter leading-none">NO SIGNAL <br/><span className="text-brand-400">RETRIEVED</span></h3>
+            <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter leading-none">NO PLAYERS <br/><span className="text-brand-400">FOUND</span></h3>
             <p className="text-white/30 text-[10px] max-w-sm font-black uppercase tracking-[0.4em] italic leading-relaxed mx-auto">
-              No players are assigned to <b className="text-white">{selectedVenue}</b> in batch <b className="text-white">{selectedBatch}</b>. <br/>Recalibrate search parameters.
+              No players are assigned to <b className="text-white">{selectedVenue}</b> in batch <b className="text-white">{selectedBatch}</b>. <br/>Please check your settings.
             </p>
           </div>
         </div>

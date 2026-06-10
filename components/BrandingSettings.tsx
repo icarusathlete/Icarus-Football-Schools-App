@@ -356,8 +356,8 @@ export const BrandingSettings: React.FC = () => {
                     <Sparkles size={16} />
                   </div>
                   <div>
-                    <span className="text-[9px] font-black uppercase tracking-wider text-white block">Esports Cyber Stadium</span>
-                    <span className="text-[8px] font-bold text-white/30 uppercase tracking-wider block mt-0.5">Aggressive Italics • Cyber HUD</span>
+                    <span className="text-[9px] font-black uppercase tracking-wider text-white block">Elite Dark Theme</span>
+                    <span className="text-[8px] font-bold text-white/30 uppercase tracking-wider block mt-0.5">Dynamic Italics • Sport Theme</span>
                   </div>
                 </button>
               </div>

@@ -530,7 +530,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ role, currentUser }) =
                         <div className="bg-brand-900/60 backdrop-blur-xl border-white/10 rounded-[2.5rem] border-2 border-dashed border-brand-200 p-24 text-center flex flex-col items-center">
                             <div className="w-20 h-20 rounded-3xl bg-brand-950/40 flex items-center justify-center mb-6"><Activity size={36} className="text-brand-200" /></div>
                             <h3 className="text-2xl font-black text-white italic uppercase">No Match Data</h3>
-                            <p className="text-brand-400 mt-2 text-[10px] font-bold uppercase tracking-widest">No match telemetry for the selected period.</p>
+                            <p className="text-brand-400 mt-2 text-[10px] font-bold uppercase tracking-widest">No match statistics for the selected period.</p>
                         </div>
                     )}
                 </div>

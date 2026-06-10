@@ -62,7 +62,7 @@ export const GeminiService = {
 
      const prompt = `
         As a Senior Technical Director for an Elite Global Football Group (e.g., City Football Group, Barcelona, or Ajax), 
-        generate a high-level "Clinical Scout Dossier Verdict" for student athlete ${player.fullName}.
+        generate a high-level "Scouting Verdict" for student athlete ${player.fullName}.
         
         DATA CONTEXT:
         - Position: ${context.position}
@@ -73,20 +73,20 @@ export const GeminiService = {
         - Competitive Stats: ${context.matchesPlayed} Match involvements, ${context.goals} Goal contributions, ${context.averageRating} Performance floor
         
         REQUIREMENTS:
-        - Tone: Sophisticated, clinical, objective, elite European scouting style.
-        - Language: Use advanced tactical terminology (e.g., "spatial geometry", "biomechanical load", "technical ceiling", "tactical cognitive mapping", "transition phase efficiency", "ball-retention architecture").
-        - Content: Identify the player's tactical archetype, their current "performance floor", and their projected "elite ceiling".
+        - Tone: Professional, encouraging, objective, clear football academy coaching style.
+        - Language: Use simple, professional football coaching terms (e.g., "positional awareness", "speed and agility", "technical skill", "decision making", "possession", "work rate"). Do NOT use complex or clinical jargon.
+        - Content: Identify the player's playing style, areas of strength, and potential for growth.
         - Limit: Exactly 2 highly analytical sentences.
         
         STRUCTURE (HTML ONLY):
         <div class="space-y-6">
           <p class="text-white/90 text-[14px] leading-relaxed italic font-semibold tracking-tight">
-            [High-level clinical summary of the player's tactical profile, biomechanical efficiency, and developmental trajectory]
+            [High-level coaching summary of the player's style, strengths, and areas for improvement]
           </p>
           <div class="p-5 bg-brand-500/10 border border-brand-500/20 rounded-[2rem] relative overflow-hidden group">
             <div class="absolute top-0 left-0 w-2 h-full bg-brand-500 shadow-[0_0_20px_rgba(0,200,255,0.4)]"></div>
-            <span class="text-brand-500 font-black text-[9px] uppercase tracking-[0.4em] block mb-3 italic">STRATEGIC_UNLOCk_PROTOCOL</span>
-            <p class="text-white font-black text-[12px] italic tracking-wide uppercase leading-tight">[One high-impact technical directive to breach the next tier of performance, focused on tactical maturity]</p>
+            <span class="text-brand-500 font-black text-[9px] uppercase tracking-[0.4em] block mb-3 italic">COACH'S DIRECTIVE</span>
+            <p class="text-white font-black text-[12px] italic tracking-wide uppercase leading-tight">[One clear, actionable coaching tip for the player to work on to improve their game]</p>
           </div>
         </div>
         
@@ -103,10 +103,10 @@ export const GeminiService = {
         // Aggressive cleaning to ensure only HTML is returned
         text = text.replace(/```html/g, "").replace(/```/g, "").replace(/^HTML/i, "").trim();
         
-        return text || "<p class='text-white/30 italic text-sm font-black tracking-widest'>SYNCHRONIZATION_ERROR</p>";
+        return text || "<p class='text-white/30 italic text-sm font-black tracking-widest'>SUMMARY_UNAVAILABLE</p>";
      } catch (error) {
         console.error("Gemini Error:", error);
-        return "<p class='text-white/30 italic text-sm font-black tracking-widest'>STRATEGIC_RELAY_OFFLINE</p>";
+        return "<p class='text-white/30 italic text-sm font-black tracking-widest'>SERVICE_OFFLINE</p>";
      }
   },
 
@@ -119,7 +119,7 @@ export const GeminiService = {
     const prompt = `
         Analyze match for ${player.fullName} vs ${match.opponent}.
         Stats: Rating ${stats.rating}, Goals ${stats.goals}, Assists ${stats.assists}.
-        Provide a concise HTML analysis using clinical tactical language.
+        Provide a concise HTML analysis using clear coaching language.
     `;
 
     try {
@@ -148,7 +148,7 @@ export const GeminiService = {
     };
 
     const prompt = `
-        As a Lead Technical Scout for an Elite European Academy (Ajax/Benfica model), write 3 distinct clinical tactical verdicts for ${player.fullName}.
+        As a Lead Coach for a Youth Football Academy, write 3 distinct coaching verdicts for ${player.fullName}.
         
         PERFORMANCE METRICS:
         - Overall Index: ${context.overallRating}/100
@@ -157,12 +157,12 @@ export const GeminiService = {
         - Development Focus Areas: ${context.developmentAreas.join(', ')}
         
         REQUIREMENTS:
-        - Tone: Dispassionate, clinical, data-driven, elite European scouting style.
-        - Terminology: Use scouting shorthand and advanced tactical jargon (e.g., "half-space penetration", "inverted-role adaptability", "biomechanical load tolerance", "tactical cognitive speed", "spatial geometry awareness").
-        - Content: Each variation should emphasize a different scout perspective:
-            1. TACTICAL ARCHETYPE: Define the player's future profile (e.g., "Press-Resistant Playmaker", "Modern Wing-Back", "Clinical Box-Striker").
-            2. PERFORMANCE FLOOR vs CEILING: Analyze current stability vs projected elite potential.
-            3. STRATEGIC GROWTH: Connect the development focus areas to concrete match-day impact.
+        - Tone: Professional, constructive, clear football coaching style.
+        - Terminology: Use simple, standard youth coaching terms (e.g., "spatial awareness", "dribbling ability", "work rate", "decision making under pressure", "passing range"). Do NOT use complex jargon.
+        - Content: Each variation should emphasize a different coaching perspective:
+            1. PLAYING STYLE: Define the player's role and style (e.g., "Creative Playmaker", "Solid Defender", "Clinical Finisher").
+            2. STRENGTHS AND POTENTIAL: Analyze current skills and future potential.
+            3. STRATEGIC GROWTH: Connect the development focus areas to how they can improve on match days.
         - Constraint: Exactly 2-3 highly professional scouting sentences per variation.
         
         OUTPUT FORMAT:
@@ -187,11 +187,10 @@ export const GeminiService = {
             }
         } catch (e) {
             console.error("Failed to parse AI response as JSON", cleanedText);
-            // Fallback: split by newlines or just return the raw text as a single suggestion if parsing fails
-            return [text || "Awaiting technical synchronization..."];
+            return [text || "Awaiting verdict..."];
         }
         
-        return ["Awaiting technical synchronization..."];
+        return ["Awaiting verdict..."];
     } catch (error) {
         console.error("Gemini Error:", error);
         return ["System offline. Please input manual verdict."];
