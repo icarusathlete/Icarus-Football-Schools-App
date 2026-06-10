@@ -18,3 +18,10 @@ View your app in AI Studio: https://ai.studio/apps/fa97019b-f2b4-411e-99e9-39eef
 2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
 3. Run the app:
    `npm run dev`
+
+## Antigravity Connection
+
+This workspace is configured for Google Antigravity. To enable the GitHub MCP server:
+1. Update [.agents/mcp_config.json](.agents/mcp_config.json) with your GitHub Personal Access Token (PAT).
+2. Set this directory as your active workspace in Antigravity.
+
