@@ -92,71 +92,7 @@ const App: React.FC = () => {
   const [isUserLoading, setIsUserLoading] = useState(false);
   const [settings, setSettings] = useState(StorageService.getSettings());
 
-  // 2FA Global Enforcer States
-  const [isMfaEnrolled, setIsMfaEnrolled] = useState(true);
-  const [mfaSecret, setMfaSecret] = useState<any>(null);
-  const [mfaQrUrl, setMfaQrUrl] = useState('');
-  const [mfaSecretKey, setMfaSecretKey] = useState('');
-  const [mfaVerifyCode, setMfaVerifyCode] = useState('');
-  const [mfaError, setMfaError] = useState('');
-  const [isEnrollingMfa, setIsEnrollingMfa] = useState(false);
 
-  const initializeMfaEnrollment = async () => {
-    setMfaError('');
-    setIsEnrollingMfa(true);
-    try {
-      const firebaseUser = auth.currentUser;
-      if (!firebaseUser) throw new Error("No active authenticated session.");
-      
-      const session = await multiFactor(firebaseUser).getSession();
-      const secret = await TotpMultiFactorGenerator.generateSecret(session);
-      setMfaSecret(secret);
-      setMfaSecretKey(secret.secretKey);
-      
-      const email = firebaseUser.email || 'user';
-      const qrUrl = secret.generateQrCodeUrl(email, settings.name || 'Icarus Football Academy');
-      setMfaQrUrl(qrUrl);
-    } catch (err: any) {
-      console.error("MFA mandatory enrollment initiation failed:", err);
-      setMfaError(err.message || "Failed to initialize 2FA enrollment.");
-    } finally {
-      setIsEnrollingMfa(false);
-    }
-  };
-
-  useEffect(() => {
-    if (currentUser && !isMfaEnrolled && !mfaSecret && !isEnrollingMfa) {
-      initializeMfaEnrollment();
-    }
-  }, [currentUser, isMfaEnrolled]);
-
-  const handleConfirmMfaEnrollment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setMfaError('');
-    setIsEnrollingMfa(true);
-    try {
-      const firebaseUser = auth.currentUser;
-      if (!firebaseUser || !mfaSecret) throw new Error("Missing active enrollment session.");
-      
-      if (mfaVerifyCode.trim().length !== 6) {
-        throw new Error("Verification code must be exactly 6 digits.");
-      }
-      
-      const assertion = TotpMultiFactorGenerator.assertionForEnrollment(mfaSecret, mfaVerifyCode.trim());
-      await multiFactor(firebaseUser).enroll(assertion, "Authenticator App");
-      
-      setIsMfaEnrolled(true);
-      setMfaSecret(null);
-      setMfaQrUrl('');
-      setMfaSecretKey('');
-      setMfaVerifyCode('');
-    } catch (err: any) {
-      console.error("MFA mandatory enrollment confirmation failed:", err);
-      setMfaError(err.message || "Invalid verification code. Please check your authenticator and try again.");
-    } finally {
-      setIsEnrollingMfa(false);
-    }
-  };
 
   useEffect(() => {
     StorageService.init();
@@ -176,10 +112,6 @@ const App: React.FC = () => {
 
       if (firebaseUser) {
         setIsUserLoading(true);
-        
-        // Enforce 2-Factor Authentication state
-        const enrolled = multiFactor(firebaseUser).enrolledFactors.length > 0;
-        setIsMfaEnrolled(enrolled);
 
         // Fetch user role and subscribe to real-time metadata updates
         const userRef = doc(db, 'users', firebaseUser.uid);
@@ -211,7 +143,6 @@ const App: React.FC = () => {
         return; 
       } else {
         setCurrentUser(null);
-        setIsMfaEnrolled(true); // reset state
         setIsUserLoading(false);
         StorageService.stopFirebaseSync();
       }
@@ -350,117 +281,7 @@ const App: React.FC = () => {
   // Pending/rejected users go straight to the Layout with the guest tab — skip Onboarding
   const isGuest = currentUser.role === 'pending' || currentUser.role === 'rejected';
 
-  // Global Mandatory 2-Factor Authentication (TOTP MFA) Enrollment Enforcer
-  if (!isMfaEnrolled) {
-    return (
-      <>
-        <OrientationGuard />
-        <div className="min-h-screen bg-brand-950 flex flex-col items-center justify-center p-6 relative overflow-hidden font-display selection:bg-brand-500/30">
-            {/* Tactical Grid Background */}
-            <div className="absolute inset-0 opacity-[0.05] pointer-events-none" 
-                 style={{ backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
-            
-            <div className="absolute top-0 right-0 -mt-24 -mr-24 w-[600px] h-[600px] bg-brand-500/10 rounded-full blur-[140px] animate-pulse-slow" />
-            <div className="absolute bottom-0 left-0 -mb-24 -ml-24 w-[500px] h-[500px] bg-brand-primary/5 rounded-full blur-[120px] animate-pulse-slow" />
 
-            <div className="w-full max-w-md bg-brand-900 rounded-[3rem] shadow-[0_0_100px_rgba(0,0,0,0.5)] border border-white/10 overflow-hidden relative z-10 p-8 sm:p-10 text-center animate-slide-up">
-                
-                <div className="w-16 h-16 bg-brand-primary/10 border border-brand-primary/20 rounded-[1.25rem] flex items-center justify-center mx-auto text-brand-primary shadow-lg animate-pulse mb-6">
-                    <Shield size={28} />
-                </div>
-
-                <div className="space-y-2 mb-8">
-                    <span className="text-[8px] font-black text-brand-primary uppercase tracking-[0.2em] bg-brand-primary/10 px-3 py-1 rounded-full border border-brand-primary/20">
-                        Global Security Enforcement
-                    </span>
-                    <h2 className="text-2xl font-black text-white italic uppercase tracking-tighter pt-2">
-                        Mandatory 2FA Setup
-                    </h2>
-                    <p className="text-[10px] text-white/40 leading-relaxed font-medium">
-                        To maintain high athletic data security, all staff, coaches, and athletes are required to enroll in 2-Factor Authentication before accessing their dashboards.
-                    </p>
-                </div>
-
-                {mfaError && (
-                    <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 text-red-500 text-[11px] font-bold rounded-2xl text-left leading-relaxed animate-in fade-in">
-                        {mfaError}
-                    </div>
-                )}
-
-                <form onSubmit={handleConfirmMfaEnrollment} className="space-y-6">
-                    
-                    <div className="space-y-2">
-                        <div className="text-[9px] font-black text-brand-primary uppercase tracking-[0.25em] italic">Step 1: Scan QR Code</div>
-                        <p className="text-[9px] text-white/40 leading-relaxed font-medium">Scan this QR code with Google Authenticator, Authy, or any security app.</p>
-                    </div>
-
-                    {mfaQrUrl ? (
-                        <div className="relative inline-block group">
-                            <div className="absolute inset-0 bg-brand-primary/10 rounded-3xl blur-xl group-hover:bg-brand-primary/20 transition-all duration-700 pointer-events-none" />
-                            <img 
-                                src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(mfaQrUrl)}`} 
-                                className="w-40 h-40 mx-auto bg-white p-3 rounded-[2rem] shadow-2xl relative z-10 border-4 border-white/10" 
-                                alt="MFA QR Code" 
-                            />
-                        </div>
-                    ) : (
-                        <div className="w-40 h-40 mx-auto bg-white/5 rounded-[2rem] border border-white/10 flex items-center justify-center animate-pulse">
-                            <Loader2 size={24} className="animate-spin text-brand-primary/30" />
-                        </div>
-                    )}
-
-                    {mfaSecretKey && (
-                        <div className="space-y-2 pt-2">
-                            <div className="text-[8px] font-black text-white/20 uppercase tracking-widest leading-none">Can't scan? Use manual secret key:</div>
-                            <div className="p-3 bg-brand-950 border border-white/5 rounded-xl text-[10px] font-mono font-bold tracking-widest text-brand-primary break-all select-all shadow-inner">
-                                {mfaSecretKey}
-                            </div>
-                        </div>
-                    )}
-
-                    <div className="h-[1px] bg-white/5 w-full my-6" />
-
-                    <div className="space-y-4">
-                        <div className="space-y-2">
-                            <div className="text-[9px] font-black text-brand-primary uppercase tracking-[0.25em] italic">Step 2: Confirm Code</div>
-                            <p className="text-[9px] text-white/40 leading-relaxed font-medium">Enter the 6-digit confirmation code from your authenticator app below.</p>
-                        </div>
-
-                        <input 
-                            type="text" 
-                            maxLength={6}
-                            placeholder="000 000"
-                            value={mfaVerifyCode}
-                            onChange={e => setMfaVerifyCode(e.target.value.replace(/\D/g, ''))}
-                            className="w-full text-center p-4 bg-brand-950 border border-white/10 rounded-xl outline-none focus:ring-4 focus:ring-brand-500/10 focus:border-brand-primary font-mono text-xl font-bold tracking-[0.5em] text-white shadow-inner uppercase placeholder:text-white/5"
-                            required
-                        />
-                    </div>
-
-                    <div className="pt-6 flex gap-4 border-t border-white/5">
-                        <button 
-                            type="button"
-                            onClick={handleLogout}
-                            className="flex-1 py-4 text-white/30 hover:text-white font-black rounded-xl transition-all text-[9px] uppercase tracking-widest italic cursor-pointer"
-                        >
-                            Cancel / Log Out
-                        </button>
-                        <button 
-                            type="submit"
-                            disabled={isEnrollingMfa || mfaVerifyCode.trim().length !== 6}
-                            className="flex-[2] py-4 bg-brand-primary text-brand-950 disabled:bg-white/5 disabled:text-white/20 font-black rounded-xl shadow-xl hover:scale-[1.02] active:scale-95 transition-all text-[9px] uppercase tracking-[0.2em] italic flex items-center justify-center gap-2 cursor-pointer"
-                        >
-                            {isEnrollingMfa ? <Loader2 size={12} className="animate-spin text-brand-950" /> : <Zap size={14} />}
-                            Activate 2FA
-                        </button>
-                    </div>
-
-                </form>
-            </div>
-        </div>
-      </>
-    );
-  }
 
   // Intercept if profile is incomplete (admin/coach/player only)
   if (!isGuest && window.location.hostname !== 'localhost' && (!currentUser.fullName || !currentUser.memberId)) {
