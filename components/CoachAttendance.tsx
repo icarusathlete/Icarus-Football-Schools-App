@@ -338,7 +338,7 @@ export const CoachAttendance: React.FC = () => {
             <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-white/20 group-hover:text-brand-400 transition-colors w-4 h-4 pointer-events-none" />
             <input
               type="text"
-              placeholder="Search athlete matrix..."
+              placeholder="Search athlete list..."
               className="w-full pl-12 pr-5 py-4 bg-white/5 border border-white/10 rounded-2xl outline-none text-white placeholder:text-white/10 font-bold text-[11px] uppercase tracking-widest focus:bg-white/10 focus:border-brand-400/40 focus:ring-4 focus:ring-brand-400/5 transition-all hover:bg-white/10"
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
@@ -364,7 +364,7 @@ export const CoachAttendance: React.FC = () => {
                 className="px-6 py-4 bg-white/10 border border-white/10 text-white/40 rounded-2xl flex items-center gap-3 hover:bg-white/20 hover:text-white transition-all active:scale-95 shadow-sm"
               >
                 <RotateCcw size={16} />
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] italic whitespace-nowrap">Unlock Protocols</span>
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] italic whitespace-nowrap">Unlock Attendance</span>
               </button>
             )
           )}
@@ -389,18 +389,18 @@ export const CoachAttendance: React.FC = () => {
              isFinalized ? <Lock size={16} /> :
              <Save size={16} />}
             <span className="text-[10px] font-black uppercase tracking-[0.3em] italic relative z-10 whitespace-nowrap">
-              {isSaving ? 'Synchronizing...' : saveStatus === 'success' ? 'Synchronized!' : isFinalized ? 'Protocol Locked' : 'Commit Protocol'}
+              {isSaving ? 'Saving...' : saveStatus === 'success' ? 'Saved!' : isFinalized ? 'Attendance Locked' : 'Save Attendance'}
             </span>
           </button>
         </div>
       </div>
 
       {/* ═══════════════════════════════
-          ROSTER MATRIX
+          ROSTER
       ═══════════════════════════════ */}
       <div className="flex items-center gap-3 px-4">
         <Users size={16} className="text-brand-400" />
-        <h2 className="text-[10px] font-black text-white/40 uppercase italic tracking-[0.3em]">Active Roster Matrix</h2>
+        <h2 className="text-[10px] font-black text-white/40 uppercase italic tracking-[0.3em]">Active Roster</h2>
         <div className="h-px flex-1 bg-white/10" />
       </div>
 

@@ -254,13 +254,13 @@ const App: React.FC = () => {
             </div>
             
             <div className="space-y-4 text-center w-full">
-              <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40 italic">System Initialization</h2>
+              <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40 italic">Loading Academy System</h2>
               <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
                 <div className="h-full bg-gradient-to-r from-brand-500 to-[#CCFF00] animate-progress-flow rounded-full w-2/3" />
               </div>
               <div className="flex justify-between items-center px-1">
-                <p className="text-[8px] font-black text-white/20 uppercase tracking-widest italic">Node Status: Online</p>
-                <p className="text-[8px] font-black text-brand-500 uppercase tracking-widest italic animate-pulse">Syncing Identity...</p>
+                <p className="text-[8px] font-black text-white/20 uppercase tracking-widest italic">System Status: Ready</p>
+                <p className="text-[8px] font-black text-brand-500 uppercase tracking-widest italic animate-pulse">Loading Profile...</p>
               </div>
             </div>
           </div>

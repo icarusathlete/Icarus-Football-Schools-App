@@ -456,7 +456,7 @@ export const BrandingSettings: React.FC = () => {
                   {isMfaEnrolled ? '2-Factor Protection: Active (TOTP)' : '2-Factor Protection: Inactive'}
                 </h4>
                 <p className="text-[9px] text-white/40 leading-relaxed font-medium max-w-lg">
-                  Protect your staff authentication node from unauthorized access. Enabling TOTP MFA challenges all subsequent portal logins with a secure, dynamically generated 6-digit key from your phone.
+                  Protect staff accounts from unauthorized access. Enabling TOTP MFA challenges all subsequent portal logins with a secure, dynamically generated 6-digit key from your phone.
                 </p>
               </div>
               
@@ -508,7 +508,7 @@ export const BrandingSettings: React.FC = () => {
           {saveSuccess && (
             <div className="p-4 bg-brand-primary/15 border border-brand-primary/30 text-brand-primary text-[10px] font-black uppercase tracking-widest rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
               <CheckCircle2 size={16} />
-              <span>Identity and visual properties synchronized successfully across Firebase nodes!</span>
+              <span>Identity and visual properties saved successfully!</span>
             </div>
           )}
         </form>
@@ -554,7 +554,7 @@ export const BrandingSettings: React.FC = () => {
                 {/* Mock Card */}
                 <div className={`p-4 bg-white/5 border border-white/5 rounded-2xl space-y-3 relative overflow-hidden transition-all ${typographyMode === 'clean' ? '' : 'italic'}`}>
                   <div className="flex justify-between items-center">
-                    <span className="text-[7px] text-white/40 uppercase tracking-widest font-black" style={{ fontFamily }}>Node Stats</span>
+                    <span className="text-[7px] text-white/40 uppercase tracking-widest font-black" style={{ fontFamily }}>System Stats</span>
                     <span className="text-[7px] font-bold uppercase px-1.5 py-0.5 rounded-md" style={{ color: secondaryColor, backgroundColor: primaryColor }}>Live</span>
                   </div>
                   

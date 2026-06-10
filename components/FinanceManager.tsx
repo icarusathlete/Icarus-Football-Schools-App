@@ -339,7 +339,7 @@ export const FinanceManager: React.FC = () => {
                 {[
                     { label: 'Total Revenue', value: `₹${(totalCollected/1000).toFixed(1)}K`, icon: <DollarSign size={18} />, color: '#C3F629' },
                     { label: 'Active Students', value: filteredPlayers.length, icon: <UserIcon size={18} />, color: '#60a5fa' },
-                    { label: 'Pending Nodes', value: filteredPlayers.filter(p => getStatus(p.id)?.status !== 'PAID').length, icon: <Activity size={18} />, color: '#f59e0b' },
+                    { label: 'Pending Payments', value: filteredPlayers.filter(p => getStatus(p.id)?.status !== 'PAID').length, icon: <Activity size={18} />, color: '#f59e0b' },
                     { label: 'Collection Rate', value: `${Math.round((totalCollected/totalDue) * 100 || 0)}%`, icon: <Target size={18} />, color: '#C3F629', pulse: true }
                 ].map((k, i) => (
                     <div key={i} className="glass-card p-8 rounded-[2.5rem] group hover:bg-white/10 hover:border-white/30 transition-all duration-500 shadow-xl relative overflow-hidden">
@@ -403,7 +403,7 @@ export const FinanceManager: React.FC = () => {
                 
                 <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-500/5 border border-brand-500/10">
                     <Zap size={12} className="text-brand-accent" />
-                    <span className="text-[9px] font-black text-brand-500/60 uppercase tracking-widest italic">FINANCIAL SYSTEMS SECURE</span>
+                    <span className="text-[9px] font-black text-brand-500/60 uppercase tracking-widest italic">Payments Secure</span>
                 </div>
             </div>
 
@@ -500,7 +500,7 @@ export const FinanceManager: React.FC = () => {
                         {filteredPlayers.length === 0 && (
                             <div className="col-span-full text-center py-24 glass-card border-dashed border-white/10 opacity-50">
                                 <Search size={40} className="mx-auto mb-4 text-white/10" />
-                                <p className="text-[11px] font-black text-white/40 uppercase tracking-[0.4em] italic">NO_RECORDS_DETECTED_IN_THIS_NODE</p>
+                                <p className="text-[11px] font-black text-white/40 uppercase tracking-[0.4em] italic">NO RECORDS FOUND</p>
                             </div>
                         )}
                     </div>
@@ -599,7 +599,7 @@ export const FinanceManager: React.FC = () => {
                                     ARCHIVE AS PDF
                                 </button>
 
-                                <p className="text-[9px] text-center text-white/20 font-black uppercase tracking-widest mt-6 italic">Secure terminal protocol active. This will authorize payment and sync encrypted data to academy nodes.</p>
+                                <p className="text-[9px] text-center text-white/20 font-black uppercase tracking-widest mt-6 italic">Secured transaction active. This will authorize payment and save payment details to the academy database.</p>
                             </div>
                         </div>
 
@@ -752,7 +752,7 @@ export const FinanceManager: React.FC = () => {
                             
                             <h3 className="font-black text-white text-3xl tracking-tighter uppercase italic mb-4 leading-none">COMMIT <span className="text-brand-accent">PAYMENT</span></h3>
                             <p className="text-white/40 text-[10px] font-black uppercase tracking-[0.25em] italic mb-10 leading-relaxed">
-                                AUTHORIZE FINANCIAL TRANSACTION? THIS PROTOCOL IS IRREVERSIBLE AND WILL SYNC TO CLOUD.
+                                Authorize financial transaction? This action cannot be undone and will update the cloud database.
                             </p>
                             
                             <div className="flex gap-4 w-full">

@@ -37,7 +37,7 @@ export const PerformanceHUD: React.FC = () => {
                     <Zap size={10} className={isOnline ? 'text-brand-500' : 'text-brand-900/10'} fill={isOnline ? 'currentColor' : 'none'} />
                 )}
                 <span className="text-[8px] font-black text-brand-900/30 uppercase tracking-[0.25em]">
-                    {isSyncing ? 'SYNCING MATRIX' : 'ENCRYPTED'}
+                    {isSyncing ? 'SYNCING DATA' : 'SECURE'}
                 </span>
             </div>
         </div>

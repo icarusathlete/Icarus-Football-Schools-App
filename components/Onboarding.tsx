@@ -107,7 +107,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ user, onComplete }) => {
           <div className="animate-fade-in space-y-10 pt-4">
              <div className="text-center">
                <h2 className="text-3xl font-black text-white uppercase tracking-tight mb-2" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-                 INITIALIZE <span className="text-[#CCFF00]">ACCESS</span>
+                 CREATE YOUR <span className="text-[#CCFF00]">PROFILE</span>
                </h2>
                <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-white/30">Select primary academy designation</p>
              </div>
@@ -149,7 +149,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ user, onComplete }) => {
                 </button>
              </div>
              <div className="flex justify-center">
-                <button onClick={() => setStep(2)} className="text-[9px] font-black text-white/20 hover:text-[#CCFF00] uppercase tracking-[0.25em] transition-all">DEFER CONFIGURATION</button>
+                <button onClick={() => setStep(2)} className="text-[9px] font-black text-white/20 hover:text-[#CCFF00] uppercase tracking-[0.25em] transition-all">SKIP FOR NOW</button>
              </div>
           </div>
         )}
@@ -159,9 +159,9 @@ export const Onboarding: React.FC<OnboardingProps> = ({ user, onComplete }) => {
           <div className="animate-fade-in space-y-10 pt-4">
              <div className="text-center">
                <h2 className="text-3xl font-black text-white uppercase tracking-tight mb-2" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-                 DEPLOY <span className="text-[#CCFF00]">DATAFEED</span>
+                 IMPORT <span className="text-[#CCFF00]">PLAYERS</span>
                </h2>
-               <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-white/30">Batch-import athlete records via CSV</p>
+               <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-white/30">Import player records from a CSV file</p>
              </div>
              
              <div className="glass-card border-dashed border-2 border-white/10 p-16 text-center hover:border-[#CCFF00]/40 transition-all bg-white/[0.02] relative group cursor-pointer">
@@ -169,16 +169,16 @@ export const Onboarding: React.FC<OnboardingProps> = ({ user, onComplete }) => {
                <div className="w-16 h-16 bg-white/10 text-[#CCFF00] rounded-xl flex items-center justify-center mx-auto mb-6 group-hover:bg-[#CCFF00]/10 group-hover:shadow-[0_0_30px_rgba(204,255,0,0.2)] transition-all">
                  <UploadCloud size={28} />
                </div>
-               <h3 className="font-black text-lg text-white uppercase tracking-tight mb-2">UPLOAD LEDGER</h3>
+               <h3 className="font-black text-lg text-white uppercase tracking-tight mb-2">UPLOAD CSV FILE</h3>
                <p className="text-[9px] text-white/30 font-bold uppercase tracking-widest leading-relaxed">Expected: name, squadId, position</p>
                {loading && <div className="absolute inset-0 bg-brand-950/90 backdrop-blur-md flex flex-col items-center justify-center rounded-[inherit] z-20">
                   <div className="w-10 h-10 border-2 border-[#CCFF00]/20 border-t-[#CCFF00] rounded-full animate-spin mb-4" />
-                  <p className="text-[9px] font-black text-[#CCFF00] uppercase tracking-[0.2em]">Processing Matrix...</p>
+                  <p className="text-[9px] font-black text-[#CCFF00] uppercase tracking-[0.2em]">Processing Roster Data...</p>
                </div>}
              </div>
              
              <button onClick={() => setStep(3)} className="w-full py-4 text-white/20 hover:text-white font-black text-[9px] uppercase tracking-[0.25em] flex items-center justify-center gap-2 transition-all">
-                MANUAL ENTRY PROTOCOL <ChevronRight size={14}/>
+                ADD PLAYERS MANUALLY <ChevronRight size={14}/>
              </button>
           </div>
         )}
@@ -194,9 +194,9 @@ export const Onboarding: React.FC<OnboardingProps> = ({ user, onComplete }) => {
                         </div>
                         <div>
                             <h2 className="text-3xl font-black text-white uppercase tracking-tight" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-                                SYNCING <span className="text-[#CCFF00]">CORE</span>
+                                SAVING <span className="text-[#CCFF00]">PROFILE</span>
                             </h2>
-                            <p className="text-[9px] font-bold text-white/20 uppercase tracking-[0.2em] mt-3">Finalizing academy encryption...</p>
+                            <p className="text-[9px] font-bold text-white/20 uppercase tracking-[0.2em] mt-3">Saving settings...</p>
                         </div>
                     </div>
                 ) : (
@@ -206,17 +206,17 @@ export const Onboarding: React.FC<OnboardingProps> = ({ user, onComplete }) => {
                         </div>
                         <div>
                             <h2 className="text-3xl font-black text-white uppercase tracking-tight mb-2" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-                                ACADEMY <span className="text-[#CCFF00]">ONLINE</span>
+                                SETUP <span className="text-[#CCFF00]">COMPLETED</span>
                             </h2>
                             <p className="text-[9px] font-bold text-white/40 uppercase tracking-[0.3em]">
-                                {importedCount > 0 ? `${importedCount} ATHLETE RECORDS DEPLOYED` : 'SYSTEM INITIALIZATION SUCCESSFUL'}
+                                {importedCount > 0 ? `${importedCount} PLAYERS IMPORTED` : 'SETUP COMPLETED SUCCESSFULLY'}
                             </p>
                         </div>
                         <button 
                             onClick={finishSetup}
                             className="w-full bg-[#CCFF00] text-brand-950 font-black px-10 py-5 rounded-2xl shadow-[0_20px_50px_rgba(204,255,0,0.2)] hover:bg-[#d4ff33] transition-all uppercase tracking-[0.25em] text-[10px] flex items-center justify-center gap-3 active:scale-[0.98]"
                         >
-                            <Zap size={14} fill="currentColor" /> ENTER COMMAND CENTER
+                            <Zap size={14} fill="currentColor" /> ENTER DASHBOARD
                         </button>
                     </>
                 )}

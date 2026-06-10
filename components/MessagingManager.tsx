@@ -133,7 +133,7 @@ export const MessagingManager: React.FC = () => {
         <div className="space-y-10 pb-32 animate-in fade-in duration-700">
             <PageHeader 
                 title="BROADCAST CENTER"
-                subtitle="Precision mass messaging and academy-wide alerting protocols"
+                subtitle="Send announcements and alerts to rosters and coaches."
                 extra={
                     <button 
                         onClick={() => setShowCompose(true)}
@@ -160,7 +160,7 @@ export const MessagingManager: React.FC = () => {
                 
                 <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-500/5 border border-brand-500/10">
                     <Zap size={12} className="text-brand-accent" />
-                    <span className="text-[9px] font-black text-brand-500/60 uppercase tracking-widest italic">COMMUNICATION SYSTEMS NOMINAL</span>
+                    <span className="text-[9px] font-black text-brand-500/60 uppercase tracking-widest italic">Messaging Ready</span>
                 </div>
             </div>
 
@@ -171,14 +171,14 @@ export const MessagingManager: React.FC = () => {
                     <div className="glass-card p-8 rounded-[2.5rem] border border-white/10 shadow-xl relative overflow-hidden">
                         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-accent/50 via-brand-accent to-brand-accent/50" />
                         <h3 className="text-[10px] font-black text-brand-accent uppercase tracking-[0.3em] mb-8 flex items-center gap-2">
-                             <ShieldCheck size={12} /> PROTOCOL STATS
+                             <ShieldCheck size={12} /> ANNOUNCEMENT STATS
                         </h3>
                         
                         <div className="space-y-6">
                             {[
                                 { label: 'Active Streams', value: messages.length, icon: CheckCircle2, color: 'text-brand-accent' },
                                 { label: 'Queue Depth', value: '0', icon: Clock, color: 'text-white/20' },
-                                { label: 'System Health', value: '100%', icon: Zap, color: 'text-[#CCFF00]' }
+                                { label: 'Service Status', value: '100%', icon: Zap, color: 'text-[#CCFF00]' }
                             ].map((stat, i) => (
                                 <div key={i} className="group p-5 rounded-2xl bg-white/5 border border-white/10 hover:border-brand-accent/20 transition-all">
                                     <div className="flex items-center justify-between">

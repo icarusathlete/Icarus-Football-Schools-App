@@ -521,7 +521,7 @@ export const PlayerManager: React.FC = () => {
         {[
           { label: 'Total Players', value: stats.totalPlayers, sub: 'Active Members', icon: <Users size={18} />, color: '#C3F629' },
           { label: 'New Joiners', value: stats.newThisMonth, sub: 'This Month', icon: <Zap size={18} />, color: stats.newThisMonth > 0 ? '#C3F629' : 'rgba(255,255,255,0.4)' },
-          { label: 'Command staff', value: stats.activeCoaches, sub: 'Active Personnel', icon: <Shield size={18} />, color: '#60a5fa' },
+          { label: 'Coaching staff', value: stats.activeCoaches, sub: 'Active Personnel', icon: <Shield size={18} />, color: '#60a5fa' },
           { label: 'TRAINING VENUES', value: stats.venuesCount, sub: 'Active Locations', icon: <MapPin size={18} />, color: '#f59e0b' }
         ].map((k, i) => (
           <div key={i} className="glass-card-alt p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2rem] group/kpi hover:bg-white/10 hover:border-white/30 transition-all duration-500 shadow-xl relative overflow-hidden border border-white/5">
@@ -1080,7 +1080,7 @@ export const PlayerManager: React.FC = () => {
             <div className="px-8 py-6 bg-white/5 border-t border-white/10 flex justify-end">
               <button onClick={() => { setShowConfigModal(false); setEditingItem(null); setNewItemName(''); }}
                 className="px-8 py-3 rounded-xl bg-white/5 border border-white/10 text-[11px] font-black text-white/40 uppercase tracking-widest hover:text-white hover:bg-white/10 shadow-sm transition-all italic tracking-[0.2em]">
-                Close Protocol
+                Close Settings
               </button>
             </div>
           </div>

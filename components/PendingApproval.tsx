@@ -67,7 +67,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({ user, onLogout
                                     <span className="text-[9px] font-black tracking-[0.25em] text-red-500 uppercase">Access Denied</span>
                                 </div>
                                 <h2 className="text-4xl font-black text-white uppercase tracking-tight leading-tight mb-4" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-                                    SYSTEM <span className="text-red-500">BLOCKED</span>
+                                    ACCESS <span className="text-red-500">BLOCKED</span>
                                 </h2>
                                 <p className="text-[10px] text-white/40 font-bold uppercase tracking-[0.15em] leading-relaxed max-w-[280px] mx-auto">
                                     Your access request was not approved. Please contact the academy admin directly for more information.
@@ -86,13 +86,13 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({ user, onLogout
                                     <div>
                                         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#CCFF00]/10 border border-[#CCFF00]/20 mb-6">
                                             <span className="w-1.5 h-1.5 rounded-full bg-[#CCFF00] animate-pulse shadow-[0_0_10px_rgba(204,255,0,0.8)]" />
-                                            <span className="text-[9px] font-black tracking-[0.25em] text-[#CCFF00] uppercase">Verification Queue</span>
+                                            <span className="text-[9px] font-black tracking-[0.25em] text-[#CCFF00] uppercase">Awaiting Review</span>
                                         </div>
                                         <h2 className="text-4xl font-black text-white uppercase tracking-tight leading-tight mb-4" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
                                             ATHLETE <span className="text-[#CCFF00]">PENDING</span>
                                         </h2>
                                         <p className="text-[10px] text-white/40 font-bold uppercase tracking-[0.15em] leading-relaxed max-w-[280px] mx-auto">
-                                            Your profile is currently undergoing tactical verification. Access will be granted upon academy director approval.
+                                            Your profile is currently undergoing profile verification. Access will be granted upon academy director approval.
                                         </p>
                                     </div>
                                     <div className="grid grid-cols-1 gap-4 pt-2">
@@ -101,8 +101,8 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({ user, onLogout
                                                 <Clock size={20} />
                                             </div>
                                             <div>
-                                                <p className="text-[9px] font-black text-white uppercase tracking-widest mb-1">Queue Position</p>
-                                                <p className="text-sm font-bold text-white/60 tracking-tight">System validation active</p>
+                                                <p className="text-[9px] font-black text-white uppercase tracking-widest mb-1">Status</p>
+                                                <p className="text-sm font-bold text-white/60 tracking-tight">Awaiting admin approval</p>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-5 p-5 glass-card border-white/5 bg-white/[0.02] text-left group">
@@ -123,7 +123,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({ user, onLogout
                                             REQUEST <span className="text-[#CCFF00]">ACCESS</span>
                                         </h2>
                                         <p className="text-[10px] text-white/40 font-bold uppercase tracking-[0.15em] leading-relaxed">
-                                            Specify your tactical role to continue system initialization.
+                                            Select your role to complete setup.
                                         </p>
                                     </div>
 
@@ -157,7 +157,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({ user, onLogout
                                     </div>
 
                                     <div>
-                                        <label className="block text-[9px] font-black text-white/40 uppercase tracking-widest mb-3">Optional Tactical Note</label>
+                                        <label className="block text-[9px] font-black text-white/40 uppercase tracking-widest mb-3">Optional Note</label>
                                         <textarea
                                             rows={2}
                                             placeholder="e.g. U12 Head Coach at Saket..."
@@ -175,7 +175,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({ user, onLogout
                                         {isSubmitting ? (
                                             <div className="w-4 h-4 border-2 border-brand-950/20 border-t-brand-950 rounded-full animate-spin" />
                                         ) : (
-                                            <>Submit Access Protocol <ChevronRight size={14} strokeWidth={3} /></>
+                                            <>Submit Request <ChevronRight size={14} strokeWidth={3} /></>
                                         )}
                                     </button>
                                 </div>
@@ -188,14 +188,14 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({ user, onLogout
                         onClick={onLogout}
                         className="w-full py-5 text-[10px] font-black text-white/40 hover:text-white uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-3 border-t border-white/5 hover:bg-white/5 group mt-8"
                     >
-                        <LogOut size={14} className="group-hover:-translate-x-1 transition-transform" /> TERMINATE SESSION
+                        <LogOut size={14} className="group-hover:-translate-x-1 transition-transform" /> LOG OUT
                     </button>
                 </div>
             </div>
 
             {/* Footer */}
             <p className="absolute bottom-8 text-white/10 text-[9px] font-black uppercase tracking-[0.5em] italic">
-                © 2026 Icarus Football Schools • Elite Portal Control
+                © 2026 Icarus Football Schools • Academy Portal
             </p>
         </div>
     );

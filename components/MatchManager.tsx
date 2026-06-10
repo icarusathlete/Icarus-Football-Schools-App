@@ -497,7 +497,7 @@ export const MatchManager: React.FC = () => {
                         onClick={() => setShowForm(!showForm)}
                         className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 italic flex items-center gap-3 shadow-2xl ${showForm ? 'bg-white/10 text-white' : 'bg-brand-accent text-brand-950 hover:scale-[1.05]'}`}
                     >
-                        {showForm ? <X size={14} /> : <Zap size={14} />} {showForm ? 'CLOSE BRIEFING' : 'NEW MATCH DEPLOYMENT'}
+                        {showForm ? <X size={14} /> : <Zap size={14} />} {showForm ? 'CLOSE' : 'RECORD NEW MATCH'}
                     </button>
                 }
             />
@@ -508,7 +508,7 @@ export const MatchManager: React.FC = () => {
                     { label: 'Total Matches', value: matches.length, icon: <Activity size={18} />, color: '#C3F629' },
                     { label: 'Upcoming', value: scheduleEvents.length, icon: <Zap size={18} />, color: '#60a5fa' },
                     { label: 'Avg Rating', value: '7.8', icon: <Target size={18} />, color: '#f59e0b' },
-                    { label: 'Live nodes', value: matches.filter(m => m.isLive).length, icon: <Activity size={18} />, color: '#C3F629', pulse: matches.some(m => m.isLive) }
+                    { label: 'Live Matches', value: matches.filter(m => m.isLive).length, icon: <Activity size={18} />, color: '#C3F629', pulse: matches.some(m => m.isLive) }
                 ].map((k, i) => (
                     <div key={i} className="glass-card p-8 rounded-[2.5rem] group hover:bg-white/10 hover:border-white/30 transition-all duration-500 shadow-xl relative overflow-hidden">
                         {k.pulse && <div className="green-light-bar" />}
@@ -531,7 +531,7 @@ export const MatchManager: React.FC = () => {
                     <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-500/40 group-focus-within:text-brand-accent transition-colors" />
                     <input 
                         type="text" 
-                        placeholder={activeTab === 'results' ? "FILTER MATCH RECORDS..." : "SCAN FIXTURE PIPELINE..."}
+                        placeholder={activeTab === 'results' ? "FILTER MATCH RECORDS..." : "SEARCH FIXTURES..."}
                         className="w-full pl-14 pr-6 py-4 bg-brand-500/5 border border-brand-500/10 rounded-2xl outline-none focus:bg-brand-500/10 focus:border-brand-accent/30 transition-all text-[10px] font-black uppercase tracking-[0.2em] text-white placeholder:text-white/20 shadow-2xl italic"
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
@@ -541,7 +541,7 @@ export const MatchManager: React.FC = () => {
                 <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-500/5 border border-brand-500/10">
                     <Filter size={12} className="text-brand-accent" />
                     <span className="text-[9px] font-black text-brand-500/60 uppercase tracking-widest italic">
-                        {activeTab === 'results' ? 'ARCHIVE_ACCESS_GRANTE' : 'PIPELINE_SYNCHRONIZED'}
+                        {activeTab === 'results' ? 'RESULTS SAVED' : 'SCHEDULE SYNCED'}
                     </span>
                 </div>
             </div>
@@ -556,23 +556,23 @@ export const MatchManager: React.FC = () => {
                         <div className="flex items-center gap-4">
                             <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-red-500 italic">
                                 <span className="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.8)]" />
-                                LIVE_FEED
+                                LIVE MATCH
                             </div>
                             <span className="h-4 w-[1px] bg-white/10 hidden sm:block" />
                             <div className="hidden sm:flex items-center gap-2 text-[10px] font-black text-white/40 uppercase tracking-[0.3em] italic">
-                                STATUS: <span className="text-brand-accent">OPERATIONAL</span>
+                                STATUS: <span className="text-brand-accent">ACTIVE</span>
                             </div>
                         </div>
 
                         {/* Desktop Tab Switcher */}
                         <div className="hidden md:flex bg-black/40 p-1.5 rounded-2xl border border-white/10 backdrop-blur-2xl shadow-inner">
-                            {['tactical', 'performance'].map((tab) => (
+                            {['Lineup', 'Performance'].map((tab) => (
                                 <button 
                                     key={tab} 
-                                    onClick={() => setConsoleTab(tab as any)}
-                                    className={`px-8 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-500 italic flex items-center gap-3 ${consoleTab === tab ? 'bg-brand-accent text-brand-950 shadow-[0_0_25px_rgba(195,246,41,0.4)] scale-105' : 'text-white/40 hover:text-white/70 hover:bg-white/5'}`}
+                                    onClick={() => setConsoleTab(tab === 'Lineup' ? 'tactical' : 'performance')}
+                                    className={`px-8 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-500 italic flex items-center gap-3 ${consoleTab === (tab === 'Lineup' ? 'tactical' : 'performance') ? 'bg-brand-accent text-brand-950 shadow-[0_0_25px_rgba(195,246,41,0.4)] scale-105' : 'text-white/40 hover:text-white/70 hover:bg-white/5'}`}
                                 >
-                                    {tab === 'tactical' ? <Activity size={14} /> : <Award size={14} />}
+                                    {tab === 'Lineup' ? <Activity size={14} /> : <Award size={14} />}
                                     {tab}
                                 </button>
                             ))}
@@ -581,7 +581,7 @@ export const MatchManager: React.FC = () => {
                         <div className="flex items-center gap-6">
                             <div className="hidden xl:flex flex-col items-end">
                                 <h2 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">{settings.name}</h2>
-                                <p className="text-[8px] font-bold text-white/30 uppercase tracking-widest italic">ACADEMY_NODE_01</p>
+                                <p className="text-[8px] font-bold text-white/30 uppercase tracking-widest italic">CENTER_01</p>
                             </div>
                             <button onClick={() => setActiveMatchId(null)} className="p-3 hover:bg-red-500/20 hover:text-red-400 rounded-2xl transition-all duration-300 text-white/20 border border-transparent hover:border-red-500/20">
                                 <X size={20}/>
@@ -607,7 +607,7 @@ export const MatchManager: React.FC = () => {
                                     </div>
                                     <div className="text-left md:text-center space-y-1 flex-1 min-w-0">
                                         <h4 className="text-[11px] lg:text-xs font-black text-white uppercase italic tracking-[0.3em] group-hover:text-brand-accent transition-colors truncate">{settings.name}</h4>
-                                        <p className="text-[8px] font-bold text-white/20 uppercase tracking-widest italic">HOME_SQUAD</p>
+                                        <p className="text-[8px] font-bold text-white/20 uppercase tracking-widest italic">HOME TEAM</p>
                                     </div>
                                 </div>
 
@@ -635,7 +635,7 @@ export const MatchManager: React.FC = () => {
                                             className={`w-full py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] italic transition-all duration-500 flex items-center justify-center gap-3 border shadow-2xl ${isTimerRunning ? 'bg-red-500/10 text-red-500 border-red-500/20 hover:bg-red-500/20' : 'bg-brand-accent text-brand-950 border-brand-accent/20 shadow-[0_10px_30px_rgba(195,246,41,0.2)] hover:scale-[1.05]'}`}
                                         >
                                             {isTimerRunning ? <X size={14} /> : <Zap size={14} />}
-                                            {isTimerRunning ? 'HALT_TIME' : matchTime === 0 ? 'START_CLOCK' : 'RESUME_CLOCK'}
+                                            {isTimerRunning ? 'PAUSE TIMER' : matchTime === 0 ? 'START TIMER' : 'RESUME TIMER'}
                                         </button>
                                     </div>
 
@@ -654,7 +654,7 @@ export const MatchManager: React.FC = () => {
                                 <div className="flex md:flex-col items-center gap-6 group w-full md:w-1/3 px-4 md:px-0 justify-end md:justify-center">
                                     <div className="text-right md:text-center space-y-1 order-1 md:order-2 flex-1 min-w-0">
                                         <h4 className="text-[11px] lg:text-xs font-black text-white/40 uppercase italic tracking-[0.3em] group-hover:text-white/70 transition-colors truncate">{activeMatch.opponent}</h4>
-                                        <p className="text-[8px] font-bold text-white/10 uppercase tracking-widest italic">VISITING_SIDE</p>
+                                        <p className="text-[8px] font-bold text-white/10 uppercase tracking-widest italic">AWAY TEAM</p>
                                     </div>
                                     <div className="w-16 h-16 lg:w-28 lg:h-28 bg-white/5 rounded-3xl flex items-center justify-center border border-white/5 group-hover:border-white/20 transition-all duration-500 shadow-xl order-2 md:order-1 -rotate-3 group-hover:rotate-0">
                                         <Shield size={48} className="text-white/10 group-hover:text-white/20 transition-colors" />
@@ -664,13 +664,13 @@ export const MatchManager: React.FC = () => {
 
                             {/* Mobile Tab Switcher */}
                             <div className="flex md:hidden bg-black/60 p-1.5 rounded-[2rem] border border-white/10 backdrop-blur-2xl w-full">
-                                {['tactical', 'performance'].map((tab) => (
+                                {['Lineup', 'Performance'].map((tab) => (
                                     <button 
                                         key={tab} 
-                                        onClick={() => setConsoleTab(tab as any)}
-                                        className={`flex-1 py-4 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all duration-500 italic flex items-center justify-center gap-3 ${consoleTab === tab ? 'bg-brand-accent text-brand-950 shadow-glow' : 'text-white/40'}`}
+                                        onClick={() => setConsoleTab(tab === 'Lineup' ? 'tactical' : 'performance')}
+                                        className={`flex-1 py-4 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all duration-500 italic flex items-center justify-center gap-3 ${consoleTab === (tab === 'Lineup' ? 'tactical' : 'performance') ? 'bg-brand-accent text-brand-950 shadow-glow' : 'text-white/40'}`}
                                     >
-                                        {tab === 'tactical' ? <Activity size={16} /> : <Award size={16} />}
+                                        {tab === 'Lineup' ? <Activity size={16} /> : <Award size={16} />}
                                         {tab}
                                     </button>
                                 ))}
@@ -678,7 +678,7 @@ export const MatchManager: React.FC = () => {
 
                             {consoleTab === 'tactical' ? (
                                 <div className="space-y-10 animate-in fade-in slide-in-from-left-4 duration-500">
-                                    {/* Unified Action Grid - Broadcast Switcher Style */}
+                                    {/* Unified Action Grid */}
                                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
                                         <button 
                                             onClick={() => setShowGoalModal(true)} 
@@ -689,8 +689,8 @@ export const MatchManager: React.FC = () => {
                                                 <PlusCircle size={28} />
                                             </div>
                                             <div className="text-center relative z-10">
-                                                <p className="text-[11px] font-black uppercase tracking-[0.2em] italic group-hover:text-brand-950 transition-colors">RECORD_GOAL</p>
-                                                <p className="text-[8px] font-bold text-white/20 uppercase tracking-widest mt-1 group-hover:text-brand-950/40 transition-colors">UNIT_STRIKE_CONFIRM</p>
+                                                <p className="text-[11px] font-black uppercase tracking-[0.2em] italic group-hover:text-brand-950 transition-colors">RECORD GOAL</p>
+                                                <p className="text-[8px] font-bold text-white/20 uppercase tracking-widest mt-1 group-hover:text-brand-950/40 transition-colors">CONFIRM GOAL DETAILS</p>
                                             </div>
                                         </button>
 
@@ -703,8 +703,8 @@ export const MatchManager: React.FC = () => {
                                                 <div className="w-5 h-7 bg-amber-500 rounded-sm shadow-xl" />
                                             </div>
                                             <div className="text-center relative z-10">
-                                                <p className="text-[11px] font-black uppercase tracking-[0.2em] italic group-hover:text-white transition-colors">YELLOW_CARD</p>
-                                                <p className="text-[8px] font-bold text-white/20 uppercase tracking-widest mt-1 group-hover:text-white/40 transition-colors">DISCIPLINARY_LOG_01</p>
+                                                <p className="text-[11px] font-black uppercase tracking-[0.2em] italic group-hover:text-white transition-colors">YELLOW CARD</p>
+                                                <p className="text-[8px] font-bold text-white/20 uppercase tracking-widest mt-1 group-hover:text-white/40 transition-colors">CONFIRM YELLOW CARD</p>
                                             </div>
                                         </button>
 
@@ -717,8 +717,8 @@ export const MatchManager: React.FC = () => {
                                                 <div className="w-5 h-7 bg-red-500 rounded-sm shadow-xl" />
                                             </div>
                                             <div className="text-center relative z-10">
-                                                <p className="text-[11px] font-black uppercase tracking-[0.2em] italic group-hover:text-white transition-colors">RED_CARD</p>
-                                                <p className="text-[8px] font-bold text-white/20 uppercase tracking-widest mt-1 group-hover:text-white/40 transition-colors">DISCIPLINARY_LOG_02</p>
+                                                <p className="text-[11px] font-black uppercase tracking-[0.2em] italic group-hover:text-white transition-colors">RED CARD</p>
+                                                <p className="text-[8px] font-bold text-white/20 uppercase tracking-widest mt-1 group-hover:text-white/40 transition-colors">CONFIRM RED CARD</p>
                                             </div>
                                         </button>
 
@@ -731,8 +731,8 @@ export const MatchManager: React.FC = () => {
                                                 <RefreshCw size={28} />
                                             </div>
                                             <div className="text-center relative z-10">
-                                                <p className="text-[11px] font-black uppercase tracking-[0.2em] italic group-hover:text-brand-950 transition-colors">EXECUTE_SUB</p>
-                                                <p className="text-[8px] font-bold text-white/20 uppercase tracking-widest mt-1 group-hover:text-brand-950/40 transition-colors">TACTICAL_ROTATION</p>
+                                                <p className="text-[11px] font-black uppercase tracking-[0.2em] italic group-hover:text-brand-950 transition-colors">SUBSTITUTION</p>
+                                                <p className="text-[8px] font-bold text-white/20 uppercase tracking-widest mt-1 group-hover:text-brand-950/40 transition-colors">SUBSTITUTION</p>
                                             </div>
                                         </button>
 
@@ -745,8 +745,8 @@ export const MatchManager: React.FC = () => {
                                                 <Users size={28} />
                                             </div>
                                             <div className="text-center relative z-10">
-                                                <p className="text-[11px] font-black uppercase tracking-[0.2em] italic group-hover:text-brand-950 transition-colors">RECORD_ATTENDANCE</p>
-                                                <p className="text-[8px] font-bold text-white/20 uppercase tracking-widest mt-1 group-hover:text-brand-950/40 transition-colors">MATCHDAY_ROLLCALL</p>
+                                                <p className="text-[11px] font-black uppercase tracking-[0.2em] italic group-hover:text-brand-950 transition-colors">RECORD ATTENDANCE</p>
+                                                <p className="text-[8px] font-bold text-white/20 uppercase tracking-widest mt-1 group-hover:text-brand-950/40 transition-colors">RECORD SQUAD ATTENDANCE</p>
                                             </div>
                                         </button>
                                     </div>
@@ -759,9 +759,9 @@ export const MatchManager: React.FC = () => {
                                             <div className="px-10 py-8 bg-white/5 border-b border-white/5 flex items-center justify-between">
                                                 <div className="flex items-center gap-3">
                                                     <Activity size={18} className="text-brand-accent" />
-                                                    <p className="text-[10px] font-black text-white uppercase tracking-[0.4em] italic">EVENT_CHRONICLE</p>
+                                                    <p className="text-[10px] font-black text-white uppercase tracking-[0.4em] italic">MATCH TIMELINE</p>
                                                 </div>
-                                                <div className="text-[8px] font-bold text-white/20 uppercase tracking-widest italic">REAL_TIME_FEED</div>
+                                                <div className="text-[8px] font-bold text-white/20 uppercase tracking-widest italic">LIVE TIMELINE</div>
                                             </div>
 
                                             <div className="p-8 max-h-[500px] overflow-y-auto custom-scrollbar space-y-6 relative z-10">
@@ -808,7 +808,7 @@ export const MatchManager: React.FC = () => {
                                                 ) : (
                                                     <div className="flex flex-col items-center justify-center py-24 opacity-10">
                                                         <Activity size={64} strokeWidth={1} className="mb-6" />
-                                                        <p className="text-[10px] font-black uppercase tracking-[0.5em] italic">NO_OPERATIONAL_DATA</p>
+                                                        <p className="text-[10px] font-black uppercase tracking-[0.5em] italic">NO EVENTS RECORDED</p>
                                                     </div>
                                                 )}
                                             </div>
@@ -822,16 +822,16 @@ export const MatchManager: React.FC = () => {
                                                     <Check size={48} className="text-brand-accent" />
                                                 </div>
                                                 <div className="relative z-10">
-                                                    <h4 className="text-3xl font-black text-white italic uppercase tracking-tighter mb-3">ARCHIVE_PROTOCOL</h4>
+                                                    <h4 className="text-3xl font-black text-white italic uppercase tracking-tighter mb-3">Archive Match</h4>
                                                     <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest italic max-w-[240px] mx-auto leading-relaxed">
-                                                        SYNC ALL TACTICAL EVENTS AND PERFORMANCE METRICS TO SECURE DATABASE.
+                                                        Save match details and performance stats to the database.
                                                     </p>
                                                 </div>
                                                 <button 
                                                     onClick={() => finalizeMatch(activeMatch)} 
                                                     className="w-full py-8 bg-brand-accent text-brand-950 rounded-2xl font-black uppercase tracking-[0.5em] text-xs shadow-glow hover:scale-[1.02] active:scale-95 transition-all italic border border-brand-accent/20 relative z-10"
                                                 >
-                                                    EXECUTE FINAL_SYNC
+                                                    Finalize & Save Match
                                                 </button>
                                             </div>
 
@@ -841,14 +841,14 @@ export const MatchManager: React.FC = () => {
                                                         <Shield size={18} className="text-white/20" />
                                                     </div>
                                                     <div>
-                                                        <p className="text-[9px] font-black text-white/40 uppercase tracking-widest italic">SECURITY_STATUS</p>
-                                                        <p className="text-[10px] font-black text-emerald-400 uppercase italic">ENCRYPTED</p>
+                                                        <p className="text-[9px] font-black text-white/40 uppercase tracking-widest italic">DATA STATUS</p>
+                                                        <p className="text-[10px] font-black text-emerald-400 uppercase italic">SECURE</p>
                                                     </div>
                                                 </div>
                                                 <div className="h-8 w-[1px] bg-white/5" />
                                                 <div className="text-right">
-                                                    <p className="text-[9px] font-black text-white/40 uppercase tracking-widest italic">NODE_ID</p>
-                                                    <p className="text-[10px] font-black text-white uppercase italic">ATHLETE_CRM_01</p>
+                                                    <p className="text-[9px] font-black text-white/40 uppercase tracking-widest italic">MATCH ID</p>
+                                                    <p className="text-[10px] font-black text-white uppercase italic">MATCH_CENTER_01</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -861,11 +861,11 @@ export const MatchManager: React.FC = () => {
                                         <div className="flex items-center gap-4">
                                             <div className="w-2 h-10 bg-brand-accent rounded-full shadow-glow" />
                                             <div>
-                                                <p className="text-[10px] font-black text-white uppercase tracking-[0.4em] italic leading-none mb-2">TACTICAL_PERFORMANCE_MATRIX</p>
+                                                <p className="text-[10px] font-black text-white uppercase tracking-[0.4em] italic leading-none mb-2">Player Performance Stats</p>
                                                 <div className="flex items-center gap-3">
-                                                    <span className="text-[8px] font-bold text-white/20 uppercase tracking-widest">{activeMatch.playerStats.length} SQUAD NODES ACTIVE</span>
+                                                    <span className="text-[8px] font-bold text-white/20 uppercase tracking-widest">{activeMatch.playerStats.length} PLAYERS ACTIVE</span>
                                                     <div className="w-1 h-1 bg-white/10 rounded-full" />
-                                                    <span className="text-[8px] font-bold text-brand-accent uppercase tracking-widest italic animate-pulse">MONITORING_LIVE</span>
+                                                    <span className="text-[8px] font-bold text-brand-accent uppercase tracking-widest italic animate-pulse">MONITORING LIVE</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -987,7 +987,7 @@ export const MatchManager: React.FC = () => {
                                                                         </div>
                                                                     )}
                                                                     {(ps.goals || 0) === 0 && (ps.assists || 0) === 0 && (
-                                                                        <span className="text-[7px] font-bold text-white/20 uppercase tracking-widest italic">STEADY_SYNC</span>
+                                                                        <span className="text-[7px] font-bold text-white/20 uppercase tracking-widest italic">Syncing...</span>
                                                                     )}
                                                                 </div>
                                                             </div>
@@ -1008,7 +1008,7 @@ export const MatchManager: React.FC = () => {
                                                     {/* Cyber-HUD Circular Gauge */}
                                                     <div className="flex flex-col items-center py-2 relative group/rating">
                                                         <HUDCircularGauge rating={rating} />
-                                                        <p className="text-[8px] font-black text-white/10 uppercase tracking-[0.4em] italic mt-4 group-hover:text-brand-accent/40 transition-colors">LIVE_PERFORMANCE_HUD</p>
+                                                        <p className="text-[8px] font-black text-white/10 uppercase tracking-[0.4em] italic mt-4 group-hover:text-brand-accent/40 transition-colors">Match Performance</p>
                                                     </div>
 
                                                     {/* Interaction Row */}
@@ -1192,7 +1192,7 @@ export const MatchManager: React.FC = () => {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <div className="space-y-4">
-                                    <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] italic ml-1">SCHEDULE SYNC</label>
+                                    <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] italic ml-1">Auto-sync Match Schedule</label>
                                     <select 
                                         className="w-full bg-black/40 border border-white/10 p-5 rounded-2xl text-white font-black italic text-sm outline-none focus:border-brand-accent transition-all appearance-none"
                                         value={newMatch.scheduledEventId}
@@ -1226,7 +1226,7 @@ export const MatchManager: React.FC = () => {
                             <section className="space-y-8">
                                 <div className="flex justify-between items-center border-b border-white/5 pb-6">
                                     <h4 className="text-[10px] font-black text-white uppercase tracking-[0.4em] italic flex items-center gap-3">
-                                        <Shirt size={18} className="text-brand-accent" /> TACTICAL DEPLOYMENT (11)
+                                        <Shirt size={18} className="text-brand-accent" /> Match Lineup (11)
                                     </h4>
                                     <span className={`text-[10px] font-black px-6 py-2 rounded-xl transition-all ${starters.size === 11 ? 'bg-brand-accent text-brand-950 shadow-glow' : 'bg-white/5 text-white/40'}`}>
                                         {starters.size} / 11 NOMINATED
@@ -1441,8 +1441,8 @@ export const MatchManager: React.FC = () => {
                         
                         <div className="px-10 py-8 border-b border-white/5 bg-white/5 flex justify-between items-center">
                             <div>
-                                <h3 className="text-2xl font-black text-white italic uppercase tracking-tighter">TACTICAL_SEQUENCE_SWAP</h3>
-                                <p className="text-[10px] font-black text-brand-primary uppercase tracking-[0.4em] mt-2 italic">PERSONNEL_RECONFIGURATION</p>
+                                <h3 className="text-2xl font-black text-white italic uppercase tracking-tighter">Player Substitutions</h3>
+                                <p className="text-[10px] font-black text-brand-primary uppercase tracking-[0.4em] mt-2 italic">SUBSTITUTION DETAILS</p>
                             </div>
                             <button onClick={() => setShowSubModal(false)} className="p-4 hover:bg-white/10 rounded-2xl transition-all text-white/40"><X size={24} /></button>
                         </div>
@@ -1454,7 +1454,7 @@ export const MatchManager: React.FC = () => {
                                 </div>
 
                                 <div className="space-y-4">
-                                    <label className="text-[10px] font-black text-red-400 uppercase tracking-[0.3em] italic ml-1">EXIT_OPERATIVE</label>
+                                    <label className="text-[10px] font-black text-red-400 uppercase tracking-[0.3em] italic ml-1">PLAYER OUT</label>
                                     <select 
                                         className="w-full bg-red-500/5 border border-red-500/20 p-5 rounded-2xl text-white font-black italic text-sm outline-none focus:border-red-500 transition-all appearance-none"
                                         value={selectedSubOut}
@@ -1466,7 +1466,7 @@ export const MatchManager: React.FC = () => {
                                 </div>
 
                                 <div className="space-y-4">
-                                    <label className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.3em] italic ml-1">ENTRY_OPERATIVE</label>
+                                    <label className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.3em] italic ml-1">PLAYER IN</label>
                                     <select 
                                         className="w-full bg-emerald-500/5 border border-emerald-500/20 p-5 rounded-2xl text-white font-black italic text-sm outline-none focus:border-emerald-500 transition-all appearance-none"
                                         value={selectedSubIn}
@@ -1483,7 +1483,7 @@ export const MatchManager: React.FC = () => {
                                 disabled={!selectedSubOut || !selectedSubIn}
                                 className="w-full py-6 bg-brand-primary text-brand-950 rounded-2xl font-black uppercase tracking-[0.3em] text-xs shadow-glow hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-4 italic disabled:opacity-30 disabled:hover:scale-100"
                             >
-                                <RefreshCw size={20} /> EXECUTE_SUBSTITUTION
+                                <RefreshCw size={20} /> CONFIRM SUBSTITUTION
                             </button>
                         </div>
                     </div>
@@ -1500,7 +1500,7 @@ export const MatchManager: React.FC = () => {
                                     <Activity size={28} />
                                 </div>
                                 <div>
-                                    <h3 className="text-2xl font-black text-white italic uppercase tracking-tighter">TACTICAL_BREAKDOWN</h3>
+                                    <h3 className="text-2xl font-black text-white italic uppercase tracking-tighter">Match Highlights & Stats</h3>
                                     <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.4em] mt-2 italic">
                                         {new Date(selectedMatchDetails.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }).toUpperCase()}
                                     </p>
@@ -1591,7 +1591,7 @@ export const MatchManager: React.FC = () => {
                                     ) : (
                                         <div className="flex flex-col items-center justify-center py-16 opacity-10">
                                             <Activity size={48} strokeWidth={1} className="mb-4" />
-                                            <p className="text-[10px] font-black uppercase tracking-[0.5em] italic text-center">NO_TACTICAL_DATA_ARCHIVED</p>
+                                            <p className="text-[10px] font-black uppercase tracking-[0.5em] italic text-center">NO EVENTS RECORDED</p>
                                         </div>
                                     )}
                                 </div>
@@ -1605,7 +1605,7 @@ export const MatchManager: React.FC = () => {
                                         <Trophy size={40} className="animate-bounce" />
                                     </div>
                                     <div className="text-center relative z-10">
-                                        <p className="text-[9px] font-black text-white/40 uppercase tracking-[0.5em] mb-2 italic">ELITE_PERFORMANCE_AWARD</p>
+                                        <p className="text-[9px] font-black text-white/40 uppercase tracking-[0.5em] mb-2 italic">STAR OF THE MATCH</p>
                                         <h4 className="text-3xl font-black text-brand-accent italic uppercase tracking-tighter">
                                             {players.find(p => p.id === selectedMatchDetails.playerOfTheMatchId)?.fullName}
                                         </h4>
@@ -1617,20 +1617,20 @@ export const MatchManager: React.FC = () => {
                             <div className="space-y-6 pt-4">
                                 <div className="flex items-center gap-4 px-2">
                                     <Youtube size={18} className="text-red-500" />
-                                    <p className="text-[11px] font-black text-white uppercase tracking-[0.4em] italic">MEDIA_VAULT</p>
+                                    <p className="text-[11px] font-black text-white uppercase tracking-[0.4em] italic">MEDIA & VIDEO</p>
                                     <div className="h-[1px] flex-1 bg-white/5 mx-4" />
                                 </div>
 
                                 <div className="bg-white/5 p-8 rounded-[2.5rem] border border-white/5 space-y-6">
                                     <div className="flex flex-col gap-4">
-                                        <label className="text-[9px] font-black text-white/40 uppercase tracking-[0.3em] italic ml-2">YOUTUBE_REPLAY_LINK</label>
+                                        <label className="text-[9px] font-black text-white/40 uppercase tracking-[0.3em] italic ml-2">YOUTUBE HIGHLIGHTS LINK</label>
                                         <div className="flex flex-col sm:flex-row gap-4">
                                             <div className="flex-1 relative">
                                                 <input 
                                                     type="text"
                                                     value={editingHighlightsUrl}
                                                     onChange={(e) => setEditingHighlightsUrl(e.target.value)}
-                                                    placeholder="PASTE_MATCH_REPLAY_URL"
+                                                    placeholder="Paste YouTube link..."
                                                     className="w-full bg-black/40 border border-white/10 p-5 rounded-2xl text-white font-black italic text-xs outline-none focus:border-brand-accent transition-all placeholder:text-white/10"
                                                 />
                                                 {editingHighlightsUrl && (
@@ -1646,7 +1646,7 @@ export const MatchManager: React.FC = () => {
                                                     const btn = document.activeElement as HTMLButtonElement;
                                                     if (btn) {
                                                         const originalText = btn.innerText;
-                                                        btn.innerText = 'SYNC_COMPLETE';
+                                                         btn.innerText = 'SAVED';
                                                         btn.style.backgroundColor = '#C3F629';
                                                         btn.style.color = '#000';
                                                         setTimeout(() => {
@@ -1659,7 +1659,7 @@ export const MatchManager: React.FC = () => {
                                                 disabled={isUpdatingHighlights || editingHighlightsUrl === (selectedMatchDetails.highlightsUrl || '')}
                                                 className="px-8 py-5 bg-white/5 hover:bg-brand-accent hover:text-brand-950 disabled:opacity-30 disabled:hover:bg-white/5 disabled:hover:text-white/40 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all border border-white/10 hover:border-brand-accent italic shrink-0"
                                             >
-                                                {isUpdatingHighlights ? 'SYNCING...' : 'UPDATE_LINK'}
+                                                {isUpdatingHighlights ? 'SAVING...' : 'SAVE LINK'}
                                             </button>
                                         </div>
                                     </div>
@@ -1670,7 +1670,7 @@ export const MatchManager: React.FC = () => {
                                             className="w-full py-6 bg-red-600/10 hover:bg-red-600/20 text-red-500 rounded-2xl font-black uppercase tracking-[0.3em] text-[10px] border border-red-500/20 transition-all flex items-center justify-center gap-4 italic group"
                                         >
                                             <Play size={18} className="fill-current group-hover:scale-110 transition-transform" />
-                                            LAUNCH_MATCH_HIGHLIGHTS
+                                            WATCH MATCH HIGHLIGHTS
                                         </button>
                                     )}
                                 </div>
@@ -1682,7 +1682,7 @@ export const MatchManager: React.FC = () => {
                                 onClick={() => setSelectedMatchDetails(null)}
                                 className="w-full py-7 bg-white/5 text-white/60 rounded-2xl font-black uppercase tracking-[0.5em] text-[10px] border border-white/10 hover:bg-white/10 hover:text-white transition-all italic shadow-2xl"
                             >
-                                CLOSE_TACTICAL_FEED
+                                CLOSE HIGHLIGHTS
                             </button>
                         </div>
                     </div>

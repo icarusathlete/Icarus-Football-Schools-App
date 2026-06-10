@@ -180,7 +180,7 @@ export const UserManagement: React.FC = () => {
         <div className="mt-6 p-8 glass-card border border-white/10 shadow-2xl relative overflow-hidden rounded-3xl space-y-8 animate-in fade-in slide-in-from-top-4 duration-500 ring-1 ring-white/5">
             
             <div className="space-y-4">
-                <label className="block text-[10px] font-black text-brand-400 uppercase tracking-[0.3em] italic">Select Access Trajectory</label>
+                <label className="block text-[10px] font-black text-brand-400 uppercase tracking-[0.3em] italic">Select Account Role</label>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     
                     {/* Trajectory: Player */}
@@ -251,7 +251,7 @@ export const UserManagement: React.FC = () => {
                         <label className="block text-[10px] font-black text-[#CCFF00] uppercase tracking-[0.3em] italic mb-2">Configure Coach Permissions</label>
                         <div className="space-y-3">
                             <label className="flex items-center gap-2 text-[10px] font-black text-brand-400 uppercase tracking-[0.3em] italic">
-                                <MapPin size={14} className="text-brand-500" /> Authorized Venues
+                                <MapPin size={14} className="text-brand-500" /> Assigned Venues
                             </label>
                             <div className="flex flex-wrap gap-2">
                                 {venues.map(v => (
@@ -268,7 +268,7 @@ export const UserManagement: React.FC = () => {
                         </div>
                         <div className="space-y-3">
                             <label className="flex items-center gap-2 text-[10px] font-black text-brand-400 uppercase tracking-[0.3em] italic">
-                                <Layers size={14} className="text-brand-500" /> Authorized Batches
+                                <Layers size={14} className="text-brand-500" /> Assigned Batches
                             </label>
                             <div className="flex flex-wrap gap-2">
                                 {batches.map(b => (
@@ -370,7 +370,7 @@ export const UserManagement: React.FC = () => {
                     )}
                 </div>
             </div>
-            {editingUserId === user.id && renderAssignmentForm(editForm, setEditForm, user.id, handleSaveEdit, handleCancelEdit, 'Update Access Protocols', false)}
+            {editingUserId === user.id && renderAssignmentForm(editForm, setEditForm, user.id, handleSaveEdit, handleCancelEdit, 'Update Permissions', false)}
         </div>
     );
 
@@ -378,7 +378,7 @@ export const UserManagement: React.FC = () => {
         <div className="space-y-8 pb-32 animate-in fade-in duration-700 font-display">
             <PageHeader 
                 title="USER MANAGEMENT" 
-                subtitle="Personnel Authorization // Access Protocol Control" 
+                subtitle="Authorized Users & Account Permissions" 
             />
 
             {/* ── PENDING APPROVALS ─────────────────────────────────────── */}
@@ -388,7 +388,7 @@ export const UserManagement: React.FC = () => {
                         <div className="space-y-1">
                             <h2 className="text-xl font-black text-white uppercase italic tracking-[0.3em] flex items-center gap-3">
                                 <Clock className="text-amber-400" size={20} />
-                                AWAITING_APPROVAL
+                                AWAITING APPROVAL
                                 <span className="bg-amber-400/10 text-amber-400 px-4 py-1 rounded-xl text-xs font-black ml-2 border border-amber-400/20 shadow-sm flex items-center gap-1.5">
                                     <Bell size={11} className="animate-pulse" />{pendingUsers.length}
                                 </span>
@@ -462,7 +462,7 @@ export const UserManagement: React.FC = () => {
                     <div className="space-y-1">
                         <h2 className="text-xl font-black text-white uppercase italic tracking-[0.3em] flex items-center gap-3">
                             <Shield className="text-[#CCFF00]" size={20} />
-                            ACTIVE_COMMAND_UNITS
+                            ACTIVE ACCOUNTS
                             <span className="bg-white text-brand-950 px-4 py-1 rounded-xl text-xs font-black ml-4 shadow-xl">{activeUsers.length}</span>
                         </h2>
                         <div className="h-1 w-32 bg-[#CCFF00]/20 rounded-full" />
@@ -475,7 +475,7 @@ export const UserManagement: React.FC = () => {
                         {activeUsers.length === 0 && (
                             <div className="p-24 text-center text-white/20 font-black uppercase tracking-[0.4em] italic text-xs flex flex-col items-center justify-center gap-8">
                                 <Shield size={80} className="opacity-10" />
-                                No active command units found
+                                No active accounts found
                             </div>
                         )}
                     </div>
@@ -488,7 +488,7 @@ export const UserManagement: React.FC = () => {
                     <div className="px-2 space-y-1">
                         <h2 className="text-xl font-black text-white/40 uppercase italic tracking-[0.3em] flex items-center gap-3">
                             <XCircle className="text-red-400" size={20} />
-                            REJECTED_REQUESTS
+                            REJECTED REQUESTS
                             <span className="bg-red-500/10 text-red-400 px-4 py-1 rounded-xl text-xs font-black ml-2 border border-red-500/20">{rejectedUsers.length}</span>
                         </h2>
                         <div className="h-1 w-32 bg-red-500/20 rounded-full" />
@@ -511,7 +511,7 @@ export const UserManagement: React.FC = () => {
                                     <Clock size={16} /> Restore
                                 </button>
                                 <button onClick={() => handleDeleteClick(user)} className="flex items-center gap-2 px-5 py-3 bg-red-500/10 text-red-400 rounded-xl hover:bg-red-500 hover:text-white transition-all font-black text-[10px] uppercase tracking-widest border border-red-500/20 italic shadow-sm">
-                                    <Trash2 size={16} /> Purge
+                                    <Trash2 size={16} /> Delete
                                 </button>
                             </div>
                             </div>

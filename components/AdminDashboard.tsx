@@ -71,7 +71,7 @@ const CentreCard: React.FC<{ stat: CentreStat; onClick: () => void }> = ({ stat,
         <div className="min-w-0">
           <div className="flex items-center gap-2 mb-2">
             <Radio size={10} className={empty ? 'text-white/20' : 'text-[#CCFF00] animate-pulse'} />
-            <p className="text-[8px] font-black uppercase italic tracking-[0.3em] text-white/30">{empty ? 'DEACTIVATED' : 'LIVE NODE'}</p>
+            <p className="text-[8px] font-black uppercase italic tracking-[0.3em] text-white/30">{empty ? 'DEACTIVATED' : 'ACTIVE'}</p>
           </div>
           <h3 className="text-[15px] font-black italic uppercase text-white tracking-tight leading-tight line-clamp-2 drop-shadow-sm">{stat.name}</h3>
         </div>
@@ -732,7 +732,7 @@ export const AdminDashboard: React.FC = () => {
           { id: 'overview', label: 'Overview & Centres', count: activeCentres.length, countColor: 'text-[#C3F629]' },
           { id: 'rankings', label: 'Athlete Rankings', count: leagueRankings.length, countColor: 'text-[#00C8FF]' },
           { id: 'analytics', label: 'Analytics & Feed', count: 0, countColor: '' },
-          { id: 'operations', label: 'Operations HUD', count: alertItems.length, countColor: alertItems.length > 0 ? 'text-red-400 font-bold' : 'text-white/40' },
+          { id: 'operations', label: 'Operations Center', count: alertItems.length, countColor: alertItems.length > 0 ? 'text-red-400 font-bold' : 'text-white/40' },
         ].map(t => (
           <button
             key={t.id}
@@ -786,7 +786,7 @@ export const AdminDashboard: React.FC = () => {
               <div className="flex items-center gap-2 px-1">
                 <Radio size={12} className="text-[#C3F629] animate-pulse" />
                 <p className="text-[10px] font-black text-white/60 uppercase italic tracking-[0.35em]">
-                  {selectedVenue === 'all' ? 'OPERATIONAL TRAINING NODES' : `${selectedVenue.toUpperCase()} OVERVIEW`}
+                  {selectedVenue === 'all' ? 'ACTIVE TRAINING VENUES' : `${selectedVenue.toUpperCase()} OVERVIEW`}
                 </p>
               </div>
               <div className={`grid gap-5 ${activeCentres.length === 1 ? 'grid-cols-1 max-w-sm' : activeCentres.length === 2 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'}`}>
@@ -803,7 +803,7 @@ export const AdminDashboard: React.FC = () => {
               <div className="flex items-center gap-2 flex-wrap">
                 <div className="w-1.5 h-1.5 rounded-full bg-white/20" />
                 <p className="text-[9px] font-black text-white/40 uppercase italic tracking-[0.3em]">
-                  {emptyCentres.length} INACTIVE NODE{emptyCentres.length > 1 ? 'S' : ''} (ZERO ENROLMENT)
+                  {emptyCentres.length} INACTIVE VENUE{emptyCentres.length > 1 ? 'S' : ''} (ZERO ENROLMENT)
                 </p>
                 <p className="text-[9px] font-bold italic text-white/20 ml-auto">{emptyCentres.map(c => c.name).join(' · ')}</p>
               </div>
@@ -1137,7 +1137,7 @@ export const AdminDashboard: React.FC = () => {
             <div className="glass-card rounded-[2rem] border border-white/10 overflow-hidden ring-1 ring-white/5 text-left">
               <div className="px-5 py-3.5 border-b border-white/10 flex items-center gap-2 bg-black/5">
                 <AlertTriangle size={12} className="text-amber-400 font-bold" />
-                <p className="text-[9px] font-black text-white/60 uppercase italic tracking-[0.3em]">CRITICAL NODE ALERTS</p>
+                <p className="text-[9px] font-black text-white/60 uppercase italic tracking-[0.3em]">IMPORTANT SYSTEM ALERTS</p>
               </div>
               <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-3">
                 {alertItems.map(a => (
@@ -1198,7 +1198,7 @@ export const AdminDashboard: React.FC = () => {
             <div className="glass-card p-6 sm:p-8 rounded-[2.5rem] border border-white/10 shadow-xl ring-1 ring-white/5 text-left">
               <div className="flex items-center gap-2 mb-6 border-b border-white/5 pb-4">
                 <LifeBuoy size={14} className="text-[#C3F629]" />
-                <h3 className="text-[11px] font-black italic uppercase text-white tracking-[0.25em]">SUPPORT DESK HUD</h3>
+                <h3 className="text-[11px] font-black italic uppercase text-white tracking-[0.25em]">Support Desk</h3>
               </div>
               
               <div className="grid grid-cols-2 gap-4 mb-6">
@@ -1318,7 +1318,7 @@ export const AdminDashboard: React.FC = () => {
             <div className="px-8 py-6 bg-white/5 border-t border-white/10 flex justify-end">
               <button onClick={() => { setShowConfigModal(false); setEditingItem(null); setNewItemName(''); }}
                 className="px-8 py-3 rounded-xl bg-white/5 border border-white/10 text-[11px] font-black text-white/40 uppercase tracking-widest hover:text-white hover:bg-white/10 shadow-sm transition-all italic tracking-[0.2em]">
-                Close Protocol
+                Close Settings
               </button>
             </div>
           </div>

@@ -382,7 +382,7 @@ export const PlayerRegistration: React.FC = () => {
               <Check size={32} className="text-[#C3F629] sm:hidden" />
               <Check size={48} className="text-[#C3F629] hidden sm:block" />
             </div>
-            <h2 className="text-xl sm:text-3xl font-black text-brand-950 uppercase tracking-tighter mb-3 sm:mb-4 font-display italic leading-none">Protocol Complete</h2>
+            <h2 className="text-xl sm:text-3xl font-black text-brand-950 uppercase tracking-tighter mb-3 sm:mb-4 font-display italic leading-none">Registration Complete</h2>
             <p className="text-brand-950/70 text-[10px] sm:text-sm font-bold uppercase tracking-widest mb-6 sm:mb-8 leading-relaxed">
               {statusMsg}
             </p>
@@ -560,7 +560,7 @@ export const PlayerRegistration: React.FC = () => {
                   <SectionHeader
                     icon={<Phone className="text-orange-400" />}
                     title="Guardian"
-                    accent="Protocol"
+                    accent="Contact"
                     subtitle="Emergency Contact Structure"
                     accentClass="text-orange-400"
                   />
@@ -622,7 +622,7 @@ export const PlayerRegistration: React.FC = () => {
                   >
                     <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 skew-x-12" />
                     {status === 'submitting' ? (
-                      <><RefreshCw size={18} className="sm:w-6 sm:h-6 animate-spin" /> Finalizing Protocol</>
+                      <><RefreshCw size={18} className="sm:w-6 sm:h-6 animate-spin" /> Saving Registration</>
                     ) : (
                       <><Save size={18} className="sm:w-6 sm:h-6 group-hover:rotate-12 transition-transform" /> Authenticate & Enroll</>
                     )}
@@ -639,7 +639,7 @@ export const PlayerRegistration: React.FC = () => {
                     <div className="absolute top-0 left-0 w-full h-1 sm:h-1.5 bg-[#C3F629] opacity-40" />
                     <SectionHeader
                       icon={<Camera size={16} />}
-                      title="Coach" accent="Protocol"
+                      title="Coach" accent="Profile"
                       subtitle="Personnel Identity Capture"
                     />
                     <div className="flex flex-col items-center">
@@ -679,7 +679,7 @@ export const PlayerRegistration: React.FC = () => {
                           placeholder="Coach's full name" />
                       </div>
                       <div>
-                        <FieldLabel icon={<Award size={11} />} label="System Username" required />
+                        <FieldLabel icon={<Award size={11} />} label="Username" required />
                         <input type="text" className={inp('username')} value={coachForm.username}
                           onChange={e => setCoachForm({ ...coachForm, username: e.target.value })}
                           placeholder="e.g. coach_john" />
@@ -792,7 +792,7 @@ export const PlayerRegistration: React.FC = () => {
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full sm:w-auto">
                         <button type="button" onClick={() => setCoachForm(INITIAL_COACH_FORM)}
                           className="px-6 sm:px-8 py-4 rounded-xl sm:rounded-2xl bg-white/5 border border-white/10 text-[10px] sm:text-[11px] font-black text-white/40 uppercase tracking-widest hover:text-white hover:bg-white/10 transition-all italic">
-                          Reset Protocol
+                          Reset Form
                         </button>
                         <button type="submit" disabled={status === 'submitting'}
                           className="px-8 sm:px-12 py-4 rounded-xl sm:rounded-2xl bg-[#C3F629] text-brand-950 font-black text-[10px] sm:text-[11px] uppercase tracking-widest hover:scale-[1.02] shadow-xl shadow-[#C3F629]/20 transition-all flex items-center justify-center gap-3 italic group">
@@ -900,7 +900,7 @@ export const PlayerRegistration: React.FC = () => {
             <div className="px-8 py-6 bg-white/5 border-t border-white/10 flex justify-end">
               <button onClick={() => setShowConfigModal(false)}
                 className="px-8 py-3 rounded-xl bg-white/5 border border-white/10 text-[11px] font-black text-white/40 uppercase tracking-widest hover:text-white hover:bg-white/10 shadow-sm transition-all italic tracking-[0.2em]">
-                Close Protocol
+                Close Registration
               </button>
             </div>
           </div>

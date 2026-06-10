@@ -77,10 +77,10 @@ export const SquadComparison: React.FC = () => {
         <div className="space-y-8 pb-32 animate-in fade-in duration-700 font-display">
             <PageHeader 
                 title="SQUAD COMPARISON" 
-                subtitle="Select up to 3 athletes for multidimensional tactical analysis."
+                subtitle="Select up to 3 players for performance comparison."
                 extra={
                     <div className="px-5 py-2.5 rounded-full bg-[#CCFF00]/10 border border-[#CCFF00]/20 text-[#CCFF00] text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-3 italic animate-pulse">
-                        <Brain size={16} className="text-[#CCFF00]"/> Neural Asset Analysis
+                        <Brain size={16} className="text-[#CCFF00]"/> Player Analysis
                     </div>
                 }
             />
@@ -103,7 +103,7 @@ export const SquadComparison: React.FC = () => {
                         {/* Search Results */}
                         {searchTerm && (
                             <div className="space-y-3 mb-8 max-h-[300px] overflow-y-auto custom-scrollbar">
-                                <p className="text-[8px] font-black text-brand-600 uppercase tracking-widest ml-1 mb-2">Available Assets</p>
+                                <p className="text-[8px] font-black text-brand-600 uppercase tracking-widest ml-1 mb-2">Available Players</p>
                                 {searchResults.map(p => (
                                     <div key={p.id} onClick={() => togglePlayer(p)} className="flex items-center justify-between p-4 rounded-2xl bg-brand-950/50 border border-transparent hover:border-brand-500/30 cursor-pointer transition-all group shadow-sm">
                                         <div className="flex items-center gap-4">
@@ -121,7 +121,7 @@ export const SquadComparison: React.FC = () => {
                         )}
 
                         <div className="border-t border-white/5 pt-8 flex-1">
-                            <h3 className="text-[10px] font-black text-brand-500 uppercase tracking-[0.2em] mb-6 ml-1 italic">ACTIVE ASSETS ({selectedPlayers.length}/3)</h3>
+                            <h3 className="text-[10px] font-black text-brand-500 uppercase tracking-[0.2em] mb-6 ml-1 italic">SELECTED PLAYERS ({selectedPlayers.length}/3)</h3>
                             <div className="space-y-4">
                                 {selectedPlayers.map((p, idx) => (
                                     <div key={p.id} className="relative bg-brand-950 p-5 rounded-2xl border border-white/5 flex items-center gap-5 overflow-hidden group shadow-xl">
@@ -139,7 +139,7 @@ export const SquadComparison: React.FC = () => {
                                 {selectedPlayers.length === 0 && (
                                     <div className="text-center py-16 border-2 border-dashed border-white/5 rounded-[2rem] text-brand-700 flex flex-col items-center gap-4 bg-brand-950/20 shadow-inner">
                                         <UserCheck size={32} className="opacity-20" />
-                                        <span className="text-[10px] font-black uppercase tracking-[0.2em] italic">Initialize comparison sequence</span>
+                                        <span className="text-[10px] font-black uppercase tracking-[0.2em] italic">Compare Players</span>
                                     </div>
                                 )}
                             </div>
@@ -156,7 +156,7 @@ export const SquadComparison: React.FC = () => {
                         <div className="flex flex-col md:flex-row items-center justify-between mb-12 gap-6 relative z-10">
                             <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter flex items-center gap-3">
                                 <Shield className="text-brand-500" size={28}/> 
-                                RADAR <span className="text-brand-500/20">TELEMETRY</span>
+                                PERFORMANCE <span className="text-brand-500/20">RADAR</span>
                             </h2>
                             <div className="flex flex-wrap items-center justify-center gap-6 bg-brand-950/50 px-6 py-3 rounded-2xl border border-white/10">
                                 {selectedPlayers.map((p, i) => (
@@ -165,7 +165,7 @@ export const SquadComparison: React.FC = () => {
                                         {p.fullName.split(' ')[0]}
                                     </div>
                                 ))}
-                                {selectedPlayers.length === 0 && <span className="text-[10px] font-black text-brand-700 uppercase tracking-widest italic">Awaiting Payload...</span>}
+                                {selectedPlayers.length === 0 && <span className="text-[10px] font-black text-brand-700 uppercase tracking-widest italic">Awaiting selection...</span>}
                             </div>
                         </div>
 
@@ -206,8 +206,8 @@ export const SquadComparison: React.FC = () => {
                                 </div>
                                 <div className="relative z-10 flex flex-col items-center bg-brand-950/20 p-12 rounded-[3.5rem] backdrop-blur-md border border-white/5 shadow-2xl">
                                     <Activity size={64} className="mb-6 text-brand-500 opacity-20 animate-pulse" />
-                                    <p className="font-black text-white text-2xl uppercase italic tracking-tighter">Diagnostic Hold</p>
-                                    <p className="text-sm mt-3 text-brand-600 font-medium uppercase tracking-widest italic">Awaiting authorized comparison data stream.</p>
+                                    <p className="font-black text-white text-2xl uppercase italic tracking-tighter">No Comparison Data</p>
+                                    <p className="text-sm mt-3 text-brand-600 font-medium uppercase tracking-widest italic">Select players to compare.</p>
                                 </div>
                             </div>
                         )}
