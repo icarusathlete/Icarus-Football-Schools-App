@@ -504,38 +504,59 @@ export const CoachAttendance: React.FC = () => {
                           </div>
                         </div>
 
-                        {/* MOTM & Tactical Controls */}
-                        <div className="grid grid-cols-2 gap-2 w-full">
-                          <button
-                            onClick={() => toggleAttendance(player.id, AttendanceStatus.PRESENT)}
-                            disabled={isFinalized}
-                            className={`flex flex-col items-center justify-center gap-1.5 py-4 rounded-2xl border transition-all duration-300 relative overflow-hidden group/btn
-                              ${isPresent 
-                                ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400' 
-                                : 'bg-white/5 border-white/10 text-white/20 hover:border-emerald-500/40 hover:text-emerald-500/60 hover:bg-emerald-500/[0.02]'
-                              } ${isFinalized ? 'opacity-20 cursor-not-allowed' : 'active:scale-95'}`}
-                          >
-                            <Check size={14} strokeWidth={4} className={`${isPresent ? 'scale-110' : 'opacity-40'}`} />
-                            <span className="text-[8px] font-black tracking-[0.2em] uppercase italic">Present</span>
-                          </button>
-                          
-                          <button
-                            onClick={() => toggleAttendance(player.id, AttendanceStatus.ABSENT)}
-                            disabled={isFinalized}
-                            className={`flex flex-col items-center justify-center gap-1.5 py-4 rounded-2xl border transition-all duration-300 relative overflow-hidden group/btn
-                              ${isAbsent 
-                                ? 'bg-red-500/10 border-red-500/50 text-red-400' 
-                                : 'bg-white/5 border-white/10 text-white/20 hover:border-red-500/40 hover:text-red-500/60 hover:bg-red-500/[0.02]'
-                              } ${isFinalized ? 'opacity-20 cursor-not-allowed' : 'active:scale-95'}`}
-                          >
-                            <X size={14} strokeWidth={4} className={`${isAbsent ? 'scale-110' : 'opacity-40'}`} />
-                            <span className="text-[8px] font-black tracking-[0.2em] uppercase italic">Absent</span>
-                          </button>
+                        {/* Attendance Switch & Star of the Match */}
+                        <div className="flex flex-col gap-3 w-full">
+                          {/* Attendance Switch Row */}
+                          <div className="flex items-center justify-between p-3.5 bg-white/5 border border-white/10 rounded-[1.25rem] w-full">
+                            <div className="flex flex-col items-start text-left">
+                              <span className="text-[9px] font-black text-white/30 uppercase tracking-widest">Attendance</span>
+                              <span className={`text-[10px] font-black uppercase tracking-wider mt-0.5 ${
+                                isPresent ? 'text-emerald-400' :
+                                isAbsent ? 'text-red-400' :
+                                'text-white/30'
+                              }`}>
+                                {isPresent ? 'Present' : isAbsent ? 'Absent' : 'Unmarked'}
+                              </span>
+                            </div>
+                            
+                            {/* Switch Container */}
+                            <button
+                              onClick={() => {
+                                if (isFinalized) return;
+                                if (isPresent) {
+                                  toggleAttendance(player.id, AttendanceStatus.ABSENT);
+                                } else if (isAbsent) {
+                                  toggleAttendance(player.id, AttendanceStatus.ABSENT);
+                                } else {
+                                  toggleAttendance(player.id, AttendanceStatus.PRESENT);
+                                }
+                              }}
+                              disabled={isFinalized}
+                              className={`w-14 h-7 rounded-full p-0.5 border transition-all duration-300 relative ${
+                                isPresent ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' :
+                                isAbsent ? 'bg-red-500/10 border-red-500/30 text-red-400' :
+                                'bg-white/5 border-white/10 text-white/20'
+                              } ${isFinalized ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer active:scale-95'}`}
+                            >
+                              {/* Switch Thumb */}
+                              <div className={`w-5.5 h-5.5 rounded-full transition-all duration-300 flex items-center justify-center absolute top-0.5 shadow-md ${
+                                isPresent 
+                                  ? 'left-[calc(100%-24px)] bg-emerald-500 text-brand-950' 
+                                  : isAbsent 
+                                  ? 'left-0.5 bg-red-500 text-white' 
+                                  : 'left-[calc(50%-11px)] bg-white/25 text-white/40'
+                              }`}>
+                                {isPresent ? <Check size={10} strokeWidth={4} /> :
+                                 isAbsent ? <X size={10} strokeWidth={4} /> :
+                                 <div className="w-1.5 h-1.5 rounded-full bg-white/60" />}
+                              </div>
+                            </button>
+                          </div>
 
                           <button
                             onClick={(e) => { e.stopPropagation(); toggleMOTM(player.id); }}
                             disabled={isFinalized || !isPresent}
-                            className={`col-span-2 py-3 rounded-xl border transition-all duration-300 flex items-center justify-center gap-3
+                            className={`py-3 rounded-xl border transition-all duration-300 flex items-center justify-center gap-3 w-full
                               ${isMotm 
                                 ? 'bg-amber-500/10 border-amber-500/50 text-amber-500 shadow-[0_0_20px_rgba(245,158,11,0.1)]' 
                                 : 'bg-white/5 border-white/10 text-white/10 hover:text-amber-500 hover:bg-amber-500/10 hover:border-amber-500/30'
