@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { Player, AcademySettings, PlayerEvaluation, AttendanceRecord, Match } from '../types';
 import { Shield, Download, Loader2, Award, X, Camera, RefreshCcw, Edit2, Zap, Target, Timer, Activity } from 'lucide-react';
 import * as htmlToImage from 'html-to-image';
+import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { GeminiService } from '../services/geminiService';
 import { StorageService } from '../services/storageService';
@@ -199,32 +200,73 @@ export const EvaluationCard: React.FC<EvaluationCardProps> = ({ player, settings
         await new Promise(r => setTimeout(r, 1200));
 
         // Adjust scale based on screen size to prevent memory crashes on mobile
-        const isMobile = window.innerWidth < 768;
-        const canvasScale = isMobile ? 1 : 2;
+        const isMobileDevice = window.innerWidth < 768;
+        const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+        const canvasScale = isMobileDevice ? 1.5 : 2;
 
-        // Temporarily reset styles to avoid clipping
         const targetElement = document.getElementById('premium-dossier-capture') || element;
-        const prevTransform = targetElement.style.transform;
-        targetElement.style.transform = 'none';
+        let imgData = '';
 
-        const imgData = await htmlToImage.toJpeg(targetElement, {
-            quality: 0.95,
-            backgroundColor: '#080C28',
-            pixelRatio: canvasScale,
-            width: 1600,
-            height: 1000,
-            style: {
-                transform: 'none',
-                opacity: '1',
-                display: 'block',
-                visibility: 'visible',
-                position: 'relative',
-                left: '0',
-                top: '0'
+        // Try html-to-image on desktop/non-Safari where it is highly performant
+        if (!isMobileDevice && !isSafari) {
+            try {
+                const prevTransform = targetElement.style.transform;
+                targetElement.style.transform = 'none';
+
+                imgData = await htmlToImage.toJpeg(targetElement, {
+                    quality: 0.95,
+                    backgroundColor: '#080C28',
+                    pixelRatio: canvasScale,
+                    width: 1600,
+                    height: 1000,
+                    style: {
+                        transform: 'none',
+                        opacity: '1',
+                        display: 'block',
+                        visibility: 'visible',
+                        position: 'relative',
+                        left: '0',
+                        top: '0'
+                    }
+                });
+                
+                targetElement.style.transform = prevTransform;
+            } catch (err) {
+                console.warn('html-to-image failed, falling back to html2canvas:', err);
             }
-        });
-        
-        targetElement.style.transform = prevTransform;
+        }
+
+        // Fallback or primary capture using html2canvas (essential for mobile/Safari and hidden elements)
+        if (!imgData) {
+            const canvas = await html2canvas(targetElement, {
+                scale: canvasScale,
+                useCORS: true,
+                logging: false,
+                backgroundColor: '#080C28',
+                width: 1600,
+                height: 1000,
+                windowWidth: 1600,
+                windowHeight: 1000,
+                x: 0,
+                y: 0,
+                onclone: (clonedDoc) => {
+                    const el = clonedDoc.getElementById('premium-dossier-capture') || clonedDoc.querySelector('[id="premium-dossier-capture"]');
+                    if (el) {
+                        const htmlEl = el as HTMLElement;
+                        htmlEl.style.position = 'relative';
+                        htmlEl.style.left = '0';
+                        htmlEl.style.top = '0';
+                        htmlEl.style.opacity = '1';
+                        htmlEl.style.zIndex = '9999';
+                        htmlEl.style.transform = 'none';
+                        htmlEl.style.display = 'block';
+                        htmlEl.style.visibility = 'visible';
+                    }
+                }
+            });
+            imgData = canvas.toDataURL('image/jpeg', 0.95);
+        }
+
         const pdf = new jsPDF({
             orientation: 'landscape',
             unit: 'px',

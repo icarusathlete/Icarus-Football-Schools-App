@@ -8,6 +8,25 @@ import { EvaluationCard } from './EvaluationCard';
 import { PageHeader } from './ui/PageHeader';
 import { GeminiService } from '../services/geminiService';
 
+// Helper: directly patch a player's evaluation in localStorage without waiting for Firestore,
+// then fire the global update event so every listener refreshes immediately.
+const patchPlayerEvaluationInCache = (playerId: string, evaluation: PlayerEvaluation) => {
+  try {
+    const PLAYERS_KEY = 'icarus_players';
+    const raw = localStorage.getItem(PLAYERS_KEY);
+    if (!raw) return;
+    const players: Player[] = JSON.parse(raw);
+    const idx = players.findIndex(p => p.id === playerId);
+    if (idx >= 0) {
+      players[idx] = { ...players[idx], evaluation };
+      localStorage.setItem(PLAYERS_KEY, JSON.stringify(players));
+      window.dispatchEvent(new Event('academy_data_update'));
+    }
+  } catch (e) {
+    console.error('patchPlayerEvaluationInCache failed', e);
+  }
+};
+
 // --- SUB-COMPONENTS FOR REAL-TIME TOOLS ---
 
 // 1. Stopwatch Component for Timed Drills
@@ -18,7 +37,11 @@ const StopwatchTool: React.FC<{
 }> = ({ label, value, onChange }) => {
     const [time, setTime] = useState(0); // in ms
     const [isRunning, setIsRunning] = useState(false);
+    // null = not applied yet; number = the last applied seconds value
+    const [appliedTime, setAppliedTime] = useState<number | null>(null);
+    const [showConfirm, setShowConfirm] = useState(false);
     const intervalRef = useRef<any>(null);
+    const confirmTimerRef = useRef<any>(null);
 
     const formatTime = (ms: number) => {
         const seconds = Math.floor(ms / 1000);
@@ -30,66 +53,128 @@ const StopwatchTool: React.FC<{
         if (isRunning) {
             clearInterval(intervalRef.current);
         } else {
+            // Reset confirmation state when starting fresh
+            setShowConfirm(false);
+            setAppliedTime(null);
             const startTime = Date.now() - time;
             intervalRef.current = setInterval(() => {
                 setTime(Date.now() - startTime);
             }, 10);
         }
-        setIsRunning(!isRunning);
+        setIsRunning(prev => !prev);
     };
 
     const resetTimer = () => {
         clearInterval(intervalRef.current);
+        clearTimeout(confirmTimerRef.current);
         setIsRunning(false);
         setTime(0);
+        setAppliedTime(null);
+        setShowConfirm(false);
     };
 
-    const applyTime = () => {
-        const seconds = parseFloat((time / 1000).toFixed(1));
+    const applyTime = useCallback(() => {
+        // Stop timer if still running
+        if (isRunning) {
+            clearInterval(intervalRef.current);
+            setIsRunning(false);
+        }
+
+        // Only apply if there's actual time recorded
+        const ms = time;
+        if (ms <= 0) return;
+
+        const seconds = parseFloat((ms / 1000).toFixed(2));
+
+        // Immediately call onChange — this triggers the async save in the parent
         onChange(seconds);
-    };
 
-    // Clean up
+        // Show the confirmation badge with the exact applied value
+        setAppliedTime(seconds);
+        setShowConfirm(true);
+
+        // Clear the confirmation after 3 seconds
+        clearTimeout(confirmTimerRef.current);
+        confirmTimerRef.current = setTimeout(() => {
+            setShowConfirm(false);
+        }, 3000);
+    }, [isRunning, time, onChange]);
+
+    // Clean up on unmount
     useEffect(() => {
-        return () => clearInterval(intervalRef.current);
+        return () => {
+            clearInterval(intervalRef.current);
+            clearTimeout(confirmTimerRef.current);
+        };
     }, []);
 
+    const isApplied = showConfirm && appliedTime !== null;
+
     return (
-        <div className="glass-card border border-white/20 rounded-[2rem] p-5 md:p-8 flex flex-col gap-4 md:gap-6 shadow-xl relative overflow-hidden group">
-             <div className="absolute inset-0 bg-brand-primary opacity-[0.05]" />
-             <div className="flex justify-between items-center relative z-10">
-                 <label className="text-[10px] font-black text-white/50 uppercase tracking-[0.3em] italic">{label}</label>
-                 <span className="text-[8px] font-black text-brand-accent bg-brand-accent/10 px-4 py-1.5 rounded-full border border-brand-accent/20 italic tracking-widest">PREVIOUS: {value}s</span>
-             </div>
-             
-             <div className="flex items-center gap-4 bg-white/10 rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-6 shadow-inner justify-between border border-white/10 relative group/timer">
-                 <div className="font-mono text-4xl md:text-5xl font-black text-white tracking-tighter w-32 md:w-40 text-center italic" style={{ fontFamily: 'Orbitron' }}>
-                     {formatTime(time)}<span className="text-xs text-brand-accent ml-2 uppercase opacity-50">sec</span>
-                 </div>
-                 <div className="flex gap-4 relative z-10">
-                     <button 
+        <div className={`glass-card border rounded-[2rem] p-5 md:p-8 flex flex-col gap-4 md:gap-6 shadow-xl relative overflow-hidden group transition-all duration-300 ${
+            isApplied ? 'border-brand-accent/60 shadow-brand-accent/10' : 'border-white/20'
+        }`}>
+            <div className="absolute inset-0 bg-brand-primary opacity-[0.05]" />
+            {/* Confirmation flash overlay */}
+            {isApplied && (
+                <div className="absolute inset-0 bg-brand-accent/5 rounded-[2rem] pointer-events-none animate-in fade-in duration-300" />
+            )}
+
+            <div className="flex justify-between items-center relative z-10">
+                <label className="text-[10px] font-black text-white/50 uppercase tracking-[0.3em] italic">{label}</label>
+                <span className={`text-[8px] font-black px-4 py-1.5 rounded-full border italic tracking-widest transition-all duration-300 ${
+                    isApplied
+                        ? 'bg-brand-accent text-brand-950 border-brand-accent shadow-[0_0_12px_rgba(195,246,41,0.4)]'
+                        : 'text-brand-accent bg-brand-accent/10 border-brand-accent/20'
+                }`}>
+                    {isApplied ? `SAVED: ${appliedTime}s ✓` : `CURRENT: ${value}s`}
+                </span>
+            </div>
+            
+            <div className="flex items-center gap-4 bg-white/10 rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-6 shadow-inner justify-between border border-white/10 relative group/timer">
+                <div className="font-mono text-4xl md:text-5xl font-black text-white tracking-tighter w-32 md:w-40 text-center italic" style={{ fontFamily: 'Orbitron' }}>
+                    {formatTime(time)}<span className="text-xs text-brand-accent ml-2 uppercase opacity-50">sec</span>
+                </div>
+                <div className="flex gap-4 relative z-10">
+                    <button 
                         onClick={toggleTimer}
                         type="button"
-                        className={`w-16 h-16 rounded-2xl text-brand-950 transition-all flex items-center justify-center hover:scale-105 active:scale-95 shadow-2xl ${isRunning ? 'bg-red-500 shadow-red-500/20 text-white' : 'bg-brand-accent shadow-brand-accent/20'}`}
-                     >
-                         {isRunning ? <Square size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" />}
-                     </button>
-                     <button 
+                        className={`w-16 h-16 rounded-2xl text-brand-950 transition-all flex items-center justify-center hover:scale-105 active:scale-95 shadow-2xl ${
+                            isRunning ? 'bg-red-500 shadow-red-500/20 text-white' : 'bg-brand-accent shadow-brand-accent/20'
+                        }`}
+                    >
+                        {isRunning ? <Square size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" />}
+                    </button>
+                    <button 
                         onClick={resetTimer}
                         type="button"
                         className="w-16 h-16 rounded-2xl bg-white/10 text-white/40 hover:text-white hover:bg-white/20 transition-all flex items-center justify-center border border-white/10"
-                     >
-                         <RefreshCcw size={24} />
-                     </button>
-                 </div>
-             </div>
-             <button 
+                    >
+                        <RefreshCcw size={24} />
+                    </button>
+                </div>
+            </div>
+
+            {/* Apply button — disabled if no time recorded */}
+            <button 
                 type="button"
                 onClick={applyTime}
-                className="w-full py-5 bg-white/20 text-white text-[10px] font-black uppercase tracking-[0.4em] rounded-2xl hover:bg-white/30 transition-all shadow-xl italic border border-white/10"
-             >
-                 APPLY TO PROFILE
-             </button>
+                disabled={time <= 0}
+                className={`w-full py-5 text-[10px] font-black uppercase tracking-[0.4em] rounded-2xl transition-all duration-300 shadow-xl italic border ${
+                    isApplied 
+                        ? 'bg-brand-accent text-brand-950 border-brand-accent shadow-brand-accent/40 scale-[0.98]' 
+                        : time > 0
+                            ? 'bg-white/20 text-white border-white/10 hover:bg-white/30 hover:border-white/20 hover:scale-[1.01]'
+                            : 'bg-white/5 text-white/20 border-white/5 cursor-not-allowed'
+                }`}
+            >
+                {isApplied 
+                    ? `✓ APPLIED ${appliedTime}s TO PROFILE` 
+                    : time > 0 
+                        ? 'APPLY TO PROFILE'
+                        : 'START TIMER FIRST'
+                }
+            </button>
         </div>
     );
 };
@@ -154,6 +239,12 @@ const PhysicalMetricInput: React.FC<{
     max?: number;
     onChange: (val: number) => void;
 }> = ({ label, value, unit, icon, min = 0, max = 300, onChange }) => {
+    const [inputValue, setInputValue] = useState(value === 0 ? '' : value.toString());
+
+    useEffect(() => {
+        setInputValue(value === 0 ? '' : value.toString());
+    }, [value]);
+
     const handleIncrement = () => {
         if (value < max) onChange(value + 1);
     };
@@ -163,12 +254,26 @@ const PhysicalMetricInput: React.FC<{
     };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const val = parseInt(e.target.value);
+        const text = e.target.value;
+        setInputValue(text);
+        
+        const val = parseInt(text);
         if (!isNaN(val)) {
-            onChange(Math.max(min, Math.min(max, val)));
-        } else if (e.target.value === '') {
+            onChange(val);
+        } else if (text === '') {
             onChange(0);
         }
+    };
+
+    const handleBlur = () => {
+        let val = parseInt(inputValue);
+        if (isNaN(val) || val < min) {
+            val = min;
+        } else if (val > max) {
+            val = max;
+        }
+        onChange(val);
+        setInputValue(val.toString());
     };
 
     return (
@@ -182,8 +287,9 @@ const PhysicalMetricInput: React.FC<{
                     <input 
                         type="number" 
                         className="w-full pl-14 pr-16 py-6 bg-white/5 border border-white/10 rounded-2xl text-2xl font-black text-white focus:border-brand-accent/50 outline-none transition-all italic font-mono shadow-inner [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                        value={value || ''}
+                        value={inputValue}
                         onChange={handleInputChange}
+                        onBlur={handleBlur}
                     />
                     <span className="absolute right-6 top-1/2 -translate-y-1/2 text-[10px] font-black text-white/30 uppercase tracking-widest italic font-mono">{unit}</span>
                 </div>
@@ -336,33 +442,49 @@ export const EvaluationManager: React.FC<EvaluationManagerProps> = ({ onBreadcru
 
   const [form, setForm] = useState<PlayerEvaluation>(defaultEval);
 
-  const loadData = () => {
+  // formRef always holds the latest form — prevents stale closures in async handlers
+  const formRef = useRef<PlayerEvaluation>(form);
+  useEffect(() => { formRef.current = form; }, [form]);
+
+  const loadData = useCallback(() => {
     setPlayers(StorageService.getPlayers());
-  };
+  }, []);
 
   useEffect(() => {
     loadData();
     window.addEventListener('academy_data_update', loadData);
     return () => window.removeEventListener('academy_data_update', loadData);
-  }, []);
+  }, [loadData]);
 
-  // Auto-calculate rating when form changes
+  // Keep previewPlayer in sync with latest players list whenever players state changes
+  useEffect(() => {
+    if (previewPlayer) {
+      const updated = players.find(p => p.id === previewPlayer.id);
+      if (updated) {
+        setPreviewPlayer(updated);
+      }
+    }
+  }, [players]);
+
+  // Auto-calculate rating whenever form metrics/timeTrials change
   useEffect(() => {
     const newRating = calculateOverallRating(form);
     if (newRating !== form.overallRating) {
         setForm(prev => ({ ...prev, overallRating: newRating }));
     }
+  }, [form.metrics, form.timeTrials]);
 
+  // Auto-save draft (debounced) on every form change during editing — for non-time-trial fields
+  useEffect(() => {
     if (isEditing && selectedPlayerId) {
         const timeoutId = setTimeout(() => {
-            StorageService.saveDraft(selectedPlayerId, form);
+            StorageService.saveDraft(selectedPlayerId, formRef.current);
             setDraftSaved(true);
             setTimeout(() => setDraftSaved(false), 2000);
-        }, 1000); // Debounce save by 1s
-        
+        }, 1500);
         return () => clearTimeout(timeoutId);
     }
-  }, [form.metrics, form.timeTrials, isEditing, selectedPlayerId]);
+  }, [form, isEditing, selectedPlayerId]);
 
   const handleSelectPlayer = (player: Player) => {
     setSelectedPlayerId(player.id);
@@ -403,12 +525,49 @@ export const EvaluationManager: React.FC<EvaluationManagerProps> = ({ onBreadcru
     setIsEditing(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!selectedPlayerId) return;
-    StorageService.saveEvaluation(selectedPlayerId, form);
+    // Always use formRef.current to get the absolute latest form state
+    const latestForm = formRef.current;
+    const ratedForm = { ...latestForm, overallRating: calculateOverallRating(latestForm) };
+    // Immediately patch cache so UI updates before Firestore responds
+    patchPlayerEvaluationInCache(selectedPlayerId, ratedForm);
+    // Persist to Firestore
+    await StorageService.saveEvaluation(selectedPlayerId, ratedForm);
     setIsEditing(false);
     onBreadcrumbChange?.([]);
   };
+
+  // handleTimeTrialChange: Called by APPLY TO PROFILE button in StopwatchTool.
+  // This is the critical path — must be robust, fast, and always reflect in the report card.
+  const handleTimeTrialChange = useCallback(async (metric: 'speed' | 'agility' | 'dribbling', val: number) => {
+    if (!selectedPlayerId) return;
+
+    // 1. Build the updated form using the ref (not stale closure)
+    const currentForm = formRef.current;
+    const updatedTimeTrials = { ...currentForm.timeTrials, [metric]: val };
+    const updatedForm: PlayerEvaluation = {
+      ...currentForm,
+      timeTrials: updatedTimeTrials,
+    };
+    // 2. Recalculate the overall rating with the new time
+    updatedForm.overallRating = calculateOverallRating(updatedForm);
+
+    // 3. Update React state immediately for live UI feedback
+    setForm(updatedForm);
+
+    // 4. SYNCHRONOUSLY patch localStorage — report card reads from here
+    //    This makes the change visible in the preview BEFORE Firestore responds.
+    patchPlayerEvaluationInCache(selectedPlayerId, updatedForm);
+
+    // 5. Persist to Firestore asynchronously (non-blocking for UX)
+    try {
+      await StorageService.saveEvaluation(selectedPlayerId, updatedForm);
+    } catch (err) {
+      console.error('handleTimeTrialChange: Firestore save failed', err);
+      // Even if Firestore fails, the localStorage patch above kept the UI consistent
+    }
+  }, [selectedPlayerId]);
 
   const handleDeleteEvaluation = async (playerId: string) => {
     setIsDeleting(true);
@@ -788,17 +947,17 @@ export const EvaluationManager: React.FC<EvaluationManagerProps> = ({ onBreadcru
                                     <StopwatchTool 
                                         label="Sprint Test (30m)" 
                                         value={form.timeTrials.speed} 
-                                        onChange={(val) => setForm({...form, timeTrials: {...form.timeTrials, speed: val}})} 
+                                        onChange={(val) => handleTimeTrialChange('speed', val)} 
                                     />
                                     <StopwatchTool 
                                         label="Agility Test" 
                                         value={form.timeTrials.agility} 
-                                        onChange={(val) => setForm({...form, timeTrials: {...form.timeTrials, agility: val}})} 
+                                        onChange={(val) => handleTimeTrialChange('agility', val)} 
                                     />
                                     <StopwatchTool 
                                         label="Dribbling Test" 
                                         value={form.timeTrials.dribbling} 
-                                        onChange={(val) => setForm({...form, timeTrials: {...form.timeTrials, dribbling: val}})} 
+                                        onChange={(val) => handleTimeTrialChange('dribbling', val)} 
                                     />
                                 </div>
                             </section>
